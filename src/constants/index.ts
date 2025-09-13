@@ -23,14 +23,21 @@ export const PAYMENT_STATUS = {
 export const TIME_SLOTS = {
   SLOT_1: 1,  // 1부: 10:00-14:00
   SLOT_2: 2,  // 2부: 14:00-18:00
-  SLOT_3: 3   // 3부: 18:00-22:00
+  SLOT_3: 3,  // 3부: 18:00-22:00
+  SLOT_4: 4   // 4부: 22:00-02:00 (추후 확장)
 } as const;
 
-export const TIME_SLOT_LABELS = {
+export const TIME_SLOT_LABELS: Record<number, string> = {
   [TIME_SLOTS.SLOT_1]: '1부 (10:00-14:00)',
   [TIME_SLOTS.SLOT_2]: '2부 (14:00-18:00)',
-  [TIME_SLOTS.SLOT_3]: '3부 (18:00-22:00)'
-} as const;
+  [TIME_SLOTS.SLOT_3]: '3부 (18:00-22:00)',
+  [TIME_SLOTS.SLOT_4]: '4부 (22:00-02:00)'
+};
+
+// 타입 가드 함수 추가
+export const getTimeSlotLabel = (slot: number): string => {
+  return TIME_SLOT_LABELS[slot] || `${slot}부 (시간 미정)`;
+};
 
 // 공간 타입
 export const FACILITY_TYPES = {

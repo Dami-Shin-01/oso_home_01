@@ -1,23 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import Button from '@/components/atoms/Button';
 import Card from '@/components/atoms/Card';
 
+// 테스트 결과 인터페이스 정의
+interface TestResult {
+  exists: boolean;
+  error?: string;
+  data: unknown[];
+  count: number;
+}
+
 export default function TestDatabasePage() {
   const [connectionStatus, setConnectionStatus] = useState<'testing' | 'connected' | 'failed'>('testing');
-  const [tables, setTables] = useState<any[]>([]);
-  const [testResults, setTestResults] = useState<{[key: string]: any}>({});
+  // const [tables] = useState<unknown[]>([]);
+  const [testResults, setTestResults] = useState<Record<string, TestResult>>({});
   const [error, setError] = useState<string>('');
 
-  const testConnection = async () => {
+  const testConnection = useCallback(async () => {
     try {
       setConnectionStatus('testing');
       setError('');
 
       // 1. 기본 연결 테스트
-      const { data, error: connectionError } = await supabase.from('users').select('count').limit(1);
+      const { error: connectionError } = await supabase.from('users').select('count').limit(1);
       
       if (connectionError) {
         console.error('Connection error:', connectionError);
@@ -36,7 +44,7 @@ export default function TestDatabasePage() {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setConnectionStatus('failed');
     }
-  };
+  }, []);
 
   const checkTables = async () => {
     const tableTests = {
@@ -48,11 +56,11 @@ export default function TestDatabasePage() {
       faqs: { query: () => supabase.from('faqs').select('*').limit(5) }
     };
 
-    const results: {[key: string]: any} = {};
+    const results: Record<string, TestResult> = {};
 
     for (const [tableName, test] of Object.entries(tableTests)) {
       try {
-        const { data, error, count } = await test.query();
+        const { data, error } = await test.query();
         results[tableName] = {
           exists: !error,
           error: error?.message,
@@ -88,7 +96,7 @@ export default function TestDatabasePage() {
 
   useEffect(() => {
     testConnection();
-  }, []);
+  }, [testConnection]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">

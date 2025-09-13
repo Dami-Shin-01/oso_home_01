@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
 import Card from '@/components/atoms/Card';
-import { RESERVATION_STATUS, PAYMENT_STATUS, TIME_SLOT_LABELS } from '@/constants';
+import { RESERVATION_STATUS, PAYMENT_STATUS, getTimeSlotLabel } from '@/constants';
 
 // 임시 데이터
 const mockReservations = [
@@ -189,7 +189,7 @@ export default function AdminReservationsPage() {
               <div>
                 <span className="text-gray-600">시간:</span>
                 <p className="font-medium">
-                  {reservation.time_slots.map(slot => TIME_SLOT_LABELS[slot]).join(', ')}
+                  {reservation.time_slots.map(slot => getTimeSlotLabel(slot)).join(', ')}
                 </p>
               </div>
               <div>

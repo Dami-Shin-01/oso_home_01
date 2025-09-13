@@ -6,7 +6,7 @@ import Card from '@/components/atoms/Card';
 
 export default function TestConnectionPage() {
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'failed'>('idle');
-  const [results, setResults] = useState<any>({});
+  const [results, setResults] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string>('');
 
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -70,7 +70,7 @@ export default function TestConnectionPage() {
     }
 
     const tables = ['users', 'facilities', 'sites', 'reservations', 'announcements', 'faqs'];
-    const tableResults: {[key: string]: any} = {};
+    const tableResults: Record<string, unknown> = {};
 
     for (const table of tables) {
       try {

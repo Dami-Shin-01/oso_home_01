@@ -92,7 +92,7 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {['프라이빗룸', '텐트동', '야외 소파테이블', '야외 야장테이블', 'VIP동'].map((type, index) => (
+            {['프라이빗룸', '텐트동', '야외 소파테이블', '야외 야장테이블', 'VIP동'].map((type) => (
               <div key={type} className="bg-gray-100 rounded-lg p-6 hover:shadow-md transition-shadow">
                 <div className="aspect-video bg-gray-200 rounded-md mb-4 flex items-center justify-center">
                   <span className="text-gray-500">이미지 준비중</span>
