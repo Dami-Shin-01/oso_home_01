@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest) {
     const updateData = await request.json();
     const allowedFields = ['phone_number'];
     
-    const filteredData: Record<string, any> = {};
+    const filteredData: Record<string, string> = {};
     for (const field of allowedFields) {
       if (updateData[field] !== undefined) {
         if (field === 'phone_number') {

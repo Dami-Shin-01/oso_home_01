@@ -1,6 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import Button from '@/components/atoms/Button';
-import Card from '@/components/atoms/Card';
 import TestDatabaseClientPage from './TestDatabaseClientPage';
 
 // 테스트 결과 타입을 정의합니다.
@@ -57,18 +55,18 @@ export default async function TestDatabasePage() {
           data: data || [],
           count: data?.length || 0,
         };
-      } catch (err: any) {
+      } catch (err: unknown) {
         testResults[tableName] = {
           exists: false,
-          error: err.message,
+          error: err instanceof Error ? err.message : 'Unknown error',
           data: [],
           count: 0,
         };
       }
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     connectionStatus = 'failed';
-    connectionError = err.message;
+    connectionError = err instanceof Error ? err.message : 'Unknown error';
   }
 
   // 서버에서 가져온 데이터를 클라이언트 컴포넌트로 전달합니다.
