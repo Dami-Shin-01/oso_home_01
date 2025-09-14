@@ -51,6 +51,7 @@ export default function AdminDashboard() {
   const [stats] = useState(mockStats);
   const [recentReservations] = useState(mockRecentReservations);
   const [tasks] = useState(mockTasks);
+  const [showDbTest, setShowDbTest] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -204,7 +205,7 @@ export default function AdminDashboard() {
         <Card>
           <h3 className="text-lg font-semibold mb-6">빠른 액션</h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Link href="/admin/reservations">
               <div className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors">
                 <span className="text-2xl mb-2 block">📋</span>
@@ -232,9 +233,57 @@ export default function AdminDashboard() {
                 <p className="text-sm font-medium">회원 관리</p>
               </div>
             </Link>
+
+            <button 
+              onClick={() => setShowDbTest(!showDbTest)}
+              className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <span className="text-2xl mb-2 block">🔧</span>
+              <p className="text-sm font-medium">DB 테스트</p>
+            </button>
           </div>
         </Card>
       </div>
+
+      {/* DB 테스트 섹션 */}
+      {showDbTest && (
+        <div className="mt-8">
+          <Card>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold">데이터베이스 연결 테스트</h3>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowDbTest(false)}
+              >
+                닫기
+              </Button>
+            </div>
+            
+            <div className="mb-4">
+              <Link href="/test-db">
+                <Button className="mr-4">
+                  전체 DB 테스트 실행
+                </Button>
+              </Link>
+              <Link href="/test-connection">
+                <Button variant="outline">
+                  연결 테스트만 실행
+                </Button>
+              </Link>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium mb-2">테스트 설명</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• <strong>전체 DB 테스트:</strong> 모든 테이블 존재 여부와 데이터 샘플 확인</li>
+                <li>• <strong>연결 테스트:</strong> Supabase 연결 상태만 간단히 확인</li>
+                <li>• 테스트 결과는 새 탭에서 확인할 수 있습니다</li>
+              </ul>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* 임시 알림 */}
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
