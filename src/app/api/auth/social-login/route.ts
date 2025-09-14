@@ -38,53 +38,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let profile = null;
-    if (authData.user) {
-      const { data: existingProfile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (!existingProfile) {
-        const { data: newProfile, error: insertError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: authData.user.id,
-              email: authData.user.email,
-              name: authData.user.user_metadata?.name || authData.user.email?.split('@')[0],
-              provider: provider,
-              role: 'USER',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          ])
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error('Profile creation error:', insertError);
-          return NextResponse.json(
-            { error: '사용자 프로필 생성에 실패했습니다.' },
-            { status: 500 }
-          );
-        }
-        profile = newProfile;
-      } else {
-        profile = existingProfile;
-      }
-    }
-
+    // OAuth는 리다이렉트 URL을 반환합니다
     return NextResponse.json({
-      accessToken: authData.session?.access_token,
-      refreshToken: authData.session?.refresh_token,
-      user: {
-        id: authData.user?.id,
-        email: authData.user?.email,
-        name: profile?.name,
-        role: profile?.role
-      }
+      redirectUrl: authData.url,
+      message: '소셜 로그인 URL이 생성되었습니다.'
     }, { status: 200 });
 
   } catch (error) {
