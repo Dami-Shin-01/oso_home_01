@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+interface AddOnItem {
+  id: string;
+  quantity: number;
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -134,7 +139,7 @@ export async function POST(request: NextRequest) {
     if (add_ons && add_ons.length > 0) {
       // 실제로는 add-ons 테이블에서 가격을 조회해야 하지만, 
       // 현재는 간단히 1개당 5천원으로 계산
-      addOnsTotalPrice = add_ons.reduce((total: number, addon: any) => {
+      addOnsTotalPrice = add_ons.reduce((total: number, addon: AddOnItem) => {
         return total + (addon.quantity * 5000);
       }, 0);
     }
@@ -174,7 +179,7 @@ export async function POST(request: NextRequest) {
 
     // 부가서비스 예약 생성 (있는 경우)
     if (add_ons && add_ons.length > 0) {
-      const addOnReservations = add_ons.map((addon: any) => ({
+      const addOnReservations = add_ons.map((addon: AddOnItem) => ({
         reservation_id: reservation.id,
         add_on_id: addon.id,
         quantity: addon.quantity,

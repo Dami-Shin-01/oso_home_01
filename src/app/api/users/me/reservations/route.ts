@@ -1,6 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+interface ReservationData {
+  id: string;
+  reservation_date: string;
+  time_slot: number;
+  guest_count: number;
+  total_amount: number;
+  status: string;
+  payment_status: string;
+  created_at: string;
+  sites: {
+    id: string;
+    name: string;
+    facilities: {
+      name: string;
+    };
+  };
+}
+
+interface GroupedReservation {
+  id: string;
+  status: string;
+  payment_status: string;
+  site_name: string;
+  site_type_name: string;
+  reservation_date: string;
+  time_slots: number[];
+  guest_count: number;
+  total_amount: number;
+  created_at: string;
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -104,8 +135,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 예약별 시간대 그룹핑 (같은 날짜, 같은 사이트의 예약들을 합치기)
-    const groupReservations = (reservations: any[]) => {
-      const grouped: Record<string, any> = {};
+    const groupReservations = (reservations: ReservationData[]) => {
+      const grouped: Record<string, GroupedReservation> = {};
       
       reservations.forEach(reservation => {
         const key = `${reservation.sites.id}-${reservation.reservation_date}`;
