@@ -17,15 +17,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!['kakao', 'naver'].includes(provider)) {
+    if (!['kakao'].includes(provider)) {
       return NextResponse.json(
-        { error: '지원하지 않는 소셜 플랫폼입니다.' },
+        { error: '현재 카카오 로그인만 지원됩니다.' },
         { status: 400 }
       );
     }
 
     const { data: authData, error: signInError } = await supabase.auth.signInWithOAuth({
-      provider: provider as 'kakao' | 'naver',
+      provider: provider as 'kakao',
       options: {
         redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
       }
