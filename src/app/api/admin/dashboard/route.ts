@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+interface ReservationWithUser {
+  id: string;
+  reservation_date: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+  non_member_name?: string | null;
+  users: {
+    name: string;
+  } | null;
+  sites: {
+    name: string;
+    facilities: {
+      name: string;
+    };
+  };
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -89,7 +107,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .order('created_at', { ascending: false })
-      .limit(10);
+      .limit(10) as { data: ReservationWithUser[] | null };
 
     // 오늘의 업무 (대기 중인 예약, 취소 요청 등)
     const { count: pendingReservations } = await supabase
