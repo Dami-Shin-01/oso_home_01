@@ -1,6 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+interface ReservationDetail {
+  id: string;
+  reservation_date: string;
+  time_slot: number;
+  guest_count: number;
+  extra_guest_count: number;
+  total_amount: number;
+  status: string;
+  payment_status: string;
+  admin_memo?: string;
+  created_at: string;
+  updated_at: string;
+  non_member_name?: string | null;
+  non_member_phone?: string | null;
+  users: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    created_at: string;
+  } | null;
+  sites: {
+    id: string;
+    name: string;
+    capacity: number;
+    facilities: {
+      id: string;
+      name: string;
+      description: string;
+      weekday_price: number;
+      weekend_price: number;
+    };
+  };
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -88,7 +123,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         )
       `)
       .eq('id', id)
-      .single();
+      .single() as { data: ReservationDetail | null; error: any };
 
     if (reservationError || !reservation) {
       return NextResponse.json(
