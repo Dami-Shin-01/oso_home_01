@@ -113,14 +113,14 @@ export default function MyPage() {
 
             <div className="mt-6 space-y-2">
               <Button
-                variant="outlined"
+                variant="outline"
                 className="w-full"
                 onClick={() => alert('회원정보 수정 기능 구현 예정')}
               >
                 회원정보 수정
               </Button>
               <Button
-                variant="contained"
+                variant="danger"
                 className="w-full"
                 onClick={() => alert('회원탈퇴 기능 구현 예정')}
               >
@@ -251,7 +251,7 @@ export default function MyPage() {
                     {activeTab === 'upcoming' ? '다가오는 예약이' : '지난 예약이'} 없습니다.
                   </p>
                   <Link href="/reservation">
-                    <Button variant="contained">
+                    <Button variant="primary">
                       지금 예약하기
                     </Button>
                   </Link>

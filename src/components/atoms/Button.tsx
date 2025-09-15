@@ -1,108 +1,50 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'contained' | 'outlined' | 'text';
-  size?: 'small' | 'medium' | 'large';
-  fullWidth?: boolean;
-  loading?: boolean;
+  variant?: 'primary' | 'secondary' | 'danger' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
   children: ReactNode;
+  loading?: boolean;
 }
 
 export default function Button({
-  variant = 'contained',
-  size = 'medium',
-  fullWidth = false,
+  variant = 'primary',
+  size = 'md',
   children,
   loading = false,
   className = '',
   disabled,
   ...props
 }: ButtonProps) {
-  const baseClasses = `
-    inline-flex items-center justify-center
-    font-medium transition-all duration-200
-    border border-transparent
-    cursor-pointer
-    focus:outline-none
-    disabled:cursor-not-allowed disabled:opacity-50
-  `.replace(/\s+/g, ' ').trim();
-
+  const baseClasses = 'font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+  
   const variantClasses = {
-    contained: `
-      text-white
-      hover:shadow-lg
-      active:shadow-md
-    `,
-    outlined: `
-      bg-transparent
-      hover:opacity-80
-    `,
-    text: `
-      bg-transparent
-      hover:bg-light-gray
-    `
+    primary: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 disabled:bg-green-300',
+    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 disabled:bg-gray-300',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-300',
+    outline: 'border-2 border-green-600 text-green-600 hover:bg-green-50 focus:ring-green-500 disabled:border-green-300 disabled:text-green-300'
   };
 
   const sizeClasses = {
-    small: 'px-3 py-1.5 text-sm min-h-[32px]',
-    medium: 'px-4 py-2 min-h-[40px]',
-    large: 'px-6 py-3 text-base min-h-[48px]'
+    sm: 'px-3 py-2 text-sm',
+    md: 'px-4 py-2 text-base',
+    lg: 'px-6 py-3 text-lg'
   };
 
-  // CSS 변수 기반 스타일 적용
-  const cssVarStyles: React.CSSProperties = {
-    borderRadius: 'var(--border-radius-sm)',
-    fontSize: size === 'medium' ? 'var(--font-size-button)' : undefined,
-    letterSpacing: size === 'medium' ? 'var(--letter-spacing-button)' : undefined,
-    fontWeight: 'var(--font-weight-medium)',
-    boxShadow: variant === 'contained' ? 'var(--shadow-button)' : undefined,
-    backgroundColor: variant === 'contained' ? 'var(--primary-red)' : undefined,
-    color: variant === 'outlined' ? 'var(--primary-red)' : 
-           variant === 'text' ? 'var(--text-deep-green)' : undefined,
-    borderColor: variant === 'outlined' ? 'var(--primary-red)' : undefined,
-    borderWidth: variant === 'outlined' ? '1px' : undefined,
-    borderStyle: variant === 'outlined' ? 'solid' : undefined,
-  };
-
-  const hoverStyles: React.CSSProperties = {
-    backgroundColor: variant === 'contained' ? '#B92B22' :
-                    variant === 'outlined' ? 'rgba(215, 52, 42, 0.05)' :
-                    variant === 'text' ? 'var(--neutral-light-gray)' : undefined
-  };
-
-  const widthClasses = fullWidth ? 'w-full' : '';
-
-  const allClasses = [
-    baseClasses,
-    variantClasses[variant],
-    sizeClasses[size],
-    widthClasses,
-    className
-  ].join(' ').replace(/\s+/g, ' ').trim();
+  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
 
   return (
     <button
-      className={allClasses}
-      style={cssVarStyles}
+      className={classes}
       disabled={disabled || loading}
-      onMouseEnter={(e) => {
-        if (!disabled && !loading) {
-          Object.assign(e.currentTarget.style, hoverStyles);
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!disabled && !loading) {
-          Object.assign(e.currentTarget.style, cssVarStyles);
-        }
-      }}
       {...props}
     >
       {loading ? (
         <div className="flex items-center">
-          <div 
-            className="animate-spin rounded-full border-2 border-current border-t-transparent mr-2"
-            style={{ width: '16px', height: '16px' }}
-          ></div>
+          <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+            <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v8z" />
+          </svg>
           로딩 중...
         </div>
       ) : (

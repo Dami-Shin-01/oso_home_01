@@ -129,7 +129,7 @@ export default function AdminReservationsPage() {
             onChange={(e) => setDateFilter(e.target.value)}
           />
           
-          <Button onClick={handleExportExcel} variant="outlined">
+          <Button onClick={handleExportExcel} variant="outline">
             📊 엑셀 다운로드
           </Button>
         </div>
@@ -209,14 +209,14 @@ export default function AdminReservationsPage() {
 
             {/* 액션 버튼 */}
             <div className="flex flex-wrap gap-2 pt-4 border-t">
-              <Button size="small" variant="outlined">
+              <Button size="sm" variant="outline">
                 상세 보기
               </Button>
               
               {reservation.status === RESERVATION_STATUS.PENDING && (
                 <Button 
-                  size="small" 
-                  variant="contained"
+                  size="sm" 
+                  variant="primary"
                   onClick={() => handleStatusChange(reservation.id, RESERVATION_STATUS.CONFIRMED)}
                 >
                   예약 확정
@@ -224,16 +224,16 @@ export default function AdminReservationsPage() {
               )}
               
               <Button 
-                size="small" 
-                variant="outlined"
+                size="sm" 
+                variant="secondary"
                 onClick={() => alert('메모 추가 기능 구현 예정')}
               >
                 메모 추가
               </Button>
               
               <Button 
-                size="small" 
-                variant="contained"
+                size="sm" 
+                variant="danger"
                 onClick={() => handleStatusChange(reservation.id, RESERVATION_STATUS.CANCELLED)}
               >
                 강제 취소
@@ -246,7 +246,7 @@ export default function AdminReservationsPage() {
           <Card>
             <div className="text-center py-12">
               <p className="text-gray-500 mb-4">조건에 맞는 예약이 없습니다.</p>
-              <Button variant="outlined" onClick={() => {
+              <Button variant="outline" onClick={() => {
                 setSearchTerm('');
                 setStatusFilter('all');
                 setDateFilter('');

@@ -38,7 +38,7 @@ export default function TestDatabaseClientPage({
           <span className="font-medium">
             {initialConnectionStatus === 'connected' ? 'Supabase 연결 성공!' : 'Supabase 연결 실패'}
           </span>
-          <Button size="small" onClick={handleRefresh}>
+          <Button size="sm" onClick={handleRefresh}>
             다시 테스트
           </Button>
         </div>
