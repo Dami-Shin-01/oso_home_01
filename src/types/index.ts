@@ -1,84 +1,29 @@
-// 사용자 관련 타입
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  phone: string;
-  role: 'USER' | 'MANAGER' | 'ADMIN';
-  created_at: string;
-  updated_at: string;
-}
+import type { Database } from '@/lib/supabase';
 
-// 시설 관련 타입
-export interface Facility {
-  id: string;
-  name: string;
-  description: string;
-  type: string;
-  capacity: number;
-  weekday_price: number;
-  weekend_price: number;
-  amenities: string[];
-  images: string[];
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+// DB 타입에서 파생된 엔티티 타입들
+export type User = Database['public']['Tables']['users']['Row'];
+export type UserInsert = Database['public']['Tables']['users']['Insert'];
+export type UserUpdate = Database['public']['Tables']['users']['Update'];
 
-export interface Site {
-  id: string;
-  facility_id: string;
-  site_number: string;
-  site_name: string;
-  features: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+export type Facility = Database['public']['Tables']['facilities']['Row'];
+export type FacilityInsert = Database['public']['Tables']['facilities']['Insert'];
+export type FacilityUpdate = Database['public']['Tables']['facilities']['Update'];
 
-// 예약 관련 타입
-export interface Reservation {
-  id: string;
-  user_id?: string;
-  guest_name?: string;
-  guest_phone?: string;
-  guest_email?: string;
-  facility_id: string;
-  site_id: string;
-  reservation_date: string;
-  time_slots: number[];
-  total_amount: number;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
-  payment_status: 'WAITING' | 'COMPLETED' | 'REFUNDED';
-  special_requests?: string;
-  admin_memo?: string;
-  created_at: string;
-  updated_at: string;
-}
+export type Site = Database['public']['Tables']['sites']['Row'];
+export type SiteInsert = Database['public']['Tables']['sites']['Insert'];
+export type SiteUpdate = Database['public']['Tables']['sites']['Update'];
 
-// 콘텐츠 관련 타입
-export interface Notice {
-  id: string;
-  title: string;
-  content: string;
-  is_important: boolean;
-  is_published: boolean;
-  author_id: string;
-  view_count: number;
-  created_at: string;
-  updated_at: string;
-}
+export type Reservation = Database['public']['Tables']['reservations']['Row'];
+export type ReservationInsert = Database['public']['Tables']['reservations']['Insert'];
+export type ReservationUpdate = Database['public']['Tables']['reservations']['Update'];
 
-export interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
-  order_index: number;
-  is_published: boolean;
-  created_at: string;
-  updated_at: string;
-}
+export type Notice = Database['public']['Tables']['notices']['Row'];
+export type NoticeInsert = Database['public']['Tables']['notices']['Insert'];
+export type NoticeUpdate = Database['public']['Tables']['notices']['Update'];
+
+export type FAQ = Database['public']['Tables']['faqs']['Row'];
+export type FAQInsert = Database['public']['Tables']['faqs']['Insert'];
+export type FAQUpdate = Database['public']['Tables']['faqs']['Update'];
 
 // API 응답 타입
 export interface ApiResponse<T> {
