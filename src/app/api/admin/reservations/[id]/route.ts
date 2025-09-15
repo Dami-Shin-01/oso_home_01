@@ -123,7 +123,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         )
       `)
       .eq('id', id)
-      .single() as { data: ReservationDetail | null; error: any };
+      .single() as { data: ReservationDetail | null; error: Error | null };
 
     if (reservationError || !reservation) {
       return NextResponse.json(
