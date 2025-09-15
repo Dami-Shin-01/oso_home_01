@@ -1,36 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-
-interface ReservationData {
-  id: string;
-  reservation_date: string;
-  time_slot: number;
-  guest_count: number;
-  total_amount: number;
-  status: string;
-  payment_status: string;
-  created_at: string;
-  sites: {
-    id: string;
-    name: string;
-    facilities: {
-      name: string;
-    };
-  };
-}
-
-interface GroupedReservation {
-  id: string;
-  status: string;
-  payment_status: string;
-  site_name: string;
-  site_type_name: string;
-  reservation_date: string;
-  time_slots: number[];
-  guest_count: number;
-  total_amount: number;
-  created_at: string;
-}
+import { ReservationRow } from '@/types/database';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -67,30 +37,14 @@ export async function GET(request: NextRequest) {
     today.setHours(0, 0, 0, 0);
     const todayString = today.toISOString().split('T')[0];
 
-    // 예정된 예약 조회
+    // 예정된 예약 조회 (실제 테이블 구조에 맞게)
+    // 현재 reservations 테이블에는 user_id가 없으므로 email로 조회
     const { data: upcomingReservations, error: upcomingError } = await supabase
       .from('reservations')
-      .select(`
-        id,
-        reservation_date,
-        time_slot,
-        guest_count,
-        total_amount,
-        status,
-        payment_status,
-        created_at,
-        sites!inner (
-          id,
-          name,
-          facilities!inner (
-            name
-          )
-        )
-      `)
-      .eq('user_id', user.id)
+      .select('*')
+      .eq('email', user.email)
       .gte('reservation_date', todayString)
-      .order('reservation_date', { ascending: true })
-      .order('time_slot', { ascending: true });
+      .order('reservation_date', { ascending: true }) as { data: ReservationRow[] | null; error: Error | null };
 
     if (upcomingError) {
       console.error('Upcoming reservations fetch error:', upcomingError);
@@ -103,28 +57,11 @@ export async function GET(request: NextRequest) {
     // 과거 예약 조회
     const { data: pastReservations, error: pastError } = await supabase
       .from('reservations')
-      .select(`
-        id,
-        reservation_date,
-        time_slot,
-        guest_count,
-        total_amount,
-        status,
-        payment_status,
-        created_at,
-        sites!inner (
-          id,
-          name,
-          facilities!inner (
-            name
-          )
-        )
-      `)
-      .eq('user_id', user.id)
+      .select('*')
+      .eq('email', user.email)
       .lt('reservation_date', todayString)
       .order('reservation_date', { ascending: false })
-      .order('time_slot', { ascending: true })
-      .limit(20); // 최근 20개만
+      .limit(20) as { data: ReservationRow[] | null; error: Error | null };
 
     if (pastError) {
       console.error('Past reservations fetch error:', pastError);
@@ -134,39 +71,29 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 예약별 시간대 그룹핑 (같은 날짜, 같은 사이트의 예약들을 합치기)
-    const groupReservations = (reservations: ReservationData[]) => {
-      const grouped: Record<string, GroupedReservation> = {};
-      
-      reservations.forEach(reservation => {
-        const key = `${reservation.sites.id}-${reservation.reservation_date}`;
-        
-        if (!grouped[key]) {
-          grouped[key] = {
-            id: reservation.id,
-            status: reservation.status,
-            payment_status: reservation.payment_status,
-            site_name: reservation.sites.name,
-            site_type_name: reservation.sites.facilities.name,
-            reservation_date: reservation.reservation_date,
-            time_slots: [reservation.time_slot],
-            guest_count: reservation.guest_count,
-            total_amount: reservation.total_amount,
-            created_at: reservation.created_at
-          };
-        } else {
-          // 시간대 추가 및 정렬
-          grouped[key].time_slots.push(reservation.time_slot);
-          grouped[key].time_slots.sort((a: number, b: number) => a - b);
-        }
-      });
-      
-      return Object.values(grouped);
-    };
-
+    // 응답 데이터 구성
     const responseData = {
-      upcoming_reservations: groupReservations(upcomingReservations || []),
-      past_reservations: groupReservations(pastReservations || [])
+      upcoming: (upcomingReservations || []).map(reservation => ({
+        id: reservation.id,
+        status: reservation.status,
+        reservation_date: reservation.reservation_date,
+        reservation_time: reservation.reservation_time,
+        guest_count: reservation.guest_count,
+        service_type: reservation.service_type,
+        sku_code: reservation.sku_code,
+        special_requests: reservation.special_requests,
+        created_at: reservation.created_at
+      })),
+      past: (pastReservations || []).map(reservation => ({
+        id: reservation.id,
+        status: reservation.status,
+        reservation_date: reservation.reservation_date,
+        reservation_time: reservation.reservation_time,
+        guest_count: reservation.guest_count,
+        service_type: reservation.service_type,
+        sku_code: reservation.sku_code,
+        created_at: reservation.created_at
+      }))
     };
 
     return NextResponse.json(responseData, { status: 200 });

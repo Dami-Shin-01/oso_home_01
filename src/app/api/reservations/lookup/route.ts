@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { ReservationRow } from '@/types/database';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,34 +20,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 비회원 예약 조회 (user_id가 null이고 입력된 연락처와 일치)
+    // 예약 조회 (실제 reservations 테이블 구조에 맞게)
     const { data: reservation, error: reservationError } = await supabase
       .from('reservations')
-      .select(`
-        id,
-        reservation_date,
-        time_slot,
-        guest_count,
-        extra_guest_count,
-        total_amount,
-        status,
-        payment_status,
-        non_member_name,
-        non_member_phone,
-        created_at,
-        sites!inner (
-          id,
-          name,
-          facilities!inner (
-            id,
-            name
-          )
-        )
-      `)
+      .select('*')
       .eq('id', reservation_id)
-      .is('user_id', null)
-      .eq('non_member_phone', phone_number)
-      .single();
+      .eq('phone', phone_number)
+      .single() as { data: ReservationRow | null; error: Error | null };
 
     if (reservationError || !reservation) {
       return NextResponse.json(
@@ -55,43 +35,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 같은 예약의 다른 시간대 조회
-    const { data: allTimeSlots } = await supabase
-      .from('reservations')
-      .select('time_slot')
-      .eq('site_id', reservation.sites.id)
-      .eq('reservation_date', reservation.reservation_date)
-      .eq('non_member_phone', phone_number)
-      .order('time_slot', { ascending: true });
-
-    // 부가서비스 조회
-    const { data: addOns } = await supabase
-      .from('reservation_add-ons')
-      .select(`
-        quantity,
-        unit_price,
-        total_price,
-        add_on_name
-      `)
-      .eq('reservation_id', reservation.id);
-
+    // 응답 데이터 구성
     const responseData = {
       id: reservation.id,
       status: reservation.status,
-      payment_status: reservation.payment_status,
       reservation_date: reservation.reservation_date,
-      time_slots: allTimeSlots?.map(slot => slot.time_slot) || [reservation.time_slot],
+      reservation_time: reservation.reservation_time,
       guest_count: reservation.guest_count,
-      extra_guest_count: reservation.extra_guest_count,
-      total_amount: reservation.total_amount,
-      guest_name: reservation.non_member_name,
-      guest_phone: reservation.non_member_phone,
-      site: {
-        name: reservation.sites.name,
-        site_type_name: reservation.sites.facilities.name
-      },
-      add_ons: addOns || [],
-      created_at: reservation.created_at
+      name: reservation.name,
+      phone: reservation.phone,
+      email: reservation.email,
+      service_type: reservation.service_type,
+      sku_code: reservation.sku_code,
+      special_requests: reservation.special_requests,
+      admin_notes: reservation.admin_notes,
+      created_at: reservation.created_at,
+      updated_at: reservation.updated_at
     };
 
     return NextResponse.json(responseData, { status: 200 });

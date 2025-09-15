@@ -32,31 +32,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('id, email, name, phone, role')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError) {
-      return NextResponse.json(
-        { error: '사용자 정보를 가져올 수 없습니다.' },
-        { status: 500 }
-      );
-    }
-
+    // 실제 users 테이블이 없으므로 auth 정보에서 가져오기
     return NextResponse.json({
       user: {
-        id: profile.id,
-        email: profile.email,
-        name: profile.name,
-        phone_number: profile.phone,
-        role: profile.role
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.email?.split('@')[0],
+        phone: user.user_metadata?.phone || '',
+        role: 'USER',
+        created_at: user.created_at
       }
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Get profile API error:', error);
+    console.error('User profile API error:', error);
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -74,55 +63,33 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const updateData = await request.json();
-    const allowedFields = ['phone_number'];
-    
-    const filteredData: Record<string, string> = {};
-    for (const field of allowedFields) {
-      if (updateData[field] !== undefined) {
-        if (field === 'phone_number') {
-          filteredData['phone'] = updateData[field];
-        } else {
-          filteredData[field] = updateData[field];
+    const { name, phone } = await request.json();
+
+    // auth 메타데이터 업데이트
+    const { error: updateError } = await supabase.auth.admin.updateUserById(
+      user.id,
+      {
+        user_metadata: {
+          ...user.user_metadata,
+          name: name || user.user_metadata?.name,
+          phone: phone || user.user_metadata?.phone
         }
       }
-    }
-
-    if (Object.keys(filteredData).length === 0) {
-      return NextResponse.json(
-        { error: '수정할 정보가 없습니다.' },
-        { status: 400 }
-      );
-    }
-
-    filteredData['updated_at'] = new Date().toISOString();
-
-    const { data: updatedProfile, error: updateError } = await supabase
-      .from('users')
-      .update(filteredData)
-      .eq('id', user.id)
-      .select('id, email, name, phone, role')
-      .single();
+    );
 
     if (updateError) {
       return NextResponse.json(
-        { error: '사용자 정보 수정에 실패했습니다.' },
+        { error: '프로필 업데이트에 실패했습니다.' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
-      user: {
-        id: updatedProfile.id,
-        email: updatedProfile.email,
-        name: updatedProfile.name,
-        phone_number: updatedProfile.phone,
-        role: updatedProfile.role
-      }
+      message: '프로필이 성공적으로 업데이트되었습니다.'
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Update profile API error:', error);
+    console.error('User profile update API error:', error);
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

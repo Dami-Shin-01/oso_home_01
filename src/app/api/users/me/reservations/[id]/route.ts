@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { ReservationRow } from '@/types/database';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,32 +43,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // 예약 상세 정보 조회
     const { data: reservation, error: reservationError } = await supabase
       .from('reservations')
-      .select(`
-        id,
-        reservation_date,
-        time_slot,
-        guest_count,
-        extra_guest_count,
-        total_amount,
-        status,
-        payment_status,
-        created_at,
-        updated_at,
-        admin_memo,
-        sites!inner (
-          id,
-          name,
-          capacity,
-          facilities!inner (
-            id,
-            name,
-            description
-          )
-        )
-      `)
+      .select('*')
       .eq('id', id)
-      .eq('user_id', user.id)
-      .single();
+      .eq('email', user.email)
+      .single() as { data: ReservationRow | null; error: Error | null };
 
     if (reservationError || !reservation) {
       return NextResponse.json(
@@ -76,46 +55,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // 같은 예약의 모든 시간대 조회
-    const { data: allTimeSlots } = await supabase
-      .from('reservations')
-      .select('time_slot')
-      .eq('site_id', reservation.sites.id)
-      .eq('reservation_date', reservation.reservation_date)
-      .eq('user_id', user.id)
-      .order('time_slot', { ascending: true });
-
-    // 부가서비스 조회
-    const { data: addOns } = await supabase
-      .from('reservation_add-ons')
-      .select(`
-        id,
-        add_on_id,
-        quantity,
-        unit_price,
-        total_price,
-        add_on_name
-      `)
-      .eq('reservation_id', reservation.id);
-
     const responseData = {
       id: reservation.id,
       status: reservation.status,
-      payment_status: reservation.payment_status,
       reservation_date: reservation.reservation_date,
-      time_slots: allTimeSlots?.map(slot => slot.time_slot) || [reservation.time_slot],
+      reservation_time: reservation.reservation_time,
       guest_count: reservation.guest_count,
-      extra_guest_count: reservation.extra_guest_count,
-      total_amount: reservation.total_amount,
-      site: {
-        id: reservation.sites.id,
-        name: reservation.sites.name,
-        capacity: reservation.sites.capacity,
-        facility_name: reservation.sites.facilities.name,
-        facility_description: reservation.sites.facilities.description
-      },
-      add_ons: addOns || [],
-      admin_memo: reservation.admin_memo,
+      service_type: reservation.service_type,
+      sku_code: reservation.sku_code,
+      special_requests: reservation.special_requests,
+      admin_notes: reservation.admin_notes,
       created_at: reservation.created_at,
       updated_at: reservation.updated_at
     };
@@ -148,9 +97,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // 기존 예약 확인
     const { data: existingReservation, error: fetchError } = await supabase
       .from('reservations')
-      .select('id, reservation_date, status, user_id')
+      .select('id, reservation_date, status')
       .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('email', user.email)
       .single();
 
     if (fetchError || !existingReservation) {
@@ -172,17 +121,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // 확정된 예약인지 확인 (확정된 예약은 제한적 수정만 가능)
-    if (existingReservation.status === 'confirmed' && 
-        (updateData.site_id || updateData.reservation_date || updateData.time_slots)) {
-      return NextResponse.json(
-        { error: '확정된 예약의 날짜나 사이트는 변경할 수 없습니다.', code: 'RESERVATION_CONFIRMED' },
-        { status: 409 }
-      );
-    }
-
-    const allowedFields = ['guest_count', 'extra_guest_count'];
-    const filteredData: Record<string, string | number> = {};
+    const allowedFields = ['guest_count', 'special_requests'];
+    const filteredData: Record<string, any> = {};
     
     for (const field of allowedFields) {
       if (updateData[field] !== undefined) {
@@ -204,7 +144,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .from('reservations')
       .update(filteredData)
       .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('email', user.email)
       .select()
       .single();
 
@@ -245,9 +185,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // 기존 예약 확인
     const { data: existingReservation, error: fetchError } = await supabase
       .from('reservations')
-      .select('id, reservation_date, status, user_id, site_id')
+      .select('id, reservation_date, status')
       .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('email', user.email)
       .single();
 
     if (fetchError || !existingReservation) {
@@ -270,7 +210,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // 예약 상태를 cancelled로 변경 (실제 삭제하지 않음)
+    // 예약 상태를 cancelled로 변경
     const { error: cancelError } = await supabase
       .from('reservations')
       .update({
@@ -278,7 +218,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('email', user.email);
 
     if (cancelError) {
       return NextResponse.json(
@@ -286,18 +226,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         { status: 500 }
       );
     }
-
-    // 같은 날짜/사이트의 다른 시간대 예약도 취소
-    await supabase
-      .from('reservations')
-      .update({
-        status: 'cancelled',
-        updated_at: new Date().toISOString()
-      })
-      .eq('site_id', existingReservation.site_id)
-      .eq('reservation_date', existingReservation.reservation_date)
-      .eq('user_id', user.id)
-      .neq('status', 'cancelled');
 
     return NextResponse.json({
       message: '예약이 성공적으로 취소되었습니다.'

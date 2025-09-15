@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { AvailabilityRow } from '@/types/database';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,90 +10,50 @@ const supabase = createClient(
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const siteTypeId = searchParams.get('site_type_id');
-    const year = searchParams.get('year');
-    const month = searchParams.get('month');
+    const date = searchParams.get('date');
+    const resource_code = searchParams.get('resource_code');
 
-    if (!siteTypeId || !year || !month) {
+    if (!date) {
       return NextResponse.json(
-        { error: 'site_type_id, year, month 파라미터가 필요합니다.' },
+        { error: 'date 파라미터가 필요합니다.' },
         { status: 400 }
       );
     }
 
-    const yearNum = parseInt(year);
-    const monthNum = parseInt(month);
+    // 가용성 정보 조회 (실제 테이블 구조에 맞게)
+    let query = supabase
+      .from('availability')
+      .select('*')
+      .eq('date', date);
 
-    if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
-      return NextResponse.json(
-        { error: '유효하지 않은 년도 또는 월입니다.' },
-        { status: 400 }
-      );
+    if (resource_code) {
+      query = query.eq('sku_code', resource_code);
     }
 
-    const startDate = new Date(yearNum, monthNum - 1, 1);
-    const endDate = new Date(yearNum, monthNum, 0);
-    
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
+    const { data: availability, error: availabilityError } = await query as { data: AvailabilityRow[] | null; error: Error | null };
 
-    const { data: sites, error: sitesError } = await supabase
-      .from('sites')
-      .select('id')
-      .eq('facility_id', siteTypeId)
-      .eq('is_active', true);
-
-    if (sitesError) {
-      console.error('Sites fetch error:', sitesError);
+    if (availabilityError) {
+      console.error('Availability fetch error:', availabilityError);
       return NextResponse.json(
-        { error: '사이트 정보를 가져올 수 없습니다.' },
+        { error: '가용성 정보를 가져올 수 없습니다.' },
         { status: 500 }
       );
     }
 
-    const siteIds = sites.map(site => site.id);
-    
-    if (siteIds.length === 0) {
-      return NextResponse.json({}, { status: 200 });
-    }
+    // 응답 데이터 구성
+    const responseData = {
+      date: date,
+      availability: (availability || []).map(item => ({
+        sku_code: item.sku_code,
+        date: item.date,
+        available_slots: item.available_slots || 0,
+        booked_slots: item.booked_slots || 0,
+        blocked: item.blocked || false,
+        block_reason: item.block_reason
+      }))
+    };
 
-    const { data: reservations, error: reservationsError } = await supabase
-      .from('reservations')
-      .select('reservation_date, time_slot, site_id')
-      .in('site_id', siteIds)
-      .gte('reservation_date', startDateStr)
-      .lte('reservation_date', endDateStr)
-      .in('status', ['confirmed', 'pending']);
-
-    if (reservationsError) {
-      console.error('Reservations fetch error:', reservationsError);
-      return NextResponse.json(
-        { error: '예약 정보를 가져올 수 없습니다.' },
-        { status: 500 }
-      );
-    }
-
-    const availabilityMap: Record<string, string> = {};
-    
-    for (let day = 1; day <= endDate.getDate(); day++) {
-      const currentDate = new Date(yearNum, monthNum - 1, day);
-      const dateStr = currentDate.toISOString().split('T')[0];
-      
-      const dayReservations = reservations.filter(r => r.reservation_date === dateStr);
-      
-      const totalSlots = siteIds.length * 3;
-      const bookedSlots = dayReservations.length;
-      
-      if (bookedSlots === 0) {
-        availabilityMap[dateStr] = 'AVAILABLE';
-      } else if (bookedSlots >= totalSlots) {
-        availabilityMap[dateStr] = 'UNAVAILABLE';
-      } else {
-        availabilityMap[dateStr] = 'PARTIALLY_AVAILABLE';
-      }
-    }
-
-    return NextResponse.json(availabilityMap, { status: 200 });
+    return NextResponse.json(responseData, { status: 200 });
 
   } catch (error) {
     console.error('Availability API error:', error);
