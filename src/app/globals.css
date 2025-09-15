@@ -1,26 +1,367 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+/* ==========================================================================
+   BBQ 예약 시스템 디자인 시스템
+   기반: Google Material Design + Custom Brand Colors
+   ========================================================================== */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ===== 브랜드 색상 (Brand Colors) ===== */
+  --primary-red: #D7342A;        /* SPC Red - 로고, 핵심 버튼, 주요 링크 */
+  --secondary-orange: #F07E29;   /* Warm Orange - 차트, 인포그래픽, 긍정적 알림 */
+  --point-orange: #FFAA5A;       /* Sensual Orange - 감성적 포인트, 배너 */
+  
+  /* ===== 배경색 (Background Colors) ===== */
+  --background-cream: #FFF9F4;   /* 페이지 기본 배경 */
+  --background-white: #FFFFFF;   /* 카드, 모달 등 콘텐츠 영역 */
+  --background-footer: #324D3F;  /* 푸터 영역 배경 */
+  
+  /* ===== 텍스트색 (Text Colors) ===== */
+  --text-deep-green: #324D3F;    /* 본문 텍스트 */
+  --text-emphasis-green: #6A8C78; /* 강조 텍스트, 부제목 */
+  
+  /* ===== 중립색 (Neutral Colors) ===== */
+  --neutral-medium-gray: #888888; /* 아이콘, 비활성화 요소 */
+  --neutral-light-gray: #F5F5F5;  /* 입력 필드 배경, 호버 배경 */
+  
+  /* ===== 시스템색 (System Colors) ===== */
+  --system-success: #2E7D32;     /* 성공, 완료 메시지 */
+  --system-error: #C62828;       /* 오류, 경고 메시지 */
+  
+  /* ===== 타이포그래피 (Typography) ===== */
+  --font-family-primary: 'Noto Sans KR', sans-serif;
+  
+  /* 폰트 크기 */
+  --font-size-h1: 48px;          /* 페이지 제목 */
+  --font-size-h2: 36px;          /* 섹션 제목 */
+  --font-size-h3: 24px;          /* 소제목 */
+  --font-size-body: 16px;        /* 본문 */
+  --font-size-button: 15px;      /* 버튼 */
+  --font-size-caption: 14px;     /* 설명 */
+  
+  /* 폰트 굵기 */
+  --font-weight-bold: 700;
+  --font-weight-medium: 500;
+  --font-weight-regular: 400;
+  
+  /* 자간 (Letter Spacing) */
+  --letter-spacing-h1: -1.5px;
+  --letter-spacing-h2: -0.5px;
+  --letter-spacing-h3: 0px;
+  --letter-spacing-body: 0.5px;
+  --letter-spacing-button: 1px;
+  --letter-spacing-caption: 0.4px;
+  
+  /* 줄 높이 (Line Height) */
+  --line-height-h1: 1.2;
+  --line-height-h2: 1.3;
+  --line-height-h3: 1.4;
+  --line-height-body: 1.6;
+  --line-height-button: 1.0;
+  --line-height-caption: 1.5;
+  
+  /* ===== 간격 시스템 (Spacing System) ===== */
+  --spacing-unit: 8px;           /* 기본 간격 단위 */
+  --spacing-xs: 8px;             /* 1x - 작은 간격 */
+  --spacing-sm: 16px;            /* 2x - 요소 간 간격 */
+  --spacing-md: 24px;            /* 3x - 컴포넌트 내부 여백 */
+  --spacing-lg: 32px;            /* 4x - 중간 섹션 간격 */
+  --spacing-xl: 48px;            /* 6x - 큰 섹션 간격 */
+  --spacing-2xl: 64px;           /* 8x - 섹션 간 메인 간격 */
+  
+  /* ===== 모서리 둥글기 (Border Radius) ===== */
+  --border-radius-sm: 8px;       /* 버튼, 입력 필드 */
+  --border-radius-md: 12px;      /* 이미지 */
+  --border-radius-lg: 16px;      /* 카드, 모달 */
+  
+  /* ===== 그림자 (Shadows) ===== */
+  --shadow-button: 0 2px 4px rgba(0,0,0,0.1);     /* 버튼 */
+  --shadow-card: 0 4px 12px rgba(0,0,0,0.08);     /* 카드 */
+  
+  /* ===== 레이아웃 (Layout) ===== */
+  --max-content-width: 1200px;   /* 최대 콘텐츠 너비 */
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Tailwind와 통합 */
+  --color-primary: var(--primary-red);
+  --color-secondary: var(--secondary-orange);
+  --color-background: var(--background-cream);
+  --color-foreground: var(--text-deep-green);
+  --font-sans: var(--font-family-primary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ===== 글로벌 리셋 및 기본 스타일 ===== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-cream);
+  color: var(--text-deep-green);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* ===== 타이포그래피 스타일 ===== */
+h1, .h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-h1);
+  letter-spacing: var(--letter-spacing-h1);
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-deep-green);
+}
+
+h2, .h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-h2);
+  letter-spacing: var(--letter-spacing-h2);
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--text-deep-green);
+}
+
+h3, .h3 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-h3);
+  letter-spacing: var(--letter-spacing-h3);
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--text-deep-green);
+}
+
+p, .body {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-body);
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--text-deep-green);
+}
+
+.caption {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-caption);
+  letter-spacing: var(--letter-spacing-caption);
+  color: var(--text-emphasis-green);
+}
+
+/* ===== 링크 스타일 ===== */
+a {
+  color: var(--primary-red);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #B92B22; /* 어두운 Primary Red */
+}
+
+/* ===== 기본 포커스 스타일 ===== */
+:focus {
+  outline: 2px solid var(--primary-red);
+  outline-offset: 2px;
+}
+
+/* ===== 선택 영역 스타일 ===== */
+::selection {
+  background-color: rgba(215, 52, 42, 0.2);
+  color: var(--text-deep-green);
+}
+
+/* ==========================================================================
+   12컬럼 그리드 시스템 (Grid System)
+   반응형 레이아웃을 위한 CSS Grid 기반 시스템
+   ========================================================================== */
+
+.container {
+  width: 100%;
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-sm);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.grid-gap-xs { gap: var(--spacing-xs); }
+.grid-gap-sm { gap: var(--spacing-sm); }
+.grid-gap-md { gap: var(--spacing-md); }
+.grid-gap-lg { gap: var(--spacing-lg); }
+
+/* 컬럼 스팬 클래스 */
+.col-1 { grid-column: span 1; }
+.col-2 { grid-column: span 2; }
+.col-3 { grid-column: span 3; }
+.col-4 { grid-column: span 4; }
+.col-5 { grid-column: span 5; }
+.col-6 { grid-column: span 6; }
+.col-7 { grid-column: span 7; }
+.col-8 { grid-column: span 8; }
+.col-9 { grid-column: span 9; }
+.col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; }
+.col-12 { grid-column: span 12; }
+
+/* 반응형 중단점 */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-xs);
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xs);
+  }
+  
+  /* 모바일에서는 모든 컬럼이 full-width */
+  .col-1, .col-2, .col-3, .col-4, .col-5, .col-6,
+  .col-7, .col-8, .col-9, .col-10, .col-11, .col-12 {
+    grid-column: span 1;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* 태블릿: 8컬럼 그리드 */
+  .grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+  
+  .col-9, .col-10, .col-11, .col-12 { grid-column: span 8; }
+  .col-7, .col-8 { grid-column: span 6; }
+  .col-5, .col-6 { grid-column: span 4; }
+}
+
+/* ==========================================================================
+   유틸리티 클래스 (Utility Classes)
+   자주 사용되는 스타일의 빠른 적용
+   ========================================================================== */
+
+/* 간격 클래스 */
+.m-0 { margin: 0; }
+.m-xs { margin: var(--spacing-xs); }
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+.m-lg { margin: var(--spacing-lg); }
+.m-xl { margin: var(--spacing-xl); }
+.m-2xl { margin: var(--spacing-2xl); }
+
+.p-0 { padding: 0; }
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.p-xl { padding: var(--spacing-xl); }
+.p-2xl { padding: var(--spacing-2xl); }
+
+/* 마진 방향별 */
+.mt-xs { margin-top: var(--spacing-xs); }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mt-xl { margin-top: var(--spacing-xl); }
+.mt-2xl { margin-top: var(--spacing-2xl); }
+
+.mb-xs { margin-bottom: var(--spacing-xs); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+.mb-2xl { margin-bottom: var(--spacing-2xl); }
+
+.ml-xs { margin-left: var(--spacing-xs); }
+.ml-sm { margin-left: var(--spacing-sm); }
+.ml-md { margin-left: var(--spacing-md); }
+.ml-lg { margin-left: var(--spacing-lg); }
+
+.mr-xs { margin-right: var(--spacing-xs); }
+.mr-sm { margin-right: var(--spacing-sm); }
+.mr-md { margin-right: var(--spacing-md); }
+.mr-lg { margin-right: var(--spacing-lg); }
+
+/* 패딩 방향별 */
+.pt-xs { padding-top: var(--spacing-xs); }
+.pt-sm { padding-top: var(--spacing-sm); }
+.pt-md { padding-top: var(--spacing-md); }
+.pt-lg { padding-top: var(--spacing-lg); }
+.pt-xl { padding-top: var(--spacing-xl); }
+.pt-2xl { padding-top: var(--spacing-2xl); }
+
+.pb-xs { padding-bottom: var(--spacing-xs); }
+.pb-sm { padding-bottom: var(--spacing-sm); }
+.pb-md { padding-bottom: var(--spacing-md); }
+.pb-lg { padding-bottom: var(--spacing-lg); }
+.pb-xl { padding-bottom: var(--spacing-xl); }
+.pb-2xl { padding-bottom: var(--spacing-2xl); }
+
+.pl-xs { padding-left: var(--spacing-xs); }
+.pl-sm { padding-left: var(--spacing-sm); }
+.pl-md { padding-left: var(--spacing-md); }
+.pl-lg { padding-left: var(--spacing-lg); }
+
+.pr-xs { padding-right: var(--spacing-xs); }
+.pr-sm { padding-right: var(--spacing-sm); }
+.pr-md { padding-right: var(--spacing-md); }
+.pr-lg { padding-right: var(--spacing-lg); }
+
+/* 텍스트 정렬 */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+/* 디스플레이 */
+.hidden { display: none; }
+.block { display: block; }
+.inline { display: inline; }
+.inline-block { display: inline-block; }
+.flex { display: flex; }
+.grid-display { display: grid; }
+
+/* 플렉스 유틸리티 */
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 색상 유틸리티 */
+.text-primary { color: var(--primary-red); }
+.text-secondary { color: var(--secondary-orange); }
+.text-success { color: var(--system-success); }
+.text-error { color: var(--system-error); }
+.text-muted { color: var(--text-emphasis-green); }
+
+.bg-primary { background-color: var(--primary-red); }
+.bg-secondary { background-color: var(--secondary-orange); }
+.bg-white { background-color: var(--background-white); }
+.bg-cream { background-color: var(--background-cream); }
+.bg-light-gray { background-color: var(--neutral-light-gray); }

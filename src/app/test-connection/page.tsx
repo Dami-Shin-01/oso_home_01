@@ -167,7 +167,7 @@ export default function TestConnectionPage() {
 
         {connectionStatus === 'success' && (
           <div className="mb-4">
-            <Button onClick={testTables} variant="secondary">
+            <Button onClick={testTables} variant="outlined">
               테이블 상태 확인
             </Button>
           </div>

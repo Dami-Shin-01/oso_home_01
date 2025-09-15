@@ -115,7 +115,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full"
-              size="lg"
+              size="large"
               loading={isLoading}
               disabled={isLoading}
             >

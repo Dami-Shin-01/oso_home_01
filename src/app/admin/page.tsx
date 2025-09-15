@@ -134,7 +134,7 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold">최근 예약</h3>
               <Link href="/admin/reservations">
-                <Button variant="outline" size="sm">
+                <Button variant="outlined" size="small">
                   전체 보기
                 </Button>
               </Link>
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mt-6 pt-4 border-t">
-              <Button className="w-full" variant="outline">
+              <Button className="w-full" variant="outlined">
                 모든 업무 보기
               </Button>
             </div>
@@ -252,8 +252,8 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold">데이터베이스 연결 테스트</h3>
               <Button 
-                variant="outline" 
-                size="sm"
+                variant="outlined" 
+                size="small"
                 onClick={() => setShowDbTest(false)}
               >
                 닫기
@@ -267,7 +267,7 @@ export default function AdminDashboard() {
                 </Button>
               </Link>
               <Link href="/test-connection">
-                <Button variant="outline">
+                <Button variant="outlined">
                   연결 테스트만 실행
                 </Button>
               </Link>

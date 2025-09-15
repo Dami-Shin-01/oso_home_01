@@ -203,7 +203,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               className="w-full"
-              size="lg"
+              size="large"
               loading={isLoading}
               disabled={isLoading || !agreedToTerms}
             >

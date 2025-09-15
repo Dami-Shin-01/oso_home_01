@@ -27,7 +27,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className={`${inter.className} min-h-screen flex flex-col bg-gray-50`}>
+      <head>
+        <link 
+          href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" 
+          rel="stylesheet" 
+        />
+      </head>
+      <body className={`${inter.className} min-h-screen flex flex-col`}>
         <Header />
         <main className="flex-1">
           {children}
