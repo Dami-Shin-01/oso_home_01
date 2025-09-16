@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Card from '@/components/atoms/Card';
@@ -38,24 +39,70 @@ interface DashboardTask {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentReservations, setRecentReservations] = useState<RecentReservation[]>([]);
   const [tasks, setTasks] = useState<DashboardTask[]>([]);
   const [showDbTest, setShowDbTest] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
 
-  // 데이터 로딩
+  // 인증 확인 및 데이터 로딩
   useEffect(() => {
+    // 로그인 상태 확인
+    const checkAuth = () => {
+      const userData = localStorage.getItem('user');
+      const accessToken = localStorage.getItem('accessToken');
+
+      if (!userData || !accessToken) {
+        // 로그인되지 않은 경우
+        router.push('/login');
+        return false;
+      }
+
+      const parsedUser = JSON.parse(userData);
+
+      // 관리자 권한 확인
+      if (parsedUser.role !== 'ADMIN' && parsedUser.role !== 'MANAGER') {
+        // 관리자가 아닌 경우
+        alert('관리자 권한이 필요합니다.');
+        router.push('/');
+        return false;
+      }
+
+      setUser(parsedUser);
+      return true;
+    };
+
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
 
+        // 인증 확인
+        if (!checkAuth()) {
+          return;
+        }
+
+        const accessToken = localStorage.getItem('accessToken');
+
         // 병렬로 모든 대시보드 데이터 요청
         const [statsRes, reservationsRes, tasksRes] = await Promise.all([
-          fetch('/api/admin/dashboard/stats'),
-          fetch('/api/admin/dashboard/recent-reservations?limit=5'),
-          fetch('/api/admin/dashboard/tasks')
+          fetch('/api/admin/dashboard/stats', {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }),
+          fetch('/api/admin/dashboard/recent-reservations?limit=5', {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }),
+          fetch('/api/admin/dashboard/tasks', {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          })
         ]);
 
         if (!statsRes.ok) throw new Error('통계 데이터를 가져올 수 없습니다.');
@@ -81,7 +128,7 @@ export default function AdminDashboard() {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [router]);
 
   const getStatusBadge = (status: string, paymentStatus?: string) => {
     if (status === 'PENDING' && paymentStatus === 'WAITING') {
@@ -135,9 +182,34 @@ export default function AdminDashboard() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* 헤더 */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">관리자 대시보드</h1>
-        <p className="text-gray-600">오소 바베큐장 운영 현황을 한눈에 확인하세요.</p>
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">관리자 대시보드</h1>
+          <p className="text-gray-600">오소 바베큐장 운영 현황을 한눈에 확인하세요.</p>
+        </div>
+
+        {user && (
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-900">{user.name}</p>
+              <p className="text-xs text-gray-500">
+                {user.role === 'ADMIN' ? '관리자' : '매니저'}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('user');
+                router.push('/login');
+              }}
+            >
+              로그아웃
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* KPI 카드 */}

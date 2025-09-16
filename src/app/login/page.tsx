@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
 import Card from '@/components/atoms/Card';
+import { API_ENDPOINTS } from '@/constants';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -48,25 +51,61 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
+
     try {
-      // TODO: Supabase 로그인 구현
-      console.log('로그인 시도:', formData);
-      
-      // 임시 로직 - 추후 실제 인증으로 대체
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // 성공 시 리다이렉트
-      // router.push('/');
-      alert('로그인 성공! (임시)');
-      
+      // 실제 로그인 API 호출
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '로그인에 실패했습니다.');
+      }
+
+      // 로그인 성공
+      console.log('로그인 성공:', data);
+
+      // 로컬 스토리지에 토큰 저장
+      if (data.data.accessToken) {
+        localStorage.setItem('accessToken', data.data.accessToken);
+      }
+      if (data.data.refreshToken) {
+        localStorage.setItem('refreshToken', data.data.refreshToken);
+      }
+
+      // 사용자 정보 저장
+      if (data.data.user) {
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+      }
+
+      // 역할에 따른 리다이렉트
+      const userRole = data.data.user?.role;
+      if (userRole === 'ADMIN' || userRole === 'MANAGER') {
+        // 관리자는 대시보드로
+        router.push('/admin');
+      } else {
+        // 일반 사용자는 메인 페이지로
+        router.push('/');
+      }
+
     } catch (error) {
       console.error('로그인 오류:', error);
-      setErrors({ general: '로그인에 실패했습니다. 다시 시도해주세요.' });
+      setErrors({
+        general: error instanceof Error ? error.message : '로그인에 실패했습니다. 다시 시도해주세요.'
+      });
     } finally {
       setIsLoading(false);
     }
