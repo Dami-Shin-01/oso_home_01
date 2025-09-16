@@ -1,70 +1,136 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Card from '@/components/atoms/Card';
+import { TIME_SLOT_LABELS } from '@/constants';
 
-// 임시 데이터 - 추후 실제 API로 대체
-const mockStats = {
-  monthlyRevenue: 4580000,
-  monthlyReservations: 87,
-  occupancyRate: 73.2,
-  conversionRate: 12.8
-};
+interface DashboardStats {
+  monthlyRevenue: number;
+  monthlyReservations: number;
+  occupancyRate: number;
+  conversionRate: number;
+}
 
-const mockRecentReservations = [
-  {
-    id: 'RES001',
-    guest_name: '김철수',
-    facility: '프라이빗룸 A',
-    date: '2024-09-20',
-    amount: 90000,
-    status: 'confirmed'
-  },
-  {
-    id: 'RES002',
-    guest_name: '박영희',
-    facility: '텐트동 B',
-    date: '2024-09-21',
-    amount: 120000,
-    status: 'pending'
-  },
-  {
-    id: 'RES003',
-    guest_name: '이민수',
-    facility: 'VIP동',
-    date: '2024-09-22',
-    amount: 150000,
-    status: 'pending'
-  }
-];
+interface RecentReservation {
+  id: string;
+  customer_name: string;
+  customer_type: 'member' | 'guest';
+  contact: string;
+  facility_name: string;
+  site_name: string;
+  reservation_date: string;
+  time_slots: number[];
+  total_amount: number;
+  status: string;
+  payment_status: string;
+  created_at: string;
+}
 
-const mockTasks = [
-  { id: 1, title: '신규 예약 승인 대기', count: 5, urgent: true },
-  { id: 2, title: '취소 요청 처리', count: 2, urgent: true },
-  { id: 3, title: '시설 점검 일정', count: 1, urgent: false },
-  { id: 4, title: '공지사항 업데이트', count: 3, urgent: false }
-];
+interface DashboardTask {
+  id: number;
+  title: string;
+  count: number;
+  urgent: boolean;
+  type: string;
+  description: string;
+}
 
 export default function AdminDashboard() {
-  const [stats] = useState(mockStats);
-  const [recentReservations] = useState(mockRecentReservations);
-  const [tasks] = useState(mockTasks);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentReservations, setRecentReservations] = useState<RecentReservation[]>([]);
+  const [tasks, setTasks] = useState<DashboardTask[]>([]);
   const [showDbTest, setShowDbTest] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const getStatusBadge = (status: string) => {
+  // 데이터 로딩
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+
+        // 병렬로 모든 대시보드 데이터 요청
+        const [statsRes, reservationsRes, tasksRes] = await Promise.all([
+          fetch('/api/admin/dashboard/stats'),
+          fetch('/api/admin/dashboard/recent-reservations?limit=5'),
+          fetch('/api/admin/dashboard/tasks')
+        ]);
+
+        if (!statsRes.ok) throw new Error('통계 데이터를 가져올 수 없습니다.');
+        if (!reservationsRes.ok) throw new Error('예약 데이터를 가져올 수 없습니다.');
+        if (!tasksRes.ok) throw new Error('업무 데이터를 가져올 수 없습니다.');
+
+        const [statsData, reservationsData, tasksData] = await Promise.all([
+          statsRes.json(),
+          reservationsRes.json(),
+          tasksRes.json()
+        ]);
+
+        setStats(statsData.data);
+        setRecentReservations(reservationsData.data.reservations);
+        setTasks(tasksData.data.tasks);
+        setError(null);
+      } catch (err) {
+        console.error('Dashboard data fetch error:', err);
+        setError(err instanceof Error ? err.message : '데이터를 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const getStatusBadge = (status: string, paymentStatus?: string) => {
+    if (status === 'PENDING' && paymentStatus === 'WAITING') {
+      return <span className="px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-800 rounded-full">입금 대기</span>;
+    }
     switch (status) {
+      case 'CONFIRMED':
       case 'confirmed':
         return <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">확정</span>;
+      case 'PENDING':
       case 'pending':
         return <span className="px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-800 rounded-full">대기</span>;
+      case 'CANCELLED':
       case 'cancelled':
         return <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">취소</span>;
       default:
         return <span className="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">알 수 없음</span>;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">대시보드 데이터를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Card>
+          <div className="text-center py-8">
+            <span className="text-4xl mb-4 block">⚠️</span>
+            <h3 className="text-lg font-semibold text-red-600 mb-2">데이터 로딩 오류</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()} variant="primary">
+              다시 시도
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -84,7 +150,7 @@ export default function AdminDashboard() {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">월간 매출</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {stats.monthlyRevenue.toLocaleString()}원
+                {stats?.monthlyRevenue.toLocaleString() || 0}원
               </p>
             </div>
           </div>
@@ -97,7 +163,7 @@ export default function AdminDashboard() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">월간 예약</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.monthlyReservations}건</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.monthlyReservations || 0}건</p>
             </div>
           </div>
         </Card>
@@ -108,8 +174,8 @@ export default function AdminDashboard() {
               <span className="text-2xl">📊</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">가동률</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.occupancyRate}%</p>
+              <p className="text-sm font-medium text-gray-600">오늘 가동률</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.occupancyRate || 0}%</p>
             </div>
           </div>
         </Card>
@@ -120,8 +186,8 @@ export default function AdminDashboard() {
               <span className="text-2xl">🎯</span>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">전환율</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.conversionRate}%</p>
+              <p className="text-sm font-medium text-gray-600">예약 확정률</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats?.conversionRate || 0}%</p>
             </div>
           </div>
         </Card>
@@ -141,25 +207,48 @@ export default function AdminDashboard() {
             </div>
 
             <div className="space-y-4">
-              {recentReservations.map((reservation) => (
-                <div key={reservation.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <p className="font-semibold">{reservation.guest_name}</p>
-                      <p className="text-sm text-gray-600">
-                        {reservation.facility} | {reservation.date}
-                      </p>
+              {recentReservations.length > 0 ? (
+                recentReservations.map((reservation) => (
+                  <div key={reservation.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center space-x-4">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-semibold">{reservation.customer_name}</p>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            reservation.customer_type === 'member'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {reservation.customer_type === 'member' ? '회원' : '비회원'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {reservation.facility_name} | {reservation.reservation_date}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {reservation.time_slots.map(slot => TIME_SLOT_LABELS[slot]).join(', ')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <span className="font-semibold">
+                          {reservation.total_amount.toLocaleString()}원
+                        </span>
+                        <p className="text-xs text-gray-500">
+                          {new Date(reservation.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      {getStatusBadge(reservation.status, reservation.payment_status)}
                     </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <span className="font-semibold">
-                      {reservation.amount.toLocaleString()}원
-                    </span>
-                    {getStatusBadge(reservation.status)}
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  최근 예약이 없습니다.
                 </div>
-              ))}
+              )}
             </div>
           </Card>
         </div>
@@ -170,25 +259,32 @@ export default function AdminDashboard() {
             <h3 className="text-lg font-semibold mb-6">오늘의 업무</h3>
             
             <div className="space-y-3">
-              {tasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                  <div className="flex items-center space-x-3">
-                    {task.urgent && (
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    )}
-                    <div>
-                      <p className="font-medium text-sm">{task.title}</p>
-                      {task.count > 0 && (
-                        <p className="text-xs text-gray-600">{task.count}건</p>
+              {tasks.length > 0 ? (
+                tasks.map((task) => (
+                  <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center space-x-3">
+                      {task.urgent && (
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                       )}
+                      <div>
+                        <p className="font-medium text-sm">{task.title}</p>
+                        <p className="text-xs text-gray-500">{task.description}</p>
+                        {task.count > 0 && (
+                          <p className="text-xs text-gray-600 font-medium">{task.count}건</p>
+                        )}
+                      </div>
                     </div>
+
+                    <Link href={`/admin/${task.type.replace('_', '-')}`} className="text-blue-600 hover:text-blue-800 text-sm">
+                      처리
+                    </Link>
                   </div>
-                  
-                  <button className="text-blue-600 hover:text-blue-800 text-sm">
-                    처리
-                  </button>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  처리할 업무가 없습니다.
                 </div>
-              ))}
+              )}
             </div>
 
             <div className="mt-6 pt-4 border-t">
@@ -285,13 +381,21 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* 임시 알림 */}
-      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <span className="text-blue-500 mr-2">ℹ️</span>
-          <p className="text-blue-800 font-medium">
-            관리자 기능이 구현 중입니다. 현재는 데모 데이터를 표시하고 있습니다.
-          </p>
+      {/* 실시간 업데이트 알림 */}
+      <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="text-green-500 mr-2">✅</span>
+            <p className="text-green-800 font-medium">
+              실시간 데이터 연동 완료! 모든 통계와 예약 현황이 실제 데이터베이스와 동기화됩니다.
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-green-600 hover:text-green-800 text-sm font-medium"
+          >
+            새로고침
+          </button>
         </div>
       </div>
     </div>

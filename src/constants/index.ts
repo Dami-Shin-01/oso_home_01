@@ -96,6 +96,12 @@ export const API_ENDPOINTS = {
   FAQS: {
     LIST: '/api/faqs',
     DETAIL: (id: string) => `/api/faqs/${id}`
+  },
+  // 관리자 대시보드
+  ADMIN: {
+    DASHBOARD_STATS: '/api/admin/dashboard/stats',
+    RECENT_RESERVATIONS: '/api/admin/dashboard/recent-reservations',
+    DASHBOARD_TASKS: '/api/admin/dashboard/tasks'
   }
 } as const;
 
