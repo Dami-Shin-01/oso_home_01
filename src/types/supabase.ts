@@ -1,3 +1,9 @@
+/**
+ * @deprecated This file contains legacy database types from the old SKU-based system.
+ * Please use /src/types/database.ts instead, which contains the new facility-based schema.
+ * This file will be removed in a future version.
+ */
+
 export type Json =
   | string
   | number

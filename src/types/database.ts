@@ -1,75 +1,450 @@
-// 실제 Supabase 데이터베이스 구조에 맞춘 타입 정의
-import { Database } from './supabase';
+// Generated TypeScript types based on database_rebuild.sql
+// This file is the single source of truth for all database type definitions
 
-// 기본 테이블 타입들
-export type ReservationRow = Database['public']['Tables']['reservations']['Row'];
-export type BookingRow = Database['public']['Tables']['bookings']['Row'];
-export type ResourceCatalogRow = Database['public']['Tables']['resource_catalog']['Row'];
-export type SkuCatalogRow = Database['public']['Tables']['sku_catalog']['Row'];
-export type TimeSlotCatalogRow = Database['public']['Tables']['time_slot_catalog']['Row'];
-export type AvailabilityRow = Database['public']['Tables']['availability']['Row'];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-// 예약 관련 확장 타입들
+export type Database = {
+  public: {
+    Tables: {
+      users: {
+        Row: {
+          id: string
+          email: string
+          password: string | null
+          name: string
+          phone: string | null
+          role: 'USER' | 'MANAGER' | 'ADMIN'
+          status: 'ACTIVE' | 'INACTIVE'
+          provider: 'email' | 'kakao'
+          provider_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          password?: string | null
+          name: string
+          phone?: string | null
+          role?: 'USER' | 'MANAGER' | 'ADMIN'
+          status?: 'ACTIVE' | 'INACTIVE'
+          provider?: 'email' | 'kakao'
+          provider_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          password?: string | null
+          name?: string
+          phone?: string | null
+          role?: 'USER' | 'MANAGER' | 'ADMIN'
+          status?: 'ACTIVE' | 'INACTIVE'
+          provider?: 'email' | 'kakao'
+          provider_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      facilities: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          type: string
+          capacity: number
+          weekday_price: number
+          weekend_price: number
+          amenities: string[]
+          images: string[]
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description: string
+          type: string
+          capacity: number
+          weekday_price: number
+          weekend_price: number
+          amenities?: string[]
+          images?: string[]
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          type?: string
+          capacity?: number
+          weekday_price?: number
+          weekend_price?: number
+          amenities?: string[]
+          images?: string[]
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sites: {
+        Row: {
+          id: string
+          facility_id: string
+          site_number: string
+          name: string
+          description: string | null
+          capacity: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          facility_id: string
+          site_number: string
+          name: string
+          description?: string | null
+          capacity: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          facility_id?: string
+          site_number?: string
+          name?: string
+          description?: string | null
+          capacity?: number
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sites_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      reservations: {
+        Row: {
+          id: string
+          user_id: string | null
+          guest_name: string | null
+          guest_phone: string | null
+          guest_email: string | null
+          facility_id: string
+          site_id: string
+          reservation_date: string
+          time_slots: number[]
+          total_amount: number
+          status: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+          payment_status: 'WAITING' | 'COMPLETED' | 'REFUNDED'
+          special_requests: string | null
+          admin_memo: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          guest_email?: string | null
+          facility_id: string
+          site_id: string
+          reservation_date: string
+          time_slots: number[]
+          total_amount: number
+          status?: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+          payment_status?: 'WAITING' | 'COMPLETED' | 'REFUNDED'
+          special_requests?: string | null
+          admin_memo?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          guest_email?: string | null
+          facility_id?: string
+          site_id?: string
+          reservation_date?: string
+          time_slots?: number[]
+          total_amount?: number
+          status?: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+          payment_status?: 'WAITING' | 'COMPLETED' | 'REFUNDED'
+          special_requests?: string | null
+          admin_memo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      notices: {
+        Row: {
+          id: string
+          title: string
+          content: string
+          is_important: boolean
+          is_published: boolean
+          author_id: string | null
+          view_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          content: string
+          is_important?: boolean
+          is_published?: boolean
+          author_id?: string | null
+          view_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          content?: string
+          is_important?: boolean
+          is_published?: boolean
+          author_id?: string | null
+          view_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notices_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      faqs: {
+        Row: {
+          id: string
+          question: string
+          answer: string
+          category: string
+          order_index: number
+          is_published: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          question: string
+          answer: string
+          category?: string
+          order_index?: number
+          is_published?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          question?: string
+          answer?: string
+          category?: string
+          order_index?: number
+          is_published?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      user_role: 'USER' | 'MANAGER' | 'ADMIN'
+      user_status: 'ACTIVE' | 'INACTIVE'
+      provider_type: 'email' | 'kakao'
+      reservation_status: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+      payment_status: 'WAITING' | 'COMPLETED' | 'REFUNDED'
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+// Convenience type exports for easy access
+export type UserRow = Database['public']['Tables']['users']['Row']
+export type UserInsert = Database['public']['Tables']['users']['Insert']
+export type UserUpdate = Database['public']['Tables']['users']['Update']
+
+export type FacilityRow = Database['public']['Tables']['facilities']['Row']
+export type FacilityInsert = Database['public']['Tables']['facilities']['Insert']
+export type FacilityUpdate = Database['public']['Tables']['facilities']['Update']
+
+export type SiteRow = Database['public']['Tables']['sites']['Row']
+export type SiteInsert = Database['public']['Tables']['sites']['Insert']
+export type SiteUpdate = Database['public']['Tables']['sites']['Update']
+
+export type ReservationRow = Database['public']['Tables']['reservations']['Row']
+export type ReservationInsert = Database['public']['Tables']['reservations']['Insert']
+export type ReservationUpdate = Database['public']['Tables']['reservations']['Update']
+
+export type NoticeRow = Database['public']['Tables']['notices']['Row']
+export type NoticeInsert = Database['public']['Tables']['notices']['Insert']
+export type NoticeUpdate = Database['public']['Tables']['notices']['Update']
+
+export type FaqRow = Database['public']['Tables']['faqs']['Row']
+export type FaqInsert = Database['public']['Tables']['faqs']['Insert']
+export type FaqUpdate = Database['public']['Tables']['faqs']['Update']
+
+// Extended types for API responses and complex queries
 export interface ReservationWithDetails extends ReservationRow {
-  resource?: ResourceCatalogRow;
-  sku?: SkuCatalogRow;
-  time_slot?: TimeSlotCatalogRow;
+  facilities?: FacilityRow
+  sites?: SiteRow
+  users?: UserRow
 }
 
-export interface BookingWithDetails extends BookingRow {
-  resource?: ResourceCatalogRow;
-  sku?: SkuCatalogRow;
+export interface FacilityWithSites extends FacilityRow {
+  sites: SiteRow[]
 }
 
-// API 응답용 타입들
-export interface ReservationDetail {
-  id: string;
-  status: string;
-  reservation_date: string;
-  reservation_time: string | null;
-  guest_count: number | null;
-  name: string;
-  phone: string;
-  email: string | null;
-  service_type: string | null;
-  sku_code: string | null;
-  special_requests: string | null;
-  admin_notes: string | null;
-  created_at: string | null;
-  updated_at: string | null;
+export interface SiteWithFacility extends SiteRow {
+  facilities: FacilityRow
 }
 
-export interface BookingDetail {
-  id: string;
-  status: string;
-  booking_date: string;
-  check_in_time: string | null;
-  check_out_time: string | null;
-  guest_count: number;
-  customer_name: string;
-  customer_phone: string;
-  customer_email: string | null;
-  sku_code: string;
-  base_price: number;
-  total_amount: number;
-  payment_status: string | null;
-  payment_method: string | null;
-  special_requests: string | null;
-  created_at: string | null;
-  updated_at: string | null;
+export interface NoticeWithAuthor extends NoticeRow {
+  users?: Pick<UserRow, 'id' | 'name' | 'email'>
 }
 
-// 대시보드용 통계 타입
+// Time slot related types
+export interface TimeSlotInfo {
+  id: number
+  name: string
+  time_range: string
+  available: boolean
+}
+
+export interface SiteAvailability {
+  site_id: string
+  site_name: string
+  site_number: string
+  capacity: number
+  occupied_time_slots: number[]
+  available_time_slots: number[]
+}
+
+export interface FacilityAvailability {
+  facility_id: string
+  facility_name: string
+  facility_type: string
+  sites: Record<string, SiteAvailability>
+}
+
+// API Request/Response types
+export interface CreateReservationRequest {
+  user_id?: string
+  guest_name?: string
+  guest_phone?: string
+  guest_email?: string
+  facility_id: string
+  site_id: string
+  reservation_date: string
+  time_slots: number[]
+  total_amount: number
+  special_requests?: string
+}
+
+export interface UpdateReservationRequest {
+  reservation_id: string
+  user_id?: string
+  guest_phone?: string
+  facility_id?: string
+  site_id?: string
+  reservation_date?: string
+  time_slots?: number[]
+  total_amount?: number
+  special_requests?: string
+}
+
+export interface CancelReservationRequest {
+  reservation_id: string
+  user_id?: string
+  guest_phone?: string
+  cancellation_reason?: string
+}
+
+export interface AvailabilityRequest {
+  date: string
+  facility_id?: string
+}
+
+export interface ReservationLookupRequest {
+  reservation_id?: string
+  guest_phone?: string
+  date?: string
+  facility_id?: string
+}
+
+// Dashboard and analytics types
 export interface DashboardStats {
-  total_reservations: number;
-  total_bookings: number;
-  total_revenue: number;
-  occupancy_rate: number;
+  total_reservations: number
+  total_facilities: number
+  total_revenue: number
+  occupancy_rate: number
+  recent_reservations: ReservationWithDetails[]
 }
 
-// 기존 호환성을 위한 타입 별칭들
-export type FlexibleReservation = ReservationWithDetails;
-export type AdminReservationDetail = ReservationDetail;
-export type DashboardReservationData = ReservationDetail;
-export type UserReservationData = ReservationDetail;
-export type AdminReservationData = ReservationDetail;
+export interface RevenueByPeriod {
+  period: string
+  total_amount: number
+  reservation_count: number
+}
+
+export interface FacilityUsageStats {
+  facility_id: string
+  facility_name: string
+  total_reservations: number
+  total_revenue: number
+  occupancy_rate: number
+}
