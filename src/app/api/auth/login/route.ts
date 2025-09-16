@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, type Database } from '@/lib/supabase';
 import {
   createSuccessResponse,
   ApiErrors,
@@ -30,14 +30,17 @@ async function loginHandler(request: NextRequest) {
     );
   }
 
-  // 사용자 프로필 조회
+  // 사용자 프로필 조회 (타입 안전성 보장)
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('users')
-    .select('*')
+    .select('id, email, name, phone, role, created_at, updated_at')
     .eq('id', authData.user.id)
-    .single();
+    .single() as {
+      data: Database['public']['Tables']['users']['Row'] | null;
+      error: any;
+    };
 
-  if (profileError) {
+  if (profileError || !profile) {
     console.error('Profile fetch error:', profileError);
     throw ApiErrors.InternalServerError(
       '사용자 정보를 가져올 수 없습니다.',

@@ -25,7 +25,7 @@ export const createSupabaseClient = () => {
   return createClientComponentClient<Database>();
 };
 
-// 타입 정의 (Supabase에서 생성된 타입을 여기에 추가)
+// 새로운 데이터베이스 스키마 타입 정의
 export type Database = {
   public: {
     Tables: {
@@ -33,27 +33,39 @@ export type Database = {
         Row: {
           id: string;
           email: string;
+          password: string | null;
           name: string;
-          phone: string;
+          phone: string | null;
           role: 'USER' | 'MANAGER' | 'ADMIN';
+          status: 'ACTIVE' | 'INACTIVE';
+          provider: 'email' | 'kakao';
+          provider_id: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           email: string;
+          password?: string | null;
           name: string;
-          phone: string;
+          phone?: string | null;
           role?: 'USER' | 'MANAGER' | 'ADMIN';
+          status?: 'ACTIVE' | 'INACTIVE';
+          provider?: 'email' | 'kakao';
+          provider_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           email?: string;
+          password?: string | null;
           name?: string;
-          phone?: string;
+          phone?: string | null;
           role?: 'USER' | 'MANAGER' | 'ADMIN';
+          status?: 'ACTIVE' | 'INACTIVE';
+          provider?: 'email' | 'kakao';
+          provider_id?: string | null;
           updated_at?: string;
         };
       };
@@ -72,14 +84,75 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
+        Insert: {
+          id?: string;
+          name: string;
+          description: string;
+          type: string;
+          capacity: number;
+          weekday_price: number;
+          weekend_price: number;
+          amenities?: string[];
+          images?: string[];
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string;
+          type?: string;
+          capacity?: number;
+          weekday_price?: number;
+          weekend_price?: number;
+          amenities?: string[];
+          images?: string[];
+          is_active?: boolean;
+          updated_at?: string;
+        };
+      };
+      sites: {
+        Row: {
+          id: string;
+          facility_id: string;
+          site_number: string;
+          name: string;
+          description: string | null;
+          capacity: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          facility_id: string;
+          site_number: string;
+          name: string;
+          description?: string | null;
+          capacity: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          facility_id?: string;
+          site_number?: string;
+          name?: string;
+          description?: string | null;
+          capacity?: number;
+          is_active?: boolean;
+          updated_at?: string;
+        };
       };
       reservations: {
         Row: {
           id: string;
-          user_id?: string;
-          guest_name?: string;
-          guest_phone?: string;
-          guest_email?: string;
+          user_id: string | null;
+          guest_name: string | null;
+          guest_phone: string | null;
+          guest_email: string | null;
           facility_id: string;
           site_id: string;
           reservation_date: string;
@@ -87,12 +160,128 @@ export type Database = {
           total_amount: number;
           status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
           payment_status: 'WAITING' | 'COMPLETED' | 'REFUNDED';
-          special_requests?: string;
-          admin_memo?: string;
+          special_requests: string | null;
+          admin_memo: string | null;
           created_at: string;
           updated_at: string;
         };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          guest_name?: string | null;
+          guest_phone?: string | null;
+          guest_email?: string | null;
+          facility_id: string;
+          site_id: string;
+          reservation_date: string;
+          time_slots: number[];
+          total_amount: number;
+          status?: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+          payment_status?: 'WAITING' | 'COMPLETED' | 'REFUNDED';
+          special_requests?: string | null;
+          admin_memo?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          guest_name?: string | null;
+          guest_phone?: string | null;
+          guest_email?: string | null;
+          facility_id?: string;
+          site_id?: string;
+          reservation_date?: string;
+          time_slots?: number[];
+          total_amount?: number;
+          status?: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+          payment_status?: 'WAITING' | 'COMPLETED' | 'REFUNDED';
+          special_requests?: string | null;
+          admin_memo?: string | null;
+          updated_at?: string;
+        };
       };
+      notices: {
+        Row: {
+          id: string;
+          title: string;
+          content: string;
+          is_important: boolean;
+          is_published: boolean;
+          author_id: string | null;
+          view_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          content: string;
+          is_important?: boolean;
+          is_published?: boolean;
+          author_id?: string | null;
+          view_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          content?: string;
+          is_important?: boolean;
+          is_published?: boolean;
+          author_id?: string | null;
+          view_count?: number;
+          updated_at?: string;
+        };
+      };
+      faqs: {
+        Row: {
+          id: string;
+          question: string;
+          answer: string;
+          category: string;
+          order_index: number;
+          is_published: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          question: string;
+          answer: string;
+          category?: string;
+          order_index?: number;
+          is_published?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          question?: string;
+          answer?: string;
+          category?: string;
+          order_index?: number;
+          is_published?: boolean;
+          updated_at?: string;
+        };
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      user_role: 'USER' | 'MANAGER' | 'ADMIN';
+      user_status: 'ACTIVE' | 'INACTIVE';
+      provider_type: 'email' | 'kakao';
+      reservation_status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+      payment_status: 'WAITING' | 'COMPLETED' | 'REFUNDED';
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 };
