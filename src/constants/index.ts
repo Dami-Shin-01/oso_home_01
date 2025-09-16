@@ -62,8 +62,10 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/api/auth/login',
     LOGOUT: '/api/auth/logout',
-    REGISTER: '/api/auth/register',
-    REFRESH: '/api/auth/refresh'
+    SIGNUP: '/api/auth/signup',
+    PROFILE: '/api/auth/profile',
+    CHANGE_PASSWORD: '/api/auth/change-password',
+    REFRESH: '/api/auth/refresh-token'
   },
   // 예약
   RESERVATIONS: {
@@ -85,10 +87,15 @@ export const API_ENDPOINTS = {
     LIST: '/api/announcements',
     DETAIL: (id: string) => `/api/announcements/${id}`
   },
-  // 사용자
-  USERS: {
-    PROFILE: '/api/users/profile',
-    UPDATE_PROFILE: '/api/users/profile'
+  // 공지사항
+  NOTICES: {
+    LIST: '/api/notices',
+    DETAIL: (id: string) => `/api/notices/${id}`
+  },
+  // FAQ
+  FAQS: {
+    LIST: '/api/faqs',
+    DETAIL: (id: string) => `/api/faqs/${id}`
   }
 } as const;
 
