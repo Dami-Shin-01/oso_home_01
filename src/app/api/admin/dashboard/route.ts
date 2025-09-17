@@ -1,21 +1,26 @@
 /**
  * @deprecated This API route is deprecated and will be removed in a future version.
- * It uses the old SKU-based database schema that has been replaced with the new facility-based system.
- * Please use the new facility-based APIs instead.
+ * Please use the new analytics endpoint: /api/admin/analytics
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 
-// Deprecated API - always return 410 Gone
 export async function GET(request: NextRequest) {
   return NextResponse.json(
     {
       error: 'This API endpoint is deprecated',
-      message: 'This admin dashboard API has been deprecated. Please use the new facility-based dashboard APIs.',
+      message: 'This admin dashboard API has been deprecated. Please use the new analytics endpoint: /api/admin/analytics',
       code: 'API_DEPRECATED',
-      deprecated_since: '2024-09-16',
-      migration_guide: 'Switch to the new facility-based reservation system APIs'
+      deprecated_since: '2024-09-17',
+      migration_guide: '/api/admin/analytics'
     },
-    { status: 410 }
+    {
+      status: 410,
+      headers: {
+        'X-API-Deprecated': 'true',
+        'X-API-Sunset': '2024-12-31',
+        'X-API-Migration-Guide': '/api/admin/analytics'
+      }
+    }
   );
 }

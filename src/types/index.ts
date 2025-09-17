@@ -1,4 +1,4 @@
-import type { Database } from '@/lib/supabase';
+import type { Database } from '@/types/database';
 
 // DB 타입에서 파생된 엔티티 타입들
 export type User = Database['public']['Tables']['users']['Row'];

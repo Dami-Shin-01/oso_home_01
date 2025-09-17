@@ -1,21 +1,26 @@
 /**
  * @deprecated This API route is deprecated and will be removed in a future version.
- * It uses the old SKU-based database schema that has been replaced with the new facility-based system.
- * Please use /api/reservations instead.
+ * Please use the new management endpoint: /api/admin/reservations/management
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 
-// Deprecated API - always return 410 Gone
 export async function GET(request: NextRequest) {
   return NextResponse.json(
     {
       error: 'This API endpoint is deprecated',
-      message: 'This admin reservations API has been deprecated. Please use the new /api/reservations endpoint.',
+      message: 'This admin reservations API has been deprecated. Please use the new management endpoint: /api/admin/reservations/management',
       code: 'API_DEPRECATED',
-      deprecated_since: '2024-09-16',
-      migration_guide: 'Use /api/reservations with proper authentication'
+      deprecated_since: '2024-09-17',
+      migration_guide: '/api/admin/reservations/management'
     },
-    { status: 410 }
+    {
+      status: 410,
+      headers: {
+        'X-API-Deprecated': 'true',
+        'X-API-Sunset': '2024-12-31',
+        'X-API-Migration-Guide': '/api/admin/reservations/management'
+      }
+    }
   );
 }
