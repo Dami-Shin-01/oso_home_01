@@ -27,7 +27,7 @@ export default async function TestDatabasePage() {
     'facilities',
     'sites',
     'reservations',
-    'announcements',
+    'notices',
     'faqs',
   ];
 
