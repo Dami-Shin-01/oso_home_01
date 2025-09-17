@@ -9,15 +9,7 @@ const config: Config = {
   theme: {
     extend: {},
   },
-  plugins: [require('daisyui')],
-  // @ts-ignore
-  daisyui: {
-    themes: ['light', 'dark', 'emerald', 'forest', 'garden'],
-    darkTheme: 'dark',
-    base: true,
-    styled: true,
-    utils: true,
-  },
+  // DaisyUI는 CSS 파일에서 @plugin "daisyui"로 설정됩니다
 }
 
 export default config
