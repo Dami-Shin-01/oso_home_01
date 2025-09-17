@@ -5,16 +5,20 @@ import {
   ApiErrors,
   withErrorHandling
 } from '@/lib/api-response';
-import type { ReservationWithDetails } from '@/types/database';
 
 async function getReservationAnalyticsHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get('limit') || '10');
-  const status = searchParams.get('status'); // 'PENDING', 'CONFIRMED', 'CANCELLED'
+  const status = searchParams.get('status') as 'PENDING' | 'CONFIRMED' | 'CANCELLED' | null;
   const facility_id = searchParams.get('facility_id');
 
   if (limit < 1 || limit > 100) {
     throw ApiErrors.BadRequest('limit은 1-100 사이여야 합니다.');
+  }
+
+  // 상태 값 검증
+  if (status && !['PENDING', 'CONFIRMED', 'CANCELLED'].includes(status)) {
+    throw ApiErrors.BadRequest('유효하지 않은 상태값입니다.');
   }
 
   // 쿼리 빌더 설정

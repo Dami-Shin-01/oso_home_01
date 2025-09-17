@@ -7,7 +7,6 @@ import {
   validateRequiredFields,
   withErrorHandling
 } from '@/lib/api-response';
-import type { ReservationWithDetails } from '@/types/database';
 
 async function getReservationsHandler(request: NextRequest) {
   // 관리자 권한 확인
@@ -16,13 +15,18 @@ async function getReservationsHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '20');
-  const status = searchParams.get('status'); // 'PENDING', 'CONFIRMED', 'CANCELLED'
+  const status = searchParams.get('status') as 'PENDING' | 'CONFIRMED' | 'CANCELLED' | null;
   const facility_id = searchParams.get('facility_id');
   const date_from = searchParams.get('date_from');
   const date_to = searchParams.get('date_to');
 
   if (page < 1 || limit < 1 || limit > 100) {
     throw ApiErrors.BadRequest('잘못된 페이지 또는 제한값입니다.');
+  }
+
+  // 상태 값 검증
+  if (status && !['PENDING', 'CONFIRMED', 'CANCELLED'].includes(status)) {
+    throw ApiErrors.BadRequest('유효하지 않은 상태값입니다.');
   }
 
   const offset = (page - 1) * limit;
