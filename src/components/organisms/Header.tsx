@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { ROUTES } from '@/constants';
+import ThemeController from './ThemeController';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,111 +18,96 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* 로고 */}
-          <div className="flex-shrink-0">
-            <Link href={ROUTES.HOME} className="text-2xl font-bold text-green-700">
-              오소 바베큐장
-            </Link>
-          </div>
-
-          {/* 데스크톱 네비게이션 */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="text-gray-900 hover:text-green-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* 로그인/회원가입 버튼 */}
-          <div className="hidden md:flex space-x-2">
-            <Link
-              href="/guest-reservation"
-              className="text-gray-700 hover:text-green-700 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              예약조회
-            </Link>
-            <Link
-              href="/login"
-              className="text-green-700 hover:text-green-900 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              로그인
-            </Link>
-            <Link
-              href="/register"
-              className="bg-green-700 text-white hover:bg-green-800 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              회원가입
-            </Link>
-          </div>
-
-          {/* 모바일 메뉴 버튼 */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-700 hover:text-green-700 p-2"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {isMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-          </div>
-        </div>
-
+    <div className="navbar bg-base-100 shadow-lg sticky top-0 z-50">
+      <div className="navbar-start">
         {/* 모바일 메뉴 */}
-        {isMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
+        <div className="dropdown">
+          <div
+            tabIndex={0}
+            role="button"
+            className="btn btn-ghost lg:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            <svg
+              className="w-5 h-5"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 17 14"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M1 1h15M1 7h15M1 13h15"
+              />
+            </svg>
+          </div>
+          {isMenuOpen && (
+            <ul
+              tabIndex={0}
+              className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+            >
               {navigationItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="text-gray-900 hover:text-green-700 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
+                <li key={item.name}>
+                  <Link href={item.href} onClick={() => setIsMenuOpen(false)}>
+                    {item.name}
+                  </Link>
+                </li>
               ))}
-              <div className="border-t pt-3 space-y-1">
-                <Link
-                  href="/guest-reservation"
-                  className="text-gray-700 hover:text-green-700 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+              <div className="divider my-1"></div>
+              <li>
+                <Link href="/guest-reservation" onClick={() => setIsMenuOpen(false)}>
                   예약조회
                 </Link>
-                <Link
-                  href="/login"
-                  className="text-green-700 hover:text-green-900 block px-3 py-2 rounded-md text-base font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+              </li>
+              <li>
+                <Link href="/login" onClick={() => setIsMenuOpen(false)}>
                   로그인
                 </Link>
-                <Link
-                  href="/register"
-                  className="bg-green-700 text-white hover:bg-green-800 block px-3 py-2 rounded-md text-base font-medium text-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
+              </li>
+              <li>
+                <Link href="/register" onClick={() => setIsMenuOpen(false)}>
                   회원가입
                 </Link>
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
-    </header>
+              </li>
+            </ul>
+          )}
+        </div>
+
+        {/* 로고 */}
+        <Link href={ROUTES.HOME} className="btn btn-ghost text-xl text-primary font-bold">
+          🍖 오소 바베큐장
+        </Link>
+      </div>
+
+      {/* 데스크톱 네비게이션 */}
+      <div className="navbar-center hidden lg:flex">
+        <ul className="menu menu-horizontal px-1">
+          {navigationItems.map((item) => (
+            <li key={item.name}>
+              <Link href={item.href} className="btn btn-ghost">
+                {item.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* 로그인/회원가입 버튼 */}
+      <div className="navbar-end hidden lg:flex gap-2">
+        <ThemeController />
+        <Link href="/guest-reservation" className="btn btn-ghost">
+          예약조회
+        </Link>
+        <Link href="/login" className="btn btn-outline btn-primary">
+          로그인
+        </Link>
+        <Link href="/register" className="btn btn-primary">
+          회원가입
+        </Link>
+      </div>
+    </div>
   );
 }
