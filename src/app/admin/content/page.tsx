@@ -40,6 +40,28 @@ export default function ContentManagementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 작성 모달 상태
+  const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [showFaqModal, setShowFaqModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // 공지사항 작성 폼 상태
+  const [noticeForm, setNoticeForm] = useState({
+    title: '',
+    content: '',
+    is_important: false,
+    is_published: false
+  });
+
+  // FAQ 작성 폼 상태
+  const [faqForm, setFaqForm] = useState({
+    question: '',
+    answer: '',
+    category: 'general',
+    order_index: 1,
+    is_published: false
+  });
+
   // 인증 확인
   useEffect(() => {
     const checkAuth = () => {
@@ -107,6 +129,89 @@ export default function ContentManagementPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // 공지사항 저장
+  const handleSaveNotice = async () => {
+    if (!noticeForm.title.trim() || !noticeForm.content.trim()) {
+      alert('제목과 내용을 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const accessToken = localStorage.getItem('accessToken');
+
+      const response = await fetch('/api/admin/notices', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(noticeForm)
+      });
+
+      if (response.ok) {
+        alert('공지사항이 성공적으로 저장되었습니다.');
+        setShowNoticeModal(false);
+        setNoticeForm({
+          title: '',
+          content: '',
+          is_important: false,
+          is_published: false
+        });
+        fetchContentData();
+      } else {
+        throw new Error('저장에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Notice save error:', err);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // FAQ 저장
+  const handleSaveFaq = async () => {
+    if (!faqForm.question.trim() || !faqForm.answer.trim()) {
+      alert('질문과 답변을 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const accessToken = localStorage.getItem('accessToken');
+
+      const response = await fetch('/api/admin/faqs', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(faqForm)
+      });
+
+      if (response.ok) {
+        alert('FAQ가 성공적으로 저장되었습니다.');
+        setShowFaqModal(false);
+        setFaqForm({
+          question: '',
+          answer: '',
+          category: 'general',
+          order_index: 1,
+          is_published: false
+        });
+        fetchContentData();
+      } else {
+        throw new Error('저장에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('FAQ save error:', err);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -185,7 +290,7 @@ export default function ContentManagementPage() {
               <Button onClick={fetchContentData} variant="outline" size="sm">
                 새로고침
               </Button>
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" onClick={() => setShowNoticeModal(true)}>
                 새 공지사항 작성
               </Button>
             </div>
@@ -257,7 +362,7 @@ export default function ContentManagementPage() {
               <Button onClick={fetchContentData} variant="outline" size="sm">
                 새로고침
               </Button>
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" onClick={() => setShowFaqModal(true)}>
                 새 FAQ 작성
               </Button>
             </div>
@@ -377,6 +482,253 @@ export default function ContentManagementPage() {
           </div>
         </Card>
       </div>
+
+      {/* 공지사항 작성 모달 */}
+      {showNoticeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">새 공지사항 작성</h2>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowNoticeModal(false);
+                    setNoticeForm({
+                      title: '',
+                      content: '',
+                      is_important: false,
+                      is_published: false
+                    });
+                  }}
+                >
+                  ✕
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    제목 *
+                  </label>
+                  <input
+                    type="text"
+                    value={noticeForm.title}
+                    onChange={(e) => setNoticeForm({...noticeForm, title: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="공지사항 제목을 입력하세요"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    내용 *
+                  </label>
+                  <textarea
+                    value={noticeForm.content}
+                    onChange={(e) => setNoticeForm({...noticeForm, content: e.target.value})}
+                    rows={10}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="공지사항 내용을 입력하세요"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={noticeForm.is_important}
+                      onChange={(e) => setNoticeForm({...noticeForm, is_important: e.target.checked})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">중요 공지사항</span>
+                  </label>
+
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={noticeForm.is_published}
+                      onChange={(e) => setNoticeForm({...noticeForm, is_published: e.target.checked})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">즉시 발행</span>
+                  </label>
+                </div>
+
+                {!noticeForm.is_published && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      💡 즉시 발행을 체크하지 않으면 초안으로 저장되며, 나중에 '미발행 공지사항 관리' 페이지에서 검토 후 발행할 수 있습니다.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowNoticeModal(false);
+                  setNoticeForm({
+                    title: '',
+                    content: '',
+                    is_important: false,
+                    is_published: false
+                  });
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveNotice}
+                disabled={saving || !noticeForm.title.trim() || !noticeForm.content.trim()}
+              >
+                {saving ? '저장 중...' : '저장'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FAQ 작성 모달 */}
+      {showFaqModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">새 FAQ 작성</h2>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowFaqModal(false);
+                    setFaqForm({
+                      question: '',
+                      answer: '',
+                      category: 'general',
+                      order_index: 1,
+                      is_published: false
+                    });
+                  }}
+                >
+                  ✕
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    질문 *
+                  </label>
+                  <input
+                    type="text"
+                    value={faqForm.question}
+                    onChange={(e) => setFaqForm({...faqForm, question: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="자주 묻는 질문을 입력하세요"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    답변 *
+                  </label>
+                  <textarea
+                    value={faqForm.answer}
+                    onChange={(e) => setFaqForm({...faqForm, answer: e.target.value})}
+                    rows={8}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="질문에 대한 답변을 입력하세요"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      카테고리
+                    </label>
+                    <select
+                      value={faqForm.category}
+                      onChange={(e) => setFaqForm({...faqForm, category: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="general">일반</option>
+                      <option value="reservation">예약</option>
+                      <option value="facility">시설</option>
+                      <option value="payment">결제</option>
+                      <option value="policy">정책</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      표시 순서
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={faqForm.order_index}
+                      onChange={(e) => setFaqForm({...faqForm, order_index: parseInt(e.target.value)})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={faqForm.is_published}
+                      onChange={(e) => setFaqForm({...faqForm, is_published: e.target.checked})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">즉시 발행</span>
+                  </label>
+                </div>
+
+                {!faqForm.is_published && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      💡 즉시 발행을 체크하지 않으면 초안으로 저장되며, 나중에 FAQ 목록에서 개별적으로 발행할 수 있습니다.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowFaqModal(false);
+                  setFaqForm({
+                    question: '',
+                    answer: '',
+                    category: 'general',
+                    order_index: 1,
+                    is_published: false
+                  });
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveFaq}
+                disabled={saving || !faqForm.question.trim() || !faqForm.answer.trim()}
+              >
+                {saving ? '저장 중...' : '저장'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
