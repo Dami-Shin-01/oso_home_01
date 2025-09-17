@@ -35,7 +35,7 @@ async function getAuthenticatedAdmin(request: NextRequest) {
 
 type FacilityUpdate = Database['public']['Tables']['facilities']['Update'];
 
-async function updateFacilityHandler(request: NextRequest, context: { params: { id: string } }) {
+async function updateFacilityHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const admin = await getAuthenticatedAdmin(request);
   if (!admin) {
     throw ApiErrors.Forbidden(
@@ -44,10 +44,11 @@ async function updateFacilityHandler(request: NextRequest, context: { params: { 
     );
   }
 
-  const facilityId = context.params.id;
+  const params = await context.params;
+  const facilityId = params.id;
   const body = await request.json();
 
-  const { name, description, capacity, price_per_hour, is_active, features } = body;
+  const { name, description, capacity, price_per_session, is_active } = body;
 
   // 입력 검증
   if (!name?.trim() || !description?.trim()) {
@@ -57,7 +58,7 @@ async function updateFacilityHandler(request: NextRequest, context: { params: { 
     );
   }
 
-  if (capacity < 1 || price_per_hour < 0) {
+  if (capacity < 1 || price_per_session < 0) {
     throw ApiErrors.BadRequest(
       '수용인원은 1명 이상, 요금은 0원 이상이어야 합니다.',
       'INVALID_CAPACITY_OR_PRICE'
@@ -97,9 +98,8 @@ async function updateFacilityHandler(request: NextRequest, context: { params: { 
     name: name.trim(),
     description: description.trim(),
     capacity: parseInt(capacity),
-    price_per_hour: parseInt(price_per_hour),
+    price_per_session: parseInt(price_per_session),
     is_active: Boolean(is_active),
-    features: Array.isArray(features) ? features : [],
     updated_at: new Date().toISOString()
   };
 
@@ -123,7 +123,7 @@ async function updateFacilityHandler(request: NextRequest, context: { params: { 
   }, '시설이 성공적으로 수정되었습니다.');
 }
 
-async function deleteFacilityHandler(request: NextRequest, context: { params: { id: string } }) {
+async function deleteFacilityHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const admin = await getAuthenticatedAdmin(request);
   if (!admin) {
     throw ApiErrors.Forbidden(
@@ -132,7 +132,8 @@ async function deleteFacilityHandler(request: NextRequest, context: { params: { 
     );
   }
 
-  const facilityId = context.params.id;
+  const params = await context.params;
+  const facilityId = params.id;
 
   // 시설 존재 여부 확인
   const { data: existingFacility, error: fetchError } = await supabaseAdmin

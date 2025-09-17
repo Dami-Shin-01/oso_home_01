@@ -167,7 +167,7 @@ async function createSiteHandler(request: NextRequest) {
         id,
         name,
         capacity,
-        price_per_hour,
+        price_per_session,
         is_active
       )
     `)

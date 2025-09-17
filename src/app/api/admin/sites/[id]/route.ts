@@ -35,7 +35,7 @@ async function getAuthenticatedAdmin(request: NextRequest) {
 
 type SiteUpdate = Database['public']['Tables']['sites']['Update'];
 
-async function updateSiteHandler(request: NextRequest, context: { params: { id: string } }) {
+async function updateSiteHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const admin = await getAuthenticatedAdmin(request);
   if (!admin) {
     throw ApiErrors.Forbidden(
@@ -44,7 +44,8 @@ async function updateSiteHandler(request: NextRequest, context: { params: { id: 
     );
   }
 
-  const siteId = context.params.id;
+  const params = await context.params;
+  const siteId = params.id;
   const body = await request.json();
 
   const { name, is_active } = body;
@@ -121,7 +122,7 @@ async function updateSiteHandler(request: NextRequest, context: { params: { id: 
   }, '구역이 성공적으로 수정되었습니다.');
 }
 
-async function deleteSiteHandler(request: NextRequest, context: { params: { id: string } }) {
+async function deleteSiteHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const admin = await getAuthenticatedAdmin(request);
   if (!admin) {
     throw ApiErrors.Forbidden(
@@ -130,7 +131,8 @@ async function deleteSiteHandler(request: NextRequest, context: { params: { id: 
     );
   }
 
-  const siteId = context.params.id;
+  const params = await context.params;
+  const siteId = params.id;
 
   // 구역 존재 여부 확인
   const { data: existingSite, error: fetchError } = await supabaseAdmin

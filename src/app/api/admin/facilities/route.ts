@@ -114,7 +114,7 @@ async function createFacilityHandler(request: NextRequest) {
 
   const body = await request.json();
 
-  const { name, description, capacity, price_per_hour, is_active, features } = body;
+  const { name, description, capacity, price_per_session, is_active } = body;
 
   // 입력 검증
   if (!name?.trim() || !description?.trim()) {
@@ -124,7 +124,7 @@ async function createFacilityHandler(request: NextRequest) {
     );
   }
 
-  if (capacity < 1 || price_per_hour < 0) {
+  if (capacity < 1 || price_per_session < 0) {
     throw ApiErrors.BadRequest(
       '수용인원은 1명 이상, 요금은 0원 이상이어야 합니다.',
       'INVALID_CAPACITY_OR_PRICE'
@@ -149,9 +149,8 @@ async function createFacilityHandler(request: NextRequest) {
     name: name.trim(),
     description: description.trim(),
     capacity: parseInt(capacity),
-    price_per_hour: parseInt(price_per_hour),
-    is_active: Boolean(is_active),
-    features: Array.isArray(features) ? features : []
+    price_per_session: parseInt(price_per_session),
+    is_active: Boolean(is_active)
   };
 
   const { data: facility, error } = await supabaseAdmin
