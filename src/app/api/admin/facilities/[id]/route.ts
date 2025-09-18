@@ -98,7 +98,6 @@ async function updateFacilityHandler(request: NextRequest, context: { params: Pr
     name: name.trim(),
     description: description.trim(),
     capacity: parseInt(capacity),
-    price_per_session: parseInt(price_per_session),
     is_active: Boolean(is_active),
     updated_at: new Date().toISOString()
   };

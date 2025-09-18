@@ -106,12 +106,12 @@ async function createSiteHandler(request: NextRequest) {
 
   const body = await request.json();
 
-  const { facility_id, name, is_active } = body;
+  const { facility_id, site_number, name, description, capacity, is_active } = body;
 
   // 입력 검증
-  if (!facility_id || !name?.trim()) {
+  if (!facility_id || !site_number?.trim() || !name?.trim() || !capacity || capacity < 1) {
     throw ApiErrors.BadRequest(
-      '소속 시설과 구역명은 필수 입력 항목입니다.',
+      '소속 시설, 구역번호, 구역명, 수용인원(1명 이상)은 필수 입력 항목입니다.',
       'REQUIRED_FIELDS_MISSING'
     );
   }
@@ -137,24 +137,27 @@ async function createSiteHandler(request: NextRequest) {
     );
   }
 
-  // 같은 시설 내 중복 구역명 확인
+  // 같은 시설 내 중복 구역번호 확인
   const { data: existingSite } = await supabaseAdmin
     .from('sites')
     .select('id')
     .eq('facility_id', facility_id)
-    .eq('name', name.trim())
+    .eq('site_number', site_number.trim())
     .single();
 
   if (existingSite) {
     throw ApiErrors.Conflict(
-      '동일한 시설 내에 같은 이름의 구역이 이미 존재합니다.',
-      'SITE_NAME_DUPLICATE'
+      '동일한 시설 내에 같은 구역번호가 이미 존재합니다.',
+      'SITE_NUMBER_DUPLICATE'
     );
   }
 
   const siteData: SiteInsert = {
     facility_id,
+    site_number: site_number.trim(),
     name: name.trim(),
+    description: description?.trim() || null,
+    capacity: parseInt(capacity),
     is_active: Boolean(is_active)
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/atoms/Card';
@@ -90,7 +90,7 @@ export default function AnalyticsPage() {
     fetchAnalyticsData();
   }, [router, dateRange]);
 
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem('accessToken');
@@ -176,7 +176,7 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ko-KR').format(price);

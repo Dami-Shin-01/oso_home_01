@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/atoms/Card';
@@ -50,32 +50,7 @@ export default function CancelledReservationsPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'refund_pending' | 'refunded'>('all');
 
-  useEffect(() => {
-    const checkAuth = () => {
-      const userData = localStorage.getItem('user');
-      const accessToken = localStorage.getItem('accessToken');
-
-      if (!userData || !accessToken) {
-        router.push('/login');
-        return false;
-      }
-
-      const parsedUser = JSON.parse(userData);
-      if (parsedUser.role !== 'ADMIN' && parsedUser.role !== 'MANAGER') {
-        alert('관리자 권한이 필요합니다.');
-        router.push('/admin');
-        return false;
-      }
-
-      return true;
-    };
-
-    if (!checkAuth()) return;
-
-    fetchCancelledReservations();
-  }, [router, filterStatus]);
-
-  const fetchCancelledReservations = async () => {
+  const fetchCancelledReservations = useCallback(async () => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem('accessToken');
@@ -177,7 +152,32 @@ export default function CancelledReservationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterStatus]);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const userData = localStorage.getItem('user');
+      const accessToken = localStorage.getItem('accessToken');
+
+      if (!userData || !accessToken) {
+        router.push('/login');
+        return false;
+      }
+
+      const parsedUser = JSON.parse(userData);
+      if (parsedUser.role !== 'ADMIN' && parsedUser.role !== 'MANAGER') {
+        alert('관리자 권한이 필요합니다.');
+        router.push('/admin');
+        return false;
+      }
+
+      return true;
+    };
+
+    if (!checkAuth()) return;
+
+    fetchCancelledReservations();
+  }, [router, filterStatus, fetchCancelledReservations]);
 
   const handleRefundAction = async (reservationId: string, action: 'process_refund' | 'mark_refunded', memo?: string) => {
     try {

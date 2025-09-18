@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/atoms/Card';
@@ -86,7 +86,7 @@ export default function TodayReservationsPage() {
     fetchTodayReservations();
   }, [router]);
 
-  const fetchTodayReservations = async () => {
+  const fetchTodayReservations = useCallback(async () => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem('accessToken');
@@ -262,7 +262,7 @@ export default function TodayReservationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [today]);
 
   const getTimeSlotText = (slots: number[]) => {
     const timeMap: Record<number, string> = {

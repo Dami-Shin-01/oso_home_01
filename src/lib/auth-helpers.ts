@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { ApiErrors } from '@/lib/api-response';
-import type { UserRow } from '@/types/database';
 
 export interface AuthenticatedUser {
   id: string;

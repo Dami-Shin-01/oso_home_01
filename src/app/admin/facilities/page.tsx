@@ -174,6 +174,7 @@ export default function FacilitiesManagementPage() {
           description: '',
           capacity: 1,
           price_per_session: 0,
+          session_duration: 180,
           is_active: true,
           features: []
         });
@@ -257,6 +258,7 @@ export default function FacilitiesManagementPage() {
       description: facility.description,
       capacity: facility.capacity,
       price_per_session: facility.price_per_session,
+      session_duration: facility.session_duration || 180,
       is_active: facility.is_active,
       features: facility.features || []
     });
@@ -300,6 +302,7 @@ export default function FacilitiesManagementPage() {
           description: '',
           capacity: 1,
           price_per_session: 0,
+          session_duration: 180,
           is_active: true,
           features: []
         });
@@ -790,6 +793,7 @@ export default function FacilitiesManagementPage() {
                       description: '',
                       capacity: 1,
                       price_per_session: 0,
+                      session_duration: 180,
                       is_active: true,
                       features: []
                     });
@@ -928,6 +932,7 @@ export default function FacilitiesManagementPage() {
                     description: '',
                     capacity: 1,
                     price_per_session: 0,
+                    session_duration: 180,
                     is_active: true,
                     features: []
                   });
@@ -1086,6 +1091,7 @@ export default function FacilitiesManagementPage() {
                       description: '',
                       capacity: 1,
                       price_per_session: 0,
+                      session_duration: 180,
                       is_active: true,
                       features: []
                     });
@@ -1225,6 +1231,7 @@ export default function FacilitiesManagementPage() {
                     description: '',
                     capacity: 1,
                     price_per_session: 0,
+                    session_duration: 180,
                     is_active: true,
                     features: []
                   });

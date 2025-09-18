@@ -560,7 +560,7 @@ export default function ContentManagementPage() {
                 {!noticeForm.is_published && (
                   <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800">
-                      💡 즉시 발행을 체크하지 않으면 초안으로 저장되며, 나중에 '미발행 공지사항 관리' 페이지에서 검토 후 발행할 수 있습니다.
+                      💡 즉시 발행을 체크하지 않으면 초안으로 저장되며, 나중에 &apos;미발행 공지사항 관리&apos; 페이지에서 검토 후 발행할 수 있습니다.
                     </p>
                   </div>
                 )}
