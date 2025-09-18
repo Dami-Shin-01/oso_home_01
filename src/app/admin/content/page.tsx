@@ -45,6 +45,12 @@ export default function ContentManagementPage() {
   const [showFaqModal, setShowFaqModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // 수정 모달 상태
+  const [showEditNoticeModal, setShowEditNoticeModal] = useState(false);
+  const [showEditFaqModal, setShowEditFaqModal] = useState(false);
+  const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
+  const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
+
   // 공지사항 작성 폼 상태
   const [noticeForm, setNoticeForm] = useState({
     title: '',
@@ -214,6 +220,174 @@ export default function ContentManagementPage() {
     }
   };
 
+  // 공지사항 수정 함수
+  const handleEditNotice = (notice: Notice) => {
+    setEditingNotice(notice);
+    setNoticeForm({
+      title: notice.title,
+      content: notice.content,
+      is_important: notice.is_important,
+      is_published: notice.is_published
+    });
+    setShowEditNoticeModal(true);
+  };
+
+  const handleUpdateNotice = async () => {
+    if (!editingNotice) return;
+
+    if (!noticeForm.title.trim() || !noticeForm.content.trim()) {
+      alert('제목과 내용을 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/admin/notices/${editingNotice.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(noticeForm)
+      });
+
+      if (response.ok) {
+        alert('공지사항이 성공적으로 수정되었습니다.');
+        setShowEditNoticeModal(false);
+        setEditingNotice(null);
+        setNoticeForm({
+          title: '',
+          content: '',
+          is_important: false,
+          is_published: false
+        });
+        fetchContentData();
+      } else {
+        throw new Error('수정에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Notice update error:', err);
+      alert('수정 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteNotice = async (notice: Notice) => {
+    if (!confirm(`"${notice.title}" 공지사항을 정말 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/admin/notices/${notice.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      if (response.ok) {
+        alert('공지사항이 성공적으로 삭제되었습니다.');
+        fetchContentData();
+      } else {
+        throw new Error('삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('Notice delete error:', err);
+      alert('삭제 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // FAQ 수정 함수
+  const handleEditFaq = (faq: FAQ) => {
+    setEditingFaq(faq);
+    setFaqForm({
+      question: faq.question,
+      answer: faq.answer,
+      category: faq.category,
+      order_index: faq.order_index,
+      is_published: faq.is_published
+    });
+    setShowEditFaqModal(true);
+  };
+
+  const handleUpdateFaq = async () => {
+    if (!editingFaq) return;
+
+    if (!faqForm.question.trim() || !faqForm.answer.trim()) {
+      alert('질문과 답변을 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/admin/faqs/${editingFaq.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(faqForm)
+      });
+
+      if (response.ok) {
+        alert('FAQ가 성공적으로 수정되었습니다.');
+        setShowEditFaqModal(false);
+        setEditingFaq(null);
+        setFaqForm({
+          question: '',
+          answer: '',
+          category: 'general',
+          order_index: 1,
+          is_published: false
+        });
+        fetchContentData();
+      } else {
+        throw new Error('수정에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('FAQ update error:', err);
+      alert('수정 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteFaq = async (faq: FAQ) => {
+    if (!confirm(`"${faq.question}" FAQ를 정말 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/admin/faqs/${faq.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      if (response.ok) {
+        alert('FAQ가 성공적으로 삭제되었습니다.');
+        fetchContentData();
+      } else {
+        throw new Error('삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('FAQ delete error:', err);
+      alert('삭제 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -330,10 +504,20 @@ export default function ContentManagementPage() {
                       </div>
                     </div>
                     <div className="flex space-x-2 ml-4">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditNotice(notice)}
+                        disabled={saving}
+                      >
                         수정
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteNotice(notice)}
+                        disabled={saving}
+                      >
                         삭제
                       </Button>
                     </div>
@@ -401,10 +585,20 @@ export default function ContentManagementPage() {
                       </div>
                     </div>
                     <div className="flex space-x-2 ml-4">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditFaq(faq)}
+                        disabled={saving}
+                      >
                         수정
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteFaq(faq)}
+                        disabled={saving}
+                      >
                         삭제
                       </Button>
                     </div>
@@ -724,6 +918,246 @@ export default function ContentManagementPage() {
                 disabled={saving || !faqForm.question.trim() || !faqForm.answer.trim()}
               >
                 {saving ? '저장 중...' : '저장'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 공지사항 수정 모달 */}
+      {showEditNoticeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">공지사항 수정</h2>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditNoticeModal(false);
+                    setEditingNotice(null);
+                    setNoticeForm({
+                      title: '',
+                      content: '',
+                      is_important: false,
+                      is_published: false
+                    });
+                  }}
+                >
+                  ✕
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    제목 *
+                  </label>
+                  <input
+                    type="text"
+                    value={noticeForm.title}
+                    onChange={(e) => setNoticeForm({...noticeForm, title: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="공지사항 제목을 입력하세요"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    내용 *
+                  </label>
+                  <textarea
+                    value={noticeForm.content}
+                    onChange={(e) => setNoticeForm({...noticeForm, content: e.target.value})}
+                    rows={12}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="공지사항 내용을 입력하세요"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="edit-notice-important"
+                      checked={noticeForm.is_important}
+                      onChange={(e) => setNoticeForm({...noticeForm, is_important: e.target.checked})}
+                      className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="edit-notice-important" className="ml-2 block text-sm text-gray-900">
+                      중요 공지사항
+                    </label>
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="edit-notice-published"
+                      checked={noticeForm.is_published}
+                      onChange={(e) => setNoticeForm({...noticeForm, is_published: e.target.checked})}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="edit-notice-published" className="ml-2 block text-sm text-gray-900">
+                      즉시 발행
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditNoticeModal(false);
+                  setEditingNotice(null);
+                  setNoticeForm({
+                    title: '',
+                    content: '',
+                    is_important: false,
+                    is_published: false
+                  });
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleUpdateNotice}
+                disabled={saving || !noticeForm.title.trim() || !noticeForm.content.trim()}
+              >
+                {saving ? '수정 중...' : '수정 완료'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FAQ 수정 모달 */}
+      {showEditFaqModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">FAQ 수정</h2>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditFaqModal(false);
+                    setEditingFaq(null);
+                    setFaqForm({
+                      question: '',
+                      answer: '',
+                      category: 'general',
+                      order_index: 1,
+                      is_published: false
+                    });
+                  }}
+                >
+                  ✕
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    질문 *
+                  </label>
+                  <input
+                    type="text"
+                    value={faqForm.question}
+                    onChange={(e) => setFaqForm({...faqForm, question: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="자주 묻는 질문을 입력하세요"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    답변 *
+                  </label>
+                  <textarea
+                    value={faqForm.answer}
+                    onChange={(e) => setFaqForm({...faqForm, answer: e.target.value})}
+                    rows={8}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="질문에 대한 답변을 입력하세요"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      카테고리
+                    </label>
+                    <select
+                      value={faqForm.category}
+                      onChange={(e) => setFaqForm({...faqForm, category: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="general">일반</option>
+                      <option value="reservation">예약</option>
+                      <option value="facility">시설</option>
+                      <option value="payment">결제</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      순서
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={faqForm.order_index}
+                      onChange={(e) => setFaqForm({...faqForm, order_index: parseInt(e.target.value) || 1})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="flex items-center pt-6">
+                    <input
+                      type="checkbox"
+                      id="edit-faq-published"
+                      checked={faqForm.is_published}
+                      onChange={(e) => setFaqForm({...faqForm, is_published: e.target.checked})}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="edit-faq-published" className="ml-2 block text-sm text-gray-900">
+                      즉시 발행
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditFaqModal(false);
+                  setEditingFaq(null);
+                  setFaqForm({
+                    question: '',
+                    answer: '',
+                    category: 'general',
+                    order_index: 1,
+                    is_published: false
+                  });
+                }}
+              >
+                취소
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleUpdateFaq}
+                disabled={saving || !faqForm.question.trim() || !faqForm.answer.trim()}
+              >
+                {saving ? '수정 중...' : '수정 완료'}
               </Button>
             </div>
           </div>
