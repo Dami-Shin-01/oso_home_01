@@ -5,45 +5,13 @@ import {
   ApiErrors,
   withErrorHandling
 } from '@/lib/api-response';
-
-async function getAuthenticatedAdmin(request: NextRequest) {
-  const authorization = request.headers.get('Authorization');
-  if (!authorization?.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authorization.substring(7);
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-
-  if (error || !user) {
-    return null;
-  }
-
-  // 관리자 권한 확인
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || !['MANAGER', 'ADMIN'].includes(profile.role)) {
-    return null;
-  }
-
-  return user;
-}
+import { requireAdminAccess } from '@/lib/auth-helpers';
 
 type Facility = Database['public']['Tables']['facilities']['Row'];
 type FacilityInsert = Database['public']['Tables']['facilities']['Insert'];
 
 async function getFacilitiesHandler(request: NextRequest) {
-  const admin = await getAuthenticatedAdmin(request);
-  if (!admin) {
-    throw ApiErrors.Forbidden(
-      '관리자 권한이 필요합니다.',
-      'ADMIN_ACCESS_REQUIRED'
-    );
-  }
+  const admin = await requireAdminAccess(request);
 
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get('limit') || '50');
@@ -104,13 +72,7 @@ async function getFacilitiesHandler(request: NextRequest) {
 }
 
 async function createFacilityHandler(request: NextRequest) {
-  const admin = await getAuthenticatedAdmin(request);
-  if (!admin) {
-    throw ApiErrors.Forbidden(
-      '관리자 권한이 필요합니다.',
-      'ADMIN_ACCESS_REQUIRED'
-    );
-  }
+  const admin = await requireAdminAccess(request);
 
   const body = await request.json();
 

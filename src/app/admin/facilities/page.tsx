@@ -10,11 +10,12 @@ interface Facility {
   id: string;
   name: string;
   description: string;
+  type: string;
   capacity: number;
-  price_per_session: number;
-  session_duration: number; // 분 단위 (예: 180분 = 3시간)
+  weekday_price: number;
+  weekend_price: number;
+  amenities: string[];
   is_active: boolean;
-  features: string[];
   created_at: string;
   updated_at: string;
 }
@@ -52,22 +53,26 @@ export default function FacilitiesManagementPage() {
   const [facilityForm, setFacilityForm] = useState({
     name: '',
     description: '',
+    type: '',
     capacity: 1,
-    price_per_session: 0,
-    session_duration: 180, // 기본 3시간 (180분)
+    weekday_price: 0,
+    weekend_price: 0,
     is_active: true,
-    features: [] as string[]
+    amenities: [] as string[]
   });
 
   // 구역 등록 폼 상태
   const [siteForm, setSiteForm] = useState({
     facility_id: '',
+    site_number: '',
     name: '',
+    description: '',
+    capacity: 1,
     is_active: true
   });
 
-  // 기능 태그 입력 상태
-  const [featureInput, setFeatureInput] = useState('');
+  // 편의시설 태그 입력 상태
+  const [amenityInput, setAmenityInput] = useState('');
 
   useEffect(() => {
     const checkAuth = () => {
@@ -143,12 +148,12 @@ export default function FacilitiesManagementPage() {
 
   // 시설 등록 핸들러
   const handleSaveFacility = async () => {
-    if (!facilityForm.name.trim() || !facilityForm.description.trim()) {
-      alert('시설명과 설명을 모두 입력해주세요.');
+    if (!facilityForm.name.trim() || !facilityForm.description.trim() || !facilityForm.type.trim()) {
+      alert('시설명, 설명, 시설 유형을 모두 입력해주세요.');
       return;
     }
 
-    if (facilityForm.capacity < 1 || facilityForm.price_per_session < 0) {
+    if (facilityForm.capacity < 1 || facilityForm.weekday_price < 0 || facilityForm.weekend_price < 0) {
       alert('수용인원은 1명 이상, 요금은 0원 이상으로 입력해주세요.');
       return;
     }
@@ -172,13 +177,14 @@ export default function FacilitiesManagementPage() {
         setFacilityForm({
           name: '',
           description: '',
+          type: '',
           capacity: 1,
-          price_per_session: 0,
-          session_duration: 180,
+          weekday_price: 0,
+          weekend_price: 0,
           is_active: true,
-          features: []
+          amenities: []
         });
-        setFeatureInput('');
+        setAmenityInput('');
         fetchFacilitiesData();
       } else {
         throw new Error('등록에 실패했습니다.');
@@ -193,8 +199,8 @@ export default function FacilitiesManagementPage() {
 
   // 구역 등록 핸들러
   const handleSaveSite = async () => {
-    if (!siteForm.facility_id || !siteForm.name.trim()) {
-      alert('소속 시설과 구역명을 모두 입력해주세요.');
+    if (!siteForm.facility_id || !siteForm.site_number.trim() || !siteForm.name.trim() || siteForm.capacity < 1) {
+      alert('소속 시설, 구역번호, 구역명, 수용인원(1명 이상)을 모두 입력해주세요.');
       return;
     }
 
@@ -216,7 +222,10 @@ export default function FacilitiesManagementPage() {
         setShowSiteModal(false);
         setSiteForm({
           facility_id: '',
+          site_number: '',
           name: '',
+          description: '',
+          capacity: 1,
           is_active: true
         });
         fetchFacilitiesData();
@@ -231,22 +240,22 @@ export default function FacilitiesManagementPage() {
     }
   };
 
-  // 기능 태그 추가
-  const addFeature = () => {
-    if (featureInput.trim() && !facilityForm.features.includes(featureInput.trim())) {
+  // 편의시설 태그 추가
+  const addAmenity = () => {
+    if (amenityInput.trim() && !facilityForm.amenities.includes(amenityInput.trim())) {
       setFacilityForm({
         ...facilityForm,
-        features: [...facilityForm.features, featureInput.trim()]
+        amenities: [...facilityForm.amenities, amenityInput.trim()]
       });
-      setFeatureInput('');
+      setAmenityInput('');
     }
   };
 
-  // 기능 태그 제거
-  const removeFeature = (featureToRemove: string) => {
+  // 편의시설 태그 제거
+  const removeAmenity = (amenityToRemove: string) => {
     setFacilityForm({
       ...facilityForm,
-      features: facilityForm.features.filter(f => f !== featureToRemove)
+      amenities: facilityForm.amenities.filter(a => a !== amenityToRemove)
     });
   };
 
@@ -256,13 +265,14 @@ export default function FacilitiesManagementPage() {
     setFacilityForm({
       name: facility.name,
       description: facility.description,
+      type: facility.type,
       capacity: facility.capacity,
-      price_per_session: facility.price_per_session,
-      session_duration: facility.session_duration || 180,
+      weekday_price: facility.weekday_price,
+      weekend_price: facility.weekend_price,
       is_active: facility.is_active,
-      features: facility.features || []
+      amenities: facility.amenities || []
     });
-    setFeatureInput('');
+    setAmenityInput('');
     setShowEditFacilityModal(true);
   };
 
@@ -270,12 +280,12 @@ export default function FacilitiesManagementPage() {
   const handleUpdateFacility = async () => {
     if (!selectedFacility) return;
 
-    if (!facilityForm.name.trim() || !facilityForm.description.trim()) {
-      alert('시설명과 설명을 모두 입력해주세요.');
+    if (!facilityForm.name.trim() || !facilityForm.description.trim() || !facilityForm.type.trim()) {
+      alert('시설명, 설명, 시설 유형을 모두 입력해주세요.');
       return;
     }
 
-    if (facilityForm.capacity < 1 || facilityForm.price_per_session < 0) {
+    if (facilityForm.capacity < 1 || facilityForm.weekday_price < 0 || facilityForm.weekend_price < 0) {
       alert('수용인원은 1명 이상, 요금은 0원 이상으로 입력해주세요.');
       return;
     }
@@ -300,13 +310,14 @@ export default function FacilitiesManagementPage() {
         setFacilityForm({
           name: '',
           description: '',
+          type: '',
           capacity: 1,
-          price_per_session: 0,
-          session_duration: 180,
+          weekday_price: 0,
+          weekend_price: 0,
           is_active: true,
-          features: []
+          amenities: []
         });
-        setFeatureInput('');
+        setAmenityInput('');
         fetchFacilitiesData();
       } else {
         throw new Error('수정에 실패했습니다.');
@@ -376,7 +387,7 @@ export default function FacilitiesManagementPage() {
   };
 
   // 구역 수정 핸들러
-  const handleUpdateSite = async (siteId: string, updatedData: { name: string; is_active: boolean }) => {
+  const handleUpdateSite = async (siteId: string, updatedData: { site_number?: string; name: string; description?: string; capacity?: number; is_active: boolean }) => {
     try {
       const accessToken = localStorage.getItem('accessToken');
 
@@ -476,6 +487,101 @@ export default function FacilitiesManagementPage() {
         </Card>
       )}
 
+      {/* 대시보드 섹션 */}
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <h4 className="font-semibold mb-4">시설 통계</h4>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>전체 시설</span>
+              <span className="font-semibold">{facilities.length}개</span>
+            </div>
+            <div className="flex justify-between">
+              <span>운영중</span>
+              <span className="font-semibold text-green-600">
+                {facilities.filter(f => f.is_active).length}개
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>평균 수용인원</span>
+              <span className="font-semibold">
+                {facilities.length > 0
+                  ? Math.round(facilities.reduce((sum, f) => sum + f.capacity, 0) / facilities.length)
+                  : 0}명
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>평균 주중 요금</span>
+              <span className="font-semibold">
+                {facilities.length > 0
+                  ? formatPrice(Math.round(facilities.reduce((sum, f) => sum + f.weekday_price, 0) / facilities.length))
+                  : 0}원
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>평균 주말 요금</span>
+              <span className="font-semibold">
+                {facilities.length > 0
+                  ? formatPrice(Math.round(facilities.reduce((sum, f) => sum + f.weekend_price, 0) / facilities.length))
+                  : 0}원
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <h4 className="font-semibold mb-4">구역 통계</h4>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>전체 구역</span>
+              <span className="font-semibold">{sites.length}개</span>
+            </div>
+            <div className="flex justify-between">
+              <span>운영중</span>
+              <span className="font-semibold text-green-600">
+                {sites.filter(s => s.is_active).length}개
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>시설당 평균 구역</span>
+              <span className="font-semibold">
+                {facilities.length > 0
+                  ? Math.round(sites.length / facilities.length * 10) / 10
+                  : 0}개
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <h4 className="font-semibold mb-4">운영 현황</h4>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>활성 시설 비율</span>
+              <span className="font-semibold text-green-600">
+                {facilities.length > 0
+                  ? Math.round(facilities.filter(f => f.is_active).length / facilities.length * 100)
+                  : 0}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>활성 구역 비율</span>
+              <span className="font-semibold text-green-600">
+                {sites.length > 0
+                  ? Math.round(sites.filter(s => s.is_active).length / sites.length * 100)
+                  : 0}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>총 수용 가능 인원</span>
+              <span className="font-semibold text-blue-600">
+                {facilities.filter(f => f.is_active).reduce((sum, f) => sum + f.capacity, 0)}명
+              </span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
       <div className="mb-6">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
@@ -535,14 +641,22 @@ export default function FacilitiesManagementPage() {
                       </div>
                       <p className="text-gray-600 text-sm mb-3">{facility.description}</p>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-3">
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-600 font-medium">시설 유형</p>
+                          <p className="text-lg font-semibold text-gray-900">{facility.type}</p>
+                        </div>
                         <div className="bg-blue-50 p-3 rounded-lg">
                           <p className="text-xs text-blue-600 font-medium">수용인원</p>
                           <p className="text-lg font-semibold text-blue-900">{facility.capacity}명</p>
                         </div>
                         <div className="bg-green-50 p-3 rounded-lg">
-                          <p className="text-xs text-green-600 font-medium">1타임 요금 (3시간)</p>
-                          <p className="text-lg font-semibold text-green-900">{formatPrice(facility.price_per_session)}원</p>
+                          <p className="text-xs text-green-600 font-medium">주중 요금</p>
+                          <p className="text-lg font-semibold text-green-900">{formatPrice(facility.weekday_price)}원</p>
+                        </div>
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <p className="text-xs text-blue-600 font-medium">주말 요금</p>
+                          <p className="text-lg font-semibold text-blue-900">{formatPrice(facility.weekend_price)}원</p>
                         </div>
                         <div className="bg-purple-50 p-3 rounded-lg">
                           <p className="text-xs text-purple-600 font-medium">등록 구역</p>
@@ -558,13 +672,13 @@ export default function FacilitiesManagementPage() {
                         </div>
                       </div>
 
-                      {facility.features && facility.features.length > 0 && (
+                      {facility.amenities && facility.amenities.length > 0 && (
                         <div className="mb-3">
-                          <p className="text-xs text-gray-500 mb-2">시설 특징</p>
+                          <p className="text-xs text-gray-500 mb-2">편의시설</p>
                           <div className="flex flex-wrap gap-1">
-                            {facility.features.map((feature, index) => (
+                            {facility.amenities.map((amenity, index) => (
                               <span key={index} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
-                                {feature}
+                                {amenity}
                               </span>
                             ))}
                           </div>
@@ -691,91 +805,6 @@ export default function FacilitiesManagementPage() {
         </Card>
       )}
 
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <h4 className="font-semibold mb-4">시설 통계</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>전체 시설</span>
-              <span className="font-semibold">{facilities.length}개</span>
-            </div>
-            <div className="flex justify-between">
-              <span>운영중</span>
-              <span className="font-semibold text-green-600">
-                {facilities.filter(f => f.is_active).length}개
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>평균 수용인원</span>
-              <span className="font-semibold">
-                {facilities.length > 0
-                  ? Math.round(facilities.reduce((sum, f) => sum + f.capacity, 0) / facilities.length)
-                  : 0}명
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>평균 1타임 요금</span>
-              <span className="font-semibold">
-                {facilities.length > 0
-                  ? formatPrice(Math.round(facilities.reduce((sum, f) => sum + f.price_per_session, 0) / facilities.length))
-                  : 0}원
-              </span>
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <h4 className="font-semibold mb-4">구역 통계</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>전체 구역</span>
-              <span className="font-semibold">{sites.length}개</span>
-            </div>
-            <div className="flex justify-between">
-              <span>운영중</span>
-              <span className="font-semibold text-green-600">
-                {sites.filter(s => s.is_active).length}개
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>시설당 평균 구역</span>
-              <span className="font-semibold">
-                {facilities.length > 0
-                  ? Math.round(sites.length / facilities.length * 10) / 10
-                  : 0}개
-              </span>
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <h4 className="font-semibold mb-4">운영 현황</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>활성 시설 비율</span>
-              <span className="font-semibold text-green-600">
-                {facilities.length > 0
-                  ? Math.round(facilities.filter(f => f.is_active).length / facilities.length * 100)
-                  : 0}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>활성 구역 비율</span>
-              <span className="font-semibold text-green-600">
-                {sites.length > 0
-                  ? Math.round(sites.filter(s => s.is_active).length / sites.length * 100)
-                  : 0}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>총 수용 가능 인원</span>
-              <span className="font-semibold text-blue-600">
-                {facilities.filter(f => f.is_active).reduce((sum, f) => sum + f.capacity, 0)}명
-              </span>
-            </div>
-          </div>
-        </Card>
-      </div>
 
       {/* 시설 등록 모달 */}
       {showFacilityModal && (
@@ -791,13 +820,14 @@ export default function FacilitiesManagementPage() {
                     setFacilityForm({
                       name: '',
                       description: '',
+                      type: '',
                       capacity: 1,
-                      price_per_session: 0,
-                      session_duration: 180,
+                      weekday_price: 0,
+                      weekend_price: 0,
                       is_active: true,
-                      features: []
+                      amenities: []
                     });
-                    setFeatureInput('');
+                    setAmenityInput('');
                   }}
                 >
                   ✕
@@ -807,7 +837,7 @@ export default function FacilitiesManagementPage() {
 
             <div className="p-6 overflow-y-auto max-h-[60vh]">
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       시설명 *
@@ -819,6 +849,22 @@ export default function FacilitiesManagementPage() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="시설명을 입력하세요"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      시설 유형 *
+                    </label>
+                    <select
+                      value={facilityForm.type}
+                      onChange={(e) => setFacilityForm({...facilityForm, type: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">시설 유형 선택</option>
+                      <option value="야외">야외</option>
+                      <option value="실내">실내</option>
+                      <option value="독채">독채</option>
+                    </select>
                   </div>
 
                   <div>
@@ -873,8 +919,8 @@ export default function FacilitiesManagementPage() {
                       type="number"
                       min="0"
                       step="1000"
-                      value={facilityForm.price_per_session}
-                      onChange={(e) => setFacilityForm({...facilityForm, price_per_session: parseInt(e.target.value) || 0})}
+                      value={facilityForm.weekday_price}
+                      onChange={(e) => setFacilityForm({...facilityForm, weekday_price: parseInt(e.target.value) || 0})}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">1타임 (3시간) 이용 요금</p>
@@ -888,27 +934,27 @@ export default function FacilitiesManagementPage() {
                   <div className="flex space-x-2 mb-2">
                     <input
                       type="text"
-                      value={featureInput}
-                      onChange={(e) => setFeatureInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addFeature()}
+                      value={amenityInput}
+                      onChange={(e) => setAmenityInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addAmenity()}
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       placeholder="특징을 입력하고 Enter 또는 추가 버튼을 누르세요"
                     />
-                    <Button type="button" onClick={addFeature} variant="outline">
+                    <Button type="button" onClick={addAmenity} variant="outline">
                       추가
                     </Button>
                   </div>
-                  {facilityForm.features.length > 0 && (
+                  {facilityForm.amenities.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {facilityForm.features.map((feature, index) => (
+                      {facilityForm.amenities.map((amenity, index) => (
                         <span
                           key={index}
                           className="inline-flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
                         >
-                          {feature}
+                          {amenity}
                           <button
                             type="button"
-                            onClick={() => removeFeature(feature)}
+                            onClick={() => removeAmenity(amenity)}
                             className="ml-2 text-blue-600 hover:text-blue-800"
                           >
                             ×
@@ -930,13 +976,14 @@ export default function FacilitiesManagementPage() {
                   setFacilityForm({
                     name: '',
                     description: '',
+                    type: '',
                     capacity: 1,
-                    price_per_session: 0,
-                    session_duration: 180,
+                    weekday_price: 0,
+                    weekend_price: 0,
                     is_active: true,
-                    features: []
+                    amenities: []
                   });
-                  setFeatureInput('');
+                  setAmenityInput('');
                 }}
               >
                 취소
@@ -966,7 +1013,10 @@ export default function FacilitiesManagementPage() {
                     setShowSiteModal(false);
                     setSiteForm({
                       facility_id: '',
+                      site_number: '',
                       name: '',
+                      description: '',
+                      capacity: 1,
                       is_active: true
                     });
                   }}
@@ -1001,18 +1051,62 @@ export default function FacilitiesManagementPage() {
                   )}
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      구역번호 *
+                    </label>
+                    <input
+                      type="text"
+                      value={siteForm.site_number}
+                      onChange={(e) => setSiteForm({...siteForm, site_number: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="구역번호를 입력하세요 (예: A-1, B-2)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">시설 내에서 고유한 번호</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      구역명 *
+                    </label>
+                    <input
+                      type="text"
+                      value={siteForm.name}
+                      onChange={(e) => setSiteForm({...siteForm, name: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="구역명을 입력하세요 (예: 강변자리, VIP테이블)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">고객이 쉽게 찾을 수 있는 이름</p>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    구역명 *
+                    구역 설명
+                  </label>
+                  <textarea
+                    value={siteForm.description}
+                    onChange={(e) => setSiteForm({...siteForm, description: e.target.value})}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="구역에 대한 상세 설명을 입력하세요 (선택사항)"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    구역 수용인원 *
                   </label>
                   <input
-                    type="text"
-                    value={siteForm.name}
-                    onChange={(e) => setSiteForm({...siteForm, name: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="구역명을 입력하세요 (예: A구역, 1번 테이블, 강변자리 등)"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={siteForm.capacity}
+                    onChange={(e) => setSiteForm({...siteForm, capacity: parseInt(e.target.value) || 1})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
-                  <p className="text-xs text-gray-500 mt-1">고객이 쉽게 찾을 수 있는 구역명을 사용하세요</p>
+                  <p className="text-xs text-gray-500 mt-1">이 구역에서 수용 가능한 최대 인원</p>
                 </div>
 
                 <div>
@@ -1055,7 +1149,10 @@ export default function FacilitiesManagementPage() {
                   setShowSiteModal(false);
                   setSiteForm({
                     facility_id: '',
+                    site_number: '',
                     name: '',
+                    description: '',
+                    capacity: 1,
                     is_active: true
                   });
                 }}
@@ -1065,7 +1162,7 @@ export default function FacilitiesManagementPage() {
               <Button
                 variant="primary"
                 onClick={handleSaveSite}
-                disabled={saving || !siteForm.facility_id || !siteForm.name.trim() || facilities.filter(f => f.is_active).length === 0}
+                disabled={saving || !siteForm.facility_id || !siteForm.site_number.trim() || !siteForm.name.trim() || siteForm.capacity < 1 || facilities.filter(f => f.is_active).length === 0}
               >
                 {saving ? '등록 중...' : '등록'}
               </Button>
@@ -1089,13 +1186,14 @@ export default function FacilitiesManagementPage() {
                     setFacilityForm({
                       name: '',
                       description: '',
+                      type: '',
                       capacity: 1,
-                      price_per_session: 0,
-                      session_duration: 180,
+                      weekday_price: 0,
+                      weekend_price: 0,
                       is_active: true,
-                      features: []
+                      amenities: []
                     });
-                    setFeatureInput('');
+                    setAmenityInput('');
                   }}
                 >
                   ✕
@@ -1105,7 +1203,7 @@ export default function FacilitiesManagementPage() {
 
             <div className="p-6 overflow-y-auto max-h-[60vh]">
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       시설명 *
@@ -1117,6 +1215,22 @@ export default function FacilitiesManagementPage() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="시설명을 입력하세요"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      시설 유형 *
+                    </label>
+                    <select
+                      value={facilityForm.type}
+                      onChange={(e) => setFacilityForm({...facilityForm, type: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">시설 유형 선택</option>
+                      <option value="야외">야외</option>
+                      <option value="실내">실내</option>
+                      <option value="독채">독채</option>
+                    </select>
                   </div>
 
                   <div>
@@ -1171,8 +1285,8 @@ export default function FacilitiesManagementPage() {
                       type="number"
                       min="0"
                       step="1000"
-                      value={facilityForm.price_per_session}
-                      onChange={(e) => setFacilityForm({...facilityForm, price_per_session: parseInt(e.target.value) || 0})}
+                      value={facilityForm.weekday_price}
+                      onChange={(e) => setFacilityForm({...facilityForm, weekday_price: parseInt(e.target.value) || 0})}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">1타임 (3시간) 이용 요금</p>
@@ -1186,27 +1300,27 @@ export default function FacilitiesManagementPage() {
                   <div className="flex space-x-2 mb-2">
                     <input
                       type="text"
-                      value={featureInput}
-                      onChange={(e) => setFeatureInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addFeature()}
+                      value={amenityInput}
+                      onChange={(e) => setAmenityInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addAmenity()}
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       placeholder="특징을 입력하고 Enter 또는 추가 버튼을 누르세요"
                     />
-                    <Button type="button" onClick={addFeature} variant="outline">
+                    <Button type="button" onClick={addAmenity} variant="outline">
                       추가
                     </Button>
                   </div>
-                  {facilityForm.features.length > 0 && (
+                  {facilityForm.amenities.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {facilityForm.features.map((feature, index) => (
+                      {facilityForm.amenities.map((amenity, index) => (
                         <span
                           key={index}
                           className="inline-flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full"
                         >
-                          {feature}
+                          {amenity}
                           <button
                             type="button"
-                            onClick={() => removeFeature(feature)}
+                            onClick={() => removeAmenity(amenity)}
                             className="ml-2 text-blue-600 hover:text-blue-800"
                           >
                             ×
@@ -1229,13 +1343,14 @@ export default function FacilitiesManagementPage() {
                   setFacilityForm({
                     name: '',
                     description: '',
+                    type: '',
                     capacity: 1,
-                    price_per_session: 0,
-                    session_duration: 180,
+                    weekday_price: 0,
+                    weekend_price: 0,
                     is_active: true,
-                    features: []
+                    amenities: []
                   });
-                  setFeatureInput('');
+                  setAmenityInput('');
                 }}
               >
                 취소
@@ -1285,7 +1400,10 @@ export default function FacilitiesManagementPage() {
                   onClick={() => {
                     setSiteForm({
                       facility_id: selectedFacility.id,
+                      site_number: '',
                       name: '',
+                      description: '',
+                      capacity: 1,
                       is_active: true
                     });
                     setShowSiteModal(true);
@@ -1357,7 +1475,10 @@ export default function FacilitiesManagementPage() {
                     onClick={() => {
                       setSiteForm({
                         facility_id: selectedFacility.id,
+                        site_number: '',
                         name: '',
+                        description: '',
+                        capacity: 1,
                         is_active: true
                       });
                       setShowSiteModal(true);

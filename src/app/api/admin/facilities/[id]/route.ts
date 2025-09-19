@@ -5,60 +5,29 @@ import {
   ApiErrors,
   withErrorHandling
 } from '@/lib/api-response';
+import { requireAdminAccess } from '@/lib/auth-helpers';
 
-async function getAuthenticatedAdmin(request: NextRequest) {
-  const authorization = request.headers.get('Authorization');
-  if (!authorization?.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authorization.substring(7);
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-
-  if (error || !user) {
-    return null;
-  }
-
-  // 관리자 권한 확인
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || !['MANAGER', 'ADMIN'].includes(profile.role)) {
-    return null;
-  }
-
-  return user;
-}
 
 type FacilityUpdate = Database['public']['Tables']['facilities']['Update'];
 
 async function updateFacilityHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const admin = await getAuthenticatedAdmin(request);
-  if (!admin) {
-    throw ApiErrors.Forbidden(
-      '관리자 권한이 필요합니다.',
-      'ADMIN_ACCESS_REQUIRED'
-    );
-  }
+  const admin = await requireAdminAccess(request);
 
   const params = await context.params;
   const facilityId = params.id;
   const body = await request.json();
 
-  const { name, description, capacity, price_per_session, is_active } = body;
+  const { name, description, type, capacity, weekday_price, weekend_price, amenities, is_active } = body;
 
   // 입력 검증
-  if (!name?.trim() || !description?.trim()) {
+  if (!name?.trim() || !description?.trim() || !type?.trim()) {
     throw ApiErrors.BadRequest(
-      '시설명과 설명은 필수 입력 항목입니다.',
+      '시설명, 설명, 시설 유형은 필수 입력 항목입니다.',
       'REQUIRED_FIELDS_MISSING'
     );
   }
 
-  if (capacity < 1 || price_per_session < 0) {
+  if (capacity < 1 || weekday_price < 0 || weekend_price < 0) {
     throw ApiErrors.BadRequest(
       '수용인원은 1명 이상, 요금은 0원 이상이어야 합니다.',
       'INVALID_CAPACITY_OR_PRICE'
@@ -97,7 +66,11 @@ async function updateFacilityHandler(request: NextRequest, context: { params: Pr
   const facilityData: FacilityUpdate = {
     name: name.trim(),
     description: description.trim(),
+    type: type.trim(),
     capacity: parseInt(capacity),
+    weekday_price: parseInt(weekday_price),
+    weekend_price: parseInt(weekend_price),
+    amenities: amenities || [],
     is_active: Boolean(is_active),
     updated_at: new Date().toISOString()
   };
@@ -123,13 +96,7 @@ async function updateFacilityHandler(request: NextRequest, context: { params: Pr
 }
 
 async function deleteFacilityHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const admin = await getAuthenticatedAdmin(request);
-  if (!admin) {
-    throw ApiErrors.Forbidden(
-      '관리자 권한이 필요합니다.',
-      'ADMIN_ACCESS_REQUIRED'
-    );
-  }
+  const admin = await requireAdminAccess(request);
 
   const params = await context.params;
   const facilityId = params.id;

@@ -5,50 +5,18 @@ import {
   ApiErrors,
   withErrorHandling
 } from '@/lib/api-response';
-
-async function getAuthenticatedAdmin(request: NextRequest) {
-  const authorization = request.headers.get('Authorization');
-  if (!authorization?.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authorization.substring(7);
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-
-  if (error || !user) {
-    return null;
-  }
-
-  // 관리자 권한 확인
-  const { data: profile } = await supabaseAdmin
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || !['MANAGER', 'ADMIN'].includes(profile.role)) {
-    return null;
-  }
-
-  return user;
-}
+import { requireAdminAccess } from '@/lib/auth-helpers';
 
 type SiteUpdate = Database['public']['Tables']['sites']['Update'];
 
 async function updateSiteHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const admin = await getAuthenticatedAdmin(request);
-  if (!admin) {
-    throw ApiErrors.Forbidden(
-      '관리자 권한이 필요합니다.',
-      'ADMIN_ACCESS_REQUIRED'
-    );
-  }
+  const admin = await requireAdminAccess(request);
 
   const params = await context.params;
   const siteId = params.id;
   const body = await request.json();
 
-  const { name, is_active } = body;
+  const { site_number, name, description, capacity, is_active } = body;
 
   // 입력 검증
   if (!name?.trim()) {
@@ -89,7 +57,10 @@ async function updateSiteHandler(request: NextRequest, context: { params: Promis
   }
 
   const siteData: SiteUpdate = {
+    site_number: site_number?.trim(),
     name: name.trim(),
+    description: description?.trim() || null,
+    capacity: capacity ? parseInt(capacity) : undefined,
     is_active: Boolean(is_active),
     updated_at: new Date().toISOString()
   };
@@ -123,13 +94,7 @@ async function updateSiteHandler(request: NextRequest, context: { params: Promis
 }
 
 async function deleteSiteHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const admin = await getAuthenticatedAdmin(request);
-  if (!admin) {
-    throw ApiErrors.Forbidden(
-      '관리자 권한이 필요합니다.',
-      'ADMIN_ACCESS_REQUIRED'
-    );
-  }
+  const admin = await requireAdminAccess(request);
 
   const params = await context.params;
   const siteId = params.id;

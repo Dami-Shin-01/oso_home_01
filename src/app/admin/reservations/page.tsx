@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
 import Card from '@/components/atoms/Card';
@@ -98,8 +99,17 @@ export default function AdminReservationsPage() {
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* 헤더 */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">예약 관리</h1>
-        <p className="text-gray-600">모든 예약을 조회하고 관리할 수 있습니다.</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">예약 관리</h1>
+            <p className="text-gray-600">모든 예약을 조회하고 관리할 수 있습니다.</p>
+          </div>
+          <Link href="/admin">
+            <Button variant="outline">
+              ← 대시보드로 돌아가기
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* 필터 및 검색 */}
