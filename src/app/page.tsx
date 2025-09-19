@@ -33,6 +33,27 @@ export default async function Home() {
                   시설 둘러보기
                 </Link>
               </div>
+
+              {/* 간단한 검색 폼 */}
+              <div className="mt-8 max-w-md mx-auto">
+                <div className="bg-base-100/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+                  <h3 className="text-lg font-semibold text-base-content mb-3">빠른 시설 검색</h3>
+                  <div className="flex gap-2">
+                    <select className="select select-bordered flex-1">
+                      <option disabled selected>시설 유형 선택</option>
+                      <option value="야외">야외</option>
+                      <option value="실내">실내</option>
+                      <option value="독채">독채</option>
+                    </select>
+                    <Link href="/facilities" className="btn btn-primary">
+                      검색
+                    </Link>
+                  </div>
+                  <p className="text-xs text-base-content/60 mt-2">
+                    원하는 시설 유형을 선택하고 검색해보세요
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
