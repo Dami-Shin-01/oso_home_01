@@ -1,6 +1,14 @@
 import Link from 'next/link';
+import { supabaseAdmin } from '@/lib/supabase';
 
-export default function Home() {
+export default async function Home() {
+  // 활성화된 시설 데이터 가져오기
+  const { data: facilities } = await supabaseAdmin
+    .from('facilities')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(6); // 메인 페이지에는 최대 6개만 표시
   return (
     <div className="min-h-screen">
         {/* 히어로 섹션 */}
@@ -92,26 +100,36 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {['프라이빗룸', '텐트동', '야외 소파테이블', '야외 야장테이블', 'VIP동'].map((type) => (
-              <div key={type} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-                <figure className="px-4 pt-4">
-                  <div className="aspect-video bg-base-200 rounded-lg w-full flex items-center justify-center">
-                    <span className="text-base-content/50">이미지 준비중</span>
-                  </div>
-                </figure>
-                <div className="card-body">
-                  <h3 className="card-title">{type}</h3>
-                  <p className="text-sm text-base-content/70 mb-4">
-                    {type}에 최적화된 바베큐 공간입니다.
-                  </p>
-                  <div className="card-actions justify-end">
-                    <Link href="/facilities" className="btn btn-primary btn-sm">
-                      자세히 보기
-                    </Link>
+            {facilities && facilities.length > 0 ? (
+              facilities.map((facility) => (
+                <div key={facility.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+                  <figure className="px-4 pt-4">
+                    <div className="aspect-video bg-base-200 rounded-lg w-full flex items-center justify-center">
+                      <span className="text-base-content/50">이미지 준비중</span>
+                    </div>
+                  </figure>
+                  <div className="card-body">
+                    <h3 className="card-title">{facility.name}</h3>
+                    <p className="text-sm text-base-content/70 mb-2">
+                      {facility.description}
+                    </p>
+                    <div className="text-xs text-base-content/60 mb-4">
+                      <span className="badge badge-outline badge-sm mr-2">{facility.type}</span>
+                      <span>수용인원: {facility.capacity}명</span>
+                    </div>
+                    <div className="card-actions justify-end">
+                      <Link href="/facilities" className="btn btn-primary btn-sm">
+                        자세히 보기
+                      </Link>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8">
+                <p className="text-base-content/50">등록된 시설이 없습니다.</p>
               </div>
-            ))}
+            )}
           </div>
 
           <div className="text-center mt-12">

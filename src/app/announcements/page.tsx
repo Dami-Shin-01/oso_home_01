@@ -1,4 +1,12 @@
-export default function AnnouncementsPage() {
+import { supabaseAdmin } from '@/lib/supabase';
+
+export default async function AnnouncementsPage() {
+  // 발행된 공지사항만 가져오기
+  const { data: notices } = await supabaseAdmin
+    .from('notices')
+    .select('*')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false });
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">공지사항</h1>
@@ -16,29 +24,33 @@ export default function AnnouncementsPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs mr-2">중요</span>
-                    1
-                  </td>
-                  <td className="py-3 px-4">
-                    <a href="#" className="text-blue-600 hover:underline">
-                      오소 바베큐장 이용 안내사항
-                    </a>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">2024-09-10</td>
-                  <td className="py-3 px-4 text-gray-600">156</td>
-                </tr>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">2</td>
-                  <td className="py-3 px-4">
-                    <a href="#" className="text-blue-600 hover:underline">
-                      추석 연휴 운영 일정 안내
-                    </a>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">2024-09-08</td>
-                  <td className="py-3 px-4 text-gray-600">89</td>
-                </tr>
+                {notices && notices.length > 0 ? (
+                  notices.map((notice, index) => (
+                    <tr key={notice.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        {notice.is_important && (
+                          <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs mr-2">중요</span>
+                        )}
+                        {index + 1}
+                      </td>
+                      <td className="py-3 px-4">
+                        <a href="#" className="text-blue-600 hover:underline">
+                          {notice.title}
+                        </a>
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {new Date(notice.created_at).toLocaleDateString('ko-KR')}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">{notice.view_count || 0}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="py-8 px-4 text-center text-gray-500">
+                      등록된 공지사항이 없습니다.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
