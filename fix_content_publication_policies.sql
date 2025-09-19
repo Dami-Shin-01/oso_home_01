@@ -47,6 +47,10 @@ CREATE POLICY "notices_admin_delete" ON notices
         )
     );
 
+-- 일반 사용자(비로그인 포함)가 발행된 공지사항을 조회할 수 있도록 허용
+CREATE POLICY "notices_public_select" ON notices
+    FOR SELECT USING (is_published = true);
+
 -- ========================================
 -- 2. FAQ 테이블 정책 수정
 -- ========================================
@@ -90,6 +94,10 @@ CREATE POLICY "faqs_admin_delete" ON faqs
             AND users.role IN ('ADMIN', 'MANAGER')
         )
     );
+
+-- 일반 사용자(비로그인 포함)가 발행된 FAQ를 조회할 수 있도록 허용
+CREATE POLICY "faqs_public_select" ON faqs
+    FOR SELECT USING (is_published = true);
 
 -- ========================================
 -- 3. 기본값 확인 및 수정

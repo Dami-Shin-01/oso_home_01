@@ -1,9 +1,9 @@
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import FaqAccordion from './components/FaqAccordion';
 
 export default async function QnaPage() {
   // 발행된 FAQ만 가져오기
-  const { data: faqs } = await supabaseAdmin
+  const { data: faqs } = await supabase
     .from('faqs')
     .select('*')
     .eq('is_published', true)

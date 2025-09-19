@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import {
   createSuccessResponse,
   ApiErrors,
@@ -10,7 +10,7 @@ async function getFacilitiesHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const isActive = searchParams.get('is_active') !== 'false';
 
-  const { data: facilities, error } = await supabaseAdmin
+  const { data: facilities, error } = await supabase
     .from('facilities')
     .select('*')
     .eq('is_active', isActive)

@@ -1,8 +1,8 @@
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export default async function AnnouncementsPage() {
   // 발행된 공지사항만 가져오기
-  const { data: notices } = await supabaseAdmin
+  const { data: notices } = await supabase
     .from('notices')
     .select('*')
     .eq('is_published', true)

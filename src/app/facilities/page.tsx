@@ -1,9 +1,9 @@
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default async function FacilitiesPage() {
   // 활성화된 시설 데이터 가져오기
-  const { data: facilities } = await supabaseAdmin
+  const { data: facilities } = await supabase
     .from('facilities')
     .select('*')
     .eq('is_active', true)
