@@ -895,7 +895,7 @@ export default function FacilitiesManagementPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       수용인원 *
@@ -913,7 +913,7 @@ export default function FacilitiesManagementPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      1타임 요금 (원) *
+                      주중 요금 (원) *
                     </label>
                     <input
                       type="number"
@@ -923,7 +923,22 @@ export default function FacilitiesManagementPage() {
                       onChange={(e) => setFacilityForm({...facilityForm, weekday_price: parseInt(e.target.value) || 0})}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">1타임 (3시간) 이용 요금</p>
+                    <p className="text-xs text-gray-500 mt-1">월~목 1타임 (3시간) 요금</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      주말 요금 (원) *
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={facilityForm.weekend_price}
+                      onChange={(e) => setFacilityForm({...facilityForm, weekend_price: parseInt(e.target.value) || 0})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">금~일 1타임 (3시간) 요금</p>
                   </div>
                 </div>
 
@@ -1261,7 +1276,7 @@ export default function FacilitiesManagementPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       수용인원 *
@@ -1279,7 +1294,7 @@ export default function FacilitiesManagementPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      1타임 요금 (원) *
+                      주중 요금 (원) *
                     </label>
                     <input
                       type="number"
@@ -1289,7 +1304,22 @@ export default function FacilitiesManagementPage() {
                       onChange={(e) => setFacilityForm({...facilityForm, weekday_price: parseInt(e.target.value) || 0})}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">1타임 (3시간) 이용 요금</p>
+                    <p className="text-xs text-gray-500 mt-1">월~목 1타임 (3시간) 요금</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      주말 요금 (원) *
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={facilityForm.weekend_price}
+                      onChange={(e) => setFacilityForm({...facilityForm, weekend_price: parseInt(e.target.value) || 0})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">금~일 1타임 (3시간) 요금</p>
                   </div>
                 </div>
 

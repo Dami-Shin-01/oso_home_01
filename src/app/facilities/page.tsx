@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
+export const revalidate = 300; // 5분마다 캐시 갱신
+
 export default async function FacilitiesPage() {
   // 활성화된 시설 데이터 가져오기
   const { data: facilities } = await supabase
