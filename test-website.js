@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable no-console */
 const { chromium } = require('playwright');
 
 async function testWebsite() {

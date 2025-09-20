@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/atoms/Card';
 import Button from '@/components/atoms/Button';
+import { fetchWithAdminAuth } from '@/lib/admin-fetch';
 
 interface TodayReservation {
   id: string;
@@ -84,187 +85,82 @@ export default function TodayReservationsPage() {
     if (!checkAuth()) return;
 
     fetchTodayReservations();
-  }, [router]);
+  }, [router, fetchTodayReservations]);
 
   const fetchTodayReservations = useCallback(async () => {
     try {
       setLoading(true);
-      const accessToken = localStorage.getItem('accessToken');
 
-      const response = await fetch(`/api/admin/reservations/management?date=${today}&status=CONFIRMED`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
+      const [reservationsResponse, facilitiesResponse] = await Promise.all([
+        fetchWithAdminAuth<{
+          success: boolean;
+          data?: { reservations?: TodayReservation[] };
+          message?: string;
+        }>(`/api/admin/reservations/management?date=${today}&status=CONFIRMED`),
+        fetchWithAdminAuth<{
+          success: boolean;
+          data?: { facilities?: Array<{ id: string; name: string; type: string; sites_count?: number; active_sites_count?: number }> };
+        }>(`/api/admin/facilities?limit=200`)
+      ]);
+
+      const reservations = reservationsResponse.data?.reservations ?? [];
+      setTodayReservations(reservations);
+
+      const facilities = facilitiesResponse.data?.facilities ?? [];
+      const facilityMeta = new Map<string, { name: string; type: string; total_sites: number }>();
+      facilities.forEach((facility) => {
+        facilityMeta.set(facility.id, {
+          name: facility.name,
+          type: facility.type,
+          total_sites: facility.active_sites_count ?? facility.sites_count ?? 0
+        });
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setTodayReservations(data.data.reservations || []);
-      } else {
-        // 샘플 데이터
-        const sampleReservations: TodayReservation[] = [
-          {
-            id: 'today-1',
-            customer: {
-              type: 'member',
-              name: '김가족',
-              phone: '010-1111-2222',
-              email: 'family@example.com'
-            },
-            facility: {
-              id: 'facility-1',
-              name: '프라이빗룸 A',
-              type: 'private'
-            },
-            site: {
-              id: 'site-1',
-              name: '프라이빗룸 A - 사이트 1',
-              site_number: 'private-1',
-              capacity: 6
-            },
-            reservation_details: {
-              date: today,
-              time_slots: [1],
-              total_amount: 90000,
-              status: 'CONFIRMED',
-              payment_status: 'COMPLETED',
-              special_requests: '어린이 의자 2개 준비 부탁드립니다.'
-            },
-            timestamps: {
-              created_at: '2025-09-15T09:00:00Z',
-              updated_at: '2025-09-16T10:00:00Z'
-            }
-          },
-          {
-            id: 'today-2',
-            customer: {
-              type: 'guest',
-              name: '박커플',
-              phone: '010-3333-4444'
-            },
-            facility: {
-              id: 'facility-2',
-              name: '텐트동 B',
-              type: 'tent'
-            },
-            site: {
-              id: 'site-2',
-              name: '텐트동 B - 사이트 1',
-              site_number: 'tent-1',
-              capacity: 8
-            },
-            reservation_details: {
-              date: today,
-              time_slots: [2],
-              total_amount: 110000,
-              status: 'CONFIRMED',
-              payment_status: 'COMPLETED',
-              special_requests: '로맨틱한 분위기로 준비해주세요.'
-            },
-            timestamps: {
-              created_at: '2025-09-16T14:30:00Z',
-              updated_at: '2025-09-16T15:00:00Z'
-            }
-          },
-          {
-            id: 'today-3',
-            customer: {
-              type: 'member',
-              name: '이회사',
-              phone: '010-5555-6666',
-              email: 'company@example.com'
-            },
-            facility: {
-              id: 'facility-1',
-              name: '프라이빗룸 A',
-              type: 'private'
-            },
-            site: {
-              id: 'site-3',
-              name: '프라이빗룸 A - 사이트 3',
-              site_number: 'private-3',
-              capacity: 6
-            },
-            reservation_details: {
-              date: today,
-              time_slots: [3],
-              total_amount: 95000,
-              status: 'CONFIRMED',
-              payment_status: 'COMPLETED',
-              special_requests: '회사 워크샵용 프로젝터 대여 가능한가요?'
-            },
-            timestamps: {
-              created_at: '2025-09-14T11:20:00Z',
-              updated_at: '2025-09-16T09:15:00Z'
-            }
-          },
-          {
-            id: 'today-4',
-            customer: {
-              type: 'guest',
-              name: '최친구들',
-              phone: '010-7777-8888'
-            },
-            facility: {
-              id: 'facility-3',
-              name: '야외 소파테이블 C',
-              type: 'outdoor_sofa'
-            },
-            site: {
-              id: 'site-4',
-              name: '야외 소파테이블 C - 사이트 2',
-              site_number: 'outdoor-2',
-              capacity: 4
-            },
-            reservation_details: {
-              date: today,
-              time_slots: [2, 3],
-              total_amount: 80000,
-              status: 'CONFIRMED',
-              payment_status: 'COMPLETED'
-            },
-            timestamps: {
-              created_at: '2025-09-16T16:45:00Z',
-              updated_at: '2025-09-16T17:00:00Z'
-            }
-          }
-        ];
-        setTodayReservations(sampleReservations);
+      const statusMap = new Map<string, FacilityStatus>();
 
-        // 시설별 현황 계산
-        const facilityMap = new Map<string, FacilityStatus>();
+      reservations.forEach((reservation) => {
+        const meta = facilityMeta.get(reservation.facility.id);
+        const existing = statusMap.get(reservation.facility.id) ?? {
+          facility_id: reservation.facility.id,
+          facility_name: meta?.name ?? reservation.facility.name,
+          facility_type: meta?.type ?? reservation.facility.type,
+          total_sites: meta?.total_sites ?? 0,
+          occupied_sites: 0,
+          occupancy_rate: 0,
+          reservations: []
+        };
 
-        sampleReservations.forEach(reservation => {
-          const facilityId = reservation.facility.id;
-          if (!facilityMap.has(facilityId)) {
-            facilityMap.set(facilityId, {
-              facility_id: facilityId,
-              facility_name: reservation.facility.name,
-              facility_type: reservation.facility.type,
-              total_sites: 3, // 임시값
-              occupied_sites: 0,
-              occupancy_rate: 0,
-              reservations: []
-            });
-          }
+        existing.reservations.push(reservation);
+        statusMap.set(reservation.facility.id, existing);
+      });
 
-          const facility = facilityMap.get(facilityId)!;
-          facility.reservations.push(reservation);
-          facility.occupied_sites = new Set(facility.reservations.map(r => r.site.id)).size;
-          facility.occupancy_rate = Math.round((facility.occupied_sites / facility.total_sites) * 100);
-        });
+      statusMap.forEach((status) => {
+        const uniqueSites = new Set(status.reservations.map((reservation) => reservation.site.id)).size;
+        status.occupied_sites = uniqueSites;
 
-        setFacilityStatus(Array.from(facilityMap.values()));
-      }
+        if (!status.total_sites) {
+          const meta = facilityMeta.get(status.facility_id);
+          status.total_sites = meta?.total_sites ?? uniqueSites;
+        }
 
+        status.occupancy_rate = status.total_sites > 0
+          ? Math.round((status.occupied_sites / status.total_sites) * 100)
+          : 0;
+      });
+
+      setFacilityStatus(Array.from(statusMap.values()));
       setError(null);
     } catch (err) {
       console.error('Today reservations fetch error:', err);
-      setError('오늘 예약 현황을 불러오는 중 오류가 발생했습니다.');
+      setTodayReservations([]);
+      setFacilityStatus([]);
+      setError(err instanceof Error ? err.message : '오늘 예약 데이터를 불러오지 못했습니다.');
     } finally {
       setLoading(false);
     }
   }, [today]);
 
-  const getTimeSlotText = (slots: number[]) => {
+const getTimeSlotText = (slots: number[]) => {
     const timeMap: Record<number, string> = {
       1: '1부 (11:00-15:00)',
       2: '2부 (15:00-19:00)',
@@ -277,8 +173,12 @@ export default function TodayReservationsPage() {
     return new Intl.NumberFormat('ko-KR').format(price);
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
+  const formatDateTime = (dateString?: string | null) => {
+    if (!dateString) {
+      return '-';
+    }
+
+    return new Date(dateString).toLocaleString('ko-KR', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -432,7 +332,7 @@ export default function TodayReservationsPage() {
                           key={slot}
                           className={`inline-block px-2 py-1 text-xs font-medium rounded ${getTimeSlotColor(slot)}`}
                         >
-                          {slot}부
+                          {getTimeSlotText(slot)}
                         </span>
                       ))}
                     </div>
@@ -476,6 +376,11 @@ export default function TodayReservationsPage() {
                   </div>
                 )}
               </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-4 border-t pt-2">
+                <span>예약 생성: {formatDateTime(reservation.timestamps.created_at)}</span>
+                <span>최종 갱신: {formatDateTime(reservation.timestamps.updated_at ?? reservation.timestamps.created_at)}</span>
+              </div>
+
             </Card>
           ))}
         </div>

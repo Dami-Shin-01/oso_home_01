@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/atoms/Card';
 import Button from '@/components/atoms/Button';
+import { fetchWithAdminAuth } from '@/lib/admin-fetch';
 
 interface UnpublishedNotice {
   id: string;
@@ -59,157 +60,56 @@ export default function UnpublishedNoticesPage() {
   const fetchUnpublishedNotices = async () => {
     try {
       setLoading(true);
-      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetchWithAdminAuth<{
+        success: boolean;
+        data?: { notices?: Notice[] };
+        message?: string;
+      }>('/api/admin/notices?published=false&limit=50');
 
-      const response = await fetch('/api/public/notices?is_published=false&limit=50', {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setNotices(data.data.notices || []);
-      } else {
-        // 샘플 데이터
-        setNotices([
-          {
-            id: 'notice-1',
-            title: '추석 연휴 운영 안내',
-            content: `안녕하세요, 오소바베큐입니다.
-
-추석 연휴 기간 중 운영 안내 말씀드립니다.
-
-📅 운영 일정:
-- 9월 28일(목): 정상 운영
-- 9월 29일(금) ~ 10월 1일(일): 휴무
-- 10월 2일(월): 정상 운영 재개
-
-추석 연휴 동안 예약은 10월 2일부터 가능합니다.
-가족과 함께 즐거운 추석 연휴 보내세요!
-
-문의사항이 있으시면 언제든 연락 주세요.
-감사합니다.`,
-            is_important: true,
-            is_published: false,
-            author: {
-              id: 'admin-1',
-              name: '오소 관리자',
-              email: 'admin@osobbq.com'
-            },
-            view_count: 0,
-            created_at: '2025-09-17T09:30:00Z',
-            updated_at: '2025-09-17T09:30:00Z'
-          },
-          {
-            id: 'notice-2',
-            title: '신메뉴 출시 안내',
-            content: `바베큐를 더욱 맛있게 즐길 수 있는 신메뉴를 출시합니다!
-
-🥩 신메뉴 소개:
-- 프리미엄 한우 세트 (4인용)
-- 해산물 바베큐 세트 (2인용)
-- 채식주의자를 위한 버섯 세트
-
-📅 출시일: 10월 1일(일)부터
-💰 특별 할인: 출시 기념 20% 할인 (10월 한 달간)
-
-자세한 메뉴 구성과 가격은 예약 시 확인하실 수 있습니다.
-많은 관심과 사랑 부탁드립니다!`,
-            is_important: false,
-            is_published: false,
-            author: {
-              id: 'manager-1',
-              name: '김매니저',
-              email: 'manager@osobbq.com'
-            },
-            view_count: 0,
-            created_at: '2025-09-16T14:15:00Z',
-            updated_at: '2025-09-17T08:20:00Z'
-          },
-          {
-            id: 'notice-3',
-            title: '주차장 확장 공사 안내',
-            content: `고객 여러분의 편의를 위해 주차장 확장 공사를 진행합니다.
-
-🚧 공사 기간: 10월 5일(목) ~ 10월 10일(화)
-🚗 공사 기간 중 주차 안내:
-- 기존 주차장의 절반만 사용 가능
-- 인근 공영주차장 이용 시 주차비 지원
-- 발렛파킹 서비스 임시 운영
-
-공사로 인한 불편을 최소화하도록 노력하겠습니다.
-양해 부탁드립니다.`,
-            is_important: false,
-            is_published: false,
-            author: {
-              id: 'admin-1',
-              name: '오소 관리자',
-              email: 'admin@osobbq.com'
-            },
-            view_count: 0,
-            created_at: '2025-09-15T16:45:00Z',
-            updated_at: '2025-09-16T10:30:00Z'
-          }
-        ]);
-      }
-
+      setNotices(response.data?.notices ?? []);
       setError(null);
     } catch (err) {
       console.error('Unpublished notices fetch error:', err);
-      setError('미발행 공지사항을 불러오는 중 오류가 발생했습니다.');
+      setNotices([]);
+      setError(err instanceof Error ? err.message : '미발행 공지사항을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleNoticeAction = async (noticeId: string, action: 'publish' | 'delete') => {
+const handleNoticeAction = async (noticeId: string, action: 'publish' | 'delete') => {
     try {
       setProcessingId(noticeId);
-      const accessToken = localStorage.getItem('accessToken');
 
       if (action === 'publish') {
-        const response = await fetch(`/api/admin/notices/${noticeId}`, {
+        const payload = await fetchWithAdminAuth<{ message?: string }>(`/api/admin/notices/${noticeId}`, {
           method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            is_published: true
-          })
+          body: JSON.stringify({ is_published: true })
         });
 
-        if (response.ok) {
-          alert('공지사항이 성공적으로 발행되었습니다.');
-          fetchUnpublishedNotices();
-        } else {
-          throw new Error('발행 처리 중 오류가 발생했습니다.');
-        }
+        alert(payload?.message ?? '공지사항이 발행되었습니다.');
+        fetchUnpublishedNotices();
       } else if (action === 'delete') {
-        if (confirm('정말로 이 공지사항을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-          const response = await fetch(`/api/admin/notices/${noticeId}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          });
-
-          if (response.ok) {
-            alert('공지사항이 삭제되었습니다.');
-            fetchUnpublishedNotices();
-          } else {
-            throw new Error('삭제 처리 중 오류가 발생했습니다.');
-          }
+        if (!confirm('해당 공지사항을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+          return;
         }
+
+        const payload = await fetchWithAdminAuth<{ message?: string }>(`/api/admin/notices/${noticeId}`, {
+          method: 'DELETE'
+        });
+
+        alert(payload?.message ?? '공지사항이 삭제되었습니다.');
+        fetchUnpublishedNotices();
       }
     } catch (err) {
       console.error('Notice action error:', err);
-      alert(action === 'publish' ? '발행 처리 중 오류가 발생했습니다.' : '삭제 처리 중 오류가 발생했습니다.');
+      alert(err instanceof Error ? err.message : action === 'publish' ? '발행 처리 중 오류가 발생했습니다.' : '삭제 처리 중 오류가 발생했습니다.');
     } finally {
       setProcessingId(null);
     }
   };
 
-  const formatDateTime = (dateString: string) => {
+const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'short',

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/atoms/Card';
 import Button from '@/components/atoms/Button';
+import { fetchWithAdminAuth } from '@/lib/admin-fetch';
 
 interface PendingReservation {
   id: string;
@@ -75,88 +76,18 @@ export default function PendingReservationsPage() {
   const fetchPendingReservations = async () => {
     try {
       setLoading(true);
-      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetchWithAdminAuth<{
+        success: boolean;
+        data?: { reservations?: PendingReservation[] };
+        message?: string;
+      }>('/api/admin/reservations/management?status=PENDING&payment_status=WAITING');
 
-      const response = await fetch('/api/admin/reservations/management?status=PENDING&payment_status=WAITING', {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setReservations(data.data.reservations || []);
-      } else {
-        setReservations([
-          {
-            id: 'pending-1',
-            customer: {
-              type: 'guest',
-              name: '김철수',
-              phone: '010-1234-5678',
-              email: 'customer@example.com'
-            },
-            facility: {
-              id: 'facility-1',
-              name: '프라이빗룸 A',
-              type: 'private'
-            },
-            site: {
-              id: 'site-1',
-              name: '프라이빗룸 A - 사이트 1',
-              site_number: 'private-1',
-              capacity: 6
-            },
-            reservation_details: {
-              date: '2025-09-20',
-              time_slots: [1, 2],
-              total_amount: 120000,
-              status: 'PENDING',
-              payment_status: 'WAITING',
-              special_requests: '창문 쪽 자리로 부탁드립니다.'
-            },
-            timestamps: {
-              created_at: '2025-09-17T10:30:00Z',
-              updated_at: '2025-09-17T10:30:00Z'
-            }
-          },
-          {
-            id: 'pending-2',
-            customer: {
-              type: 'member',
-              name: '박영희',
-              phone: '010-9876-5432',
-              email: 'member@example.com'
-            },
-            facility: {
-              id: 'facility-2',
-              name: '텐트동 B',
-              type: 'tent'
-            },
-            site: {
-              id: 'site-2',
-              name: '텐트동 B - 사이트 1',
-              site_number: 'tent-1',
-              capacity: 8
-            },
-            reservation_details: {
-              date: '2025-09-21',
-              time_slots: [2, 3],
-              total_amount: 150000,
-              status: 'PENDING',
-              payment_status: 'WAITING',
-              special_requests: '생일파티용 준비 부탁드립니다.'
-            },
-            timestamps: {
-              created_at: '2025-09-17T14:15:00Z',
-              updated_at: '2025-09-17T14:15:00Z'
-            }
-          }
-        ]);
-      }
-
+      setReservations(response.data?.reservations ?? []);
       setError(null);
     } catch (err) {
       console.error('Pending reservations fetch error:', err);
-      setError('대기 중인 예약을 불러오는 중 오류가 발생했습니다.');
+      setReservations([]);
+      setError(err instanceof Error ? err.message : '대기 중인 예약을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
     }
@@ -165,31 +96,21 @@ export default function PendingReservationsPage() {
   const handleReservationAction = async (reservationId: string, action: 'approve' | 'reject', memo?: string) => {
     try {
       setProcessingId(reservationId);
-      const accessToken = localStorage.getItem('accessToken');
-
-      const response = await fetch('/api/admin/reservations/management', {
+      const payload = await fetchWithAdminAuth<{ message?: string }>('/api/admin/reservations/management', {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           reservation_id: reservationId,
           status: action === 'approve' ? 'CONFIRMED' : 'CANCELLED',
           payment_status: action === 'approve' ? 'COMPLETED' : 'REFUNDED',
-          admin_memo: memo || `${action === 'approve' ? '승인' : '거부'} 처리됨`
+          admin_memo: memo || `${action === 'approve' ? '승인' : '거절'} 처리`
         })
       });
 
-      if (response.ok) {
-        alert(`예약이 성공적으로 ${action === 'approve' ? '승인' : '거부'}되었습니다.`);
-        fetchPendingReservations();
-      } else {
-        throw new Error('처리 중 오류가 발생했습니다.');
-      }
+      alert(payload?.message ?? `예약이 ${action === 'approve' ? '승인' : '거절'}되었습니다.`);
+      fetchPendingReservations();
     } catch (err) {
       console.error('Reservation action error:', err);
-      alert('처리 중 오류가 발생했습니다.');
+      alert(err instanceof Error ? err.message : '처리 중 오류가 발생했습니다.');
     } finally {
       setProcessingId(null);
     }

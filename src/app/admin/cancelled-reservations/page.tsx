@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/atoms/Card';
 import Button from '@/components/atoms/Button';
+import { fetchWithAdminAuth } from '@/lib/admin-fetch';
 
 interface CancelledReservation {
   id: string;
@@ -53,7 +54,6 @@ export default function CancelledReservationsPage() {
   const fetchCancelledReservations = useCallback(async () => {
     try {
       setLoading(true);
-      const accessToken = localStorage.getItem('accessToken');
 
       const queryParams = new URLSearchParams({
         status: 'CANCELLED',
@@ -64,95 +64,44 @@ export default function CancelledReservationsPage() {
         queryParams.append('payment_status', filterStatus === 'refund_pending' ? 'WAITING' : 'REFUNDED');
       }
 
-      const response = await fetch(`/api/admin/reservations/management?${queryParams.toString()}`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
+      const response = await fetchWithAdminAuth<{
+        success: boolean;
+        data?: { reservations?: CancelledReservation[] };
+        message?: string;
+      }>(`/api/admin/reservations/management?${queryParams.toString()}`);
 
-      if (response.ok) {
-        const data = await response.json();
-        setReservations(data.data.reservations || []);
-      } else {
-        // 샘플 데이터
-        setReservations([
-          {
-            id: 'cancelled-1',
-            customer: {
-              type: 'member',
-              name: '이민수',
-              phone: '010-2345-6789',
-              email: 'member2@example.com'
-            },
-            facility: {
-              id: 'facility-1',
-              name: '프라이빗룸 A',
-              type: 'private'
-            },
-            site: {
-              id: 'site-1',
-              name: '프라이빗룸 A - 사이트 2',
-              site_number: 'private-2',
-              capacity: 6
-            },
-            reservation_details: {
-              date: '2025-09-18',
-              time_slots: [2],
-              total_amount: 80000,
-              status: 'CANCELLED',
-              payment_status: 'WAITING',
-              special_requests: '조용한 자리 부탁드립니다.',
-              cancellation_reason: '개인 사정으로 인한 취소',
-              admin_memo: '고객 요청으로 취소 처리'
-            },
-            timestamps: {
-              created_at: '2025-09-15T09:00:00Z',
-              updated_at: '2025-09-17T16:30:00Z',
-              cancelled_at: '2025-09-17T16:30:00Z'
-            }
-          },
-          {
-            id: 'cancelled-2',
-            customer: {
-              type: 'guest',
-              name: '최영수',
-              phone: '010-8765-4321'
-            },
-            facility: {
-              id: 'facility-3',
-              name: '야외 소파테이블 C',
-              type: 'outdoor_sofa'
-            },
-            site: {
-              id: 'site-3',
-              name: '야외 소파테이블 C - 사이트 1',
-              site_number: 'outdoor-1',
-              capacity: 4
-            },
-            reservation_details: {
-              date: '2025-09-19',
-              time_slots: [1, 2],
-              total_amount: 60000,
-              status: 'CANCELLED',
-              payment_status: 'REFUNDED',
-              cancellation_reason: '날씨 때문에 취소',
-              admin_memo: '환불 완료 (계좌이체)'
-            },
-            timestamps: {
-              created_at: '2025-09-16T14:20:00Z',
-              updated_at: '2025-09-17T10:15:00Z',
-              cancelled_at: '2025-09-17T09:00:00Z'
-            }
-          }
-        ]);
-      }
-
+      setReservations(response.data?.reservations ?? []);
       setError(null);
     } catch (err) {
       console.error('Cancelled reservations fetch error:', err);
-      setError('취소된 예약을 불러오는 중 오류가 발생했습니다.');
+      setReservations([]);
+      setError(err instanceof Error ? err.message : '취소된 예약을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
     }
   }, [filterStatus]);
+
+const handleRefundAction = async (reservationId: string, action: 'process_refund' | 'mark_refunded', memo?: string) => {
+    try {
+      setProcessingId(reservationId);
+      const payload = await fetchWithAdminAuth<{ message?: string }>('/api/admin/reservations/management', {
+        method: 'PUT',
+        body: JSON.stringify({
+          reservation_id: reservationId,
+          payment_status: 'REFUNDED',
+          admin_memo: memo || '환불 처리 완료'
+        })
+      });
+
+      alert(payload?.message ?? '환불 처리가 완료되었습니다.');
+      fetchCancelledReservations();
+    } catch (err) {
+      console.error('Refund action error:', err);
+      alert(err instanceof Error ? err.message : '환불 처리 중 오류가 발생했습니다.');
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = () => {
@@ -177,41 +126,9 @@ export default function CancelledReservationsPage() {
     if (!checkAuth()) return;
 
     fetchCancelledReservations();
-  }, [router, filterStatus, fetchCancelledReservations]);
+  }, [router, fetchCancelledReservations]);
 
-  const handleRefundAction = async (reservationId: string, action: 'process_refund' | 'mark_refunded', memo?: string) => {
-    try {
-      setProcessingId(reservationId);
-      const accessToken = localStorage.getItem('accessToken');
-
-      const response = await fetch('/api/admin/reservations/management', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          reservation_id: reservationId,
-          payment_status: 'REFUNDED',
-          admin_memo: memo || '환불 처리 완료'
-        })
-      });
-
-      if (response.ok) {
-        alert('환불 처리가 완료되었습니다.');
-        fetchCancelledReservations();
-      } else {
-        throw new Error('환불 처리 중 오류가 발생했습니다.');
-      }
-    } catch (err) {
-      console.error('Refund action error:', err);
-      alert('환불 처리 중 오류가 발생했습니다.');
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const getTimeSlotText = (slots: number[]) => {
+const getTimeSlotText = (slots: number[]) => {
     const timeMap: Record<number, string> = {
       1: '1부 (11:00-15:00)',
       2: '2부 (15:00-19:00)',

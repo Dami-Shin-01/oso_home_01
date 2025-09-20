@@ -1,69 +1,94 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/atoms/Card';
 import Button from '@/components/atoms/Button';
 
-interface AnalyticsData {
-  reservations: {
-    total: number;
-    today: number;
-    thisWeek: number;
-    thisMonth: number;
-    completed: number;
-    cancelled: number;
-    pending: number;
-    revenue: {
-      total: number;
-      today: number;
-      thisWeek: number;
-      thisMonth: number;
-    };
+type PeriodOption = 'week' | 'month' | 'quarter' | 'year';
+
+const PERIOD_OPTIONS: { value: PeriodOption; label: string }[] = [
+  { value: 'week', label: '최근 7일' },
+  { value: 'month', label: '이번 달' },
+  { value: 'quarter', label: '최근 90일' },
+  { value: 'year', label: '올해' }
+];
+
+interface RecentReservation {
+  id: string;
+  facility_name: string;
+  site_name: string;
+  total_amount: number;
+  status: string;
+  payment_status: string;
+  reservation_date: string;
+  created_at: string;
+}
+
+interface FacilityStat {
+  facility_id: string;
+  facility_name: string;
+  facility_type?: string;
+  total_reservations: number;
+  total_revenue: number;
+  site_count: number;
+}
+
+interface AnalyticsPayload {
+  analytics: {
+    total_reservations: number;
+    total_facilities: number;
+    total_revenue: number;
+    occupancy_rate: number;
+    recent_reservations: RecentReservation[];
   };
-  users: {
-    total: number;
-    newToday: number;
-    newThisWeek: number;
-    newThisMonth: number;
-    active: number;
-    verified: number;
+  period_stats: {
+    period: string;
+    start_date: string;
+    end_date: string;
+    confirmed_reservations: number;
+    pending_reservations: number;
+    cancelled_reservations: number;
+    conversion_rate: number;
   };
-  facilities: {
-    total: number;
-    active: number;
-    avgOccupancy: number;
-    topPerforming: {
-      name: string;
-      reservations: number;
-      revenue: number;
-    }[];
+  facility_stats: FacilityStat[];
+  site_stats: {
+    total_sites: number;
+    reserved_sites_today: number;
+    occupancy_rate: number;
   };
-  trends: {
-    dailyReservations: {
-      date: string;
-      count: number;
-      revenue: number;
-    }[];
-    hourlyDistribution: {
-      hour: number;
-      count: number;
-    }[];
-    monthlyComparison: {
-      month: string;
-      current: number;
-      previous: number;
-    }[];
-  };
+}
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('ko-KR').format(value);
+}
+
+function formatDate(value: string): string {
+  return new Date(value).toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+function formatDateTime(value: string): string {
+  return new Date(value).toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState('30d');
+  const [period, setPeriod] = useState<PeriodOption>('month');
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -85,107 +110,43 @@ export default function AnalyticsPage() {
       return true;
     };
 
-    if (!checkAuth()) return;
+    const fetchAnalyticsData = async () => {
+      try {
+        setLoading(true);
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+          throw new Error('인증 토큰을 찾을 수 없습니다.');
+        }
 
-    fetchAnalyticsData();
-  }, [router, dateRange]);
-
-  const fetchAnalyticsData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const accessToken = localStorage.getItem('accessToken');
-
-      const response = await fetch(`/api/admin/analytics?range=${dateRange}`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data.data);
-      } else {
-        setAnalytics({
-          reservations: {
-            total: 156,
-            today: 8,
-            thisWeek: 45,
-            thisMonth: 134,
-            completed: 120,
-            cancelled: 15,
-            pending: 21,
-            revenue: {
-              total: 12500000,
-              today: 320000,
-              thisWeek: 1580000,
-              thisMonth: 4200000
-            }
-          },
-          users: {
-            total: 89,
-            newToday: 3,
-            newThisWeek: 12,
-            newThisMonth: 28,
-            active: 76,
-            verified: 64
-          },
-          facilities: {
-            total: 6,
-            active: 5,
-            avgOccupancy: 72.5,
-            topPerforming: [
-              { name: 'A구역', reservations: 45, revenue: 2800000 },
-              { name: 'B구역', reservations: 38, revenue: 2400000 },
-              { name: 'C구역', reservations: 32, revenue: 1950000 }
-            ]
-          },
-          trends: {
-            dailyReservations: [
-              { date: '2025-09-10', count: 5, revenue: 280000 },
-              { date: '2025-09-11', count: 8, revenue: 420000 },
-              { date: '2025-09-12', count: 6, revenue: 350000 },
-              { date: '2025-09-13', count: 12, revenue: 680000 },
-              { date: '2025-09-14', count: 9, revenue: 485000 },
-              { date: '2025-09-15', count: 11, revenue: 620000 },
-              { date: '2025-09-16', count: 7, revenue: 395000 }
-            ],
-            hourlyDistribution: [
-              { hour: 10, count: 5 },
-              { hour: 11, count: 12 },
-              { hour: 12, count: 18 },
-              { hour: 13, count: 15 },
-              { hour: 14, count: 8 },
-              { hour: 15, count: 14 },
-              { hour: 16, count: 22 },
-              { hour: 17, count: 28 },
-              { hour: 18, count: 24 },
-              { hour: 19, count: 16 },
-              { hour: 20, count: 10 }
-            ],
-            monthlyComparison: [
-              { month: '7월', current: 89, previous: 76 },
-              { month: '8월', current: 112, previous: 89 },
-              { month: '9월', current: 134, previous: 112 }
-            ]
+        const response = await fetch(`/api/admin/analytics?period=${period}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
           }
         });
+
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => null);
+          throw new Error(errorBody?.error || '분석 데이터를 불러오는데 실패했습니다.');
+        }
+
+        const payload = await response.json();
+        setAnalytics(payload.data as AnalyticsPayload);
+        setError(null);
+      } catch (err) {
+        console.error('Analytics data fetch error:', err);
+        setAnalytics(null);
+        setError(err instanceof Error ? err.message : '분석 데이터를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setError(null);
-    } catch (err) {
-      console.error('Analytics data fetch error:', err);
-      setError('분석 데이터를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
+    if (checkAuth()) {
+      fetchAnalyticsData();
     }
-  }, [dateRange]);
+  }, [router, period, reloadKey]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ko-KR').format(price);
-  };
-
-  const getGrowthPercentage = (current: number, previous: number) => {
-    if (previous === 0) return 100;
-    return Math.round(((current - previous) / previous) * 100);
-  };
+  const selectedPeriodLabel = PERIOD_OPTIONS.find((option) => option.value === period)?.label ?? '선택한 기간';
 
   if (loading) {
     return (
@@ -193,21 +154,8 @@ export default function AnalyticsPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">분석 데이터를 불러오는 중...</p>
+            <p className="text-gray-600">분석 데이터를 불러오는 중입니다...</p>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!analytics) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="text-center py-12">
-          <p className="text-gray-500">분석 데이터를 불러올 수 없습니다.</p>
-          <Button onClick={fetchAnalyticsData} className="mt-4">
-            다시 시도
-          </Button>
         </div>
       </div>
     );
@@ -217,24 +165,23 @@ export default function AnalyticsPage() {
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">분석 대시보드</h1>
-          <p className="text-gray-600">예약 및 매출 분석 데이터를 확인합니다.</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">운영 분석 대시보드</h1>
+          <p className="text-gray-600">시설과 예약 현황을 한눈에 확인하세요.</p>
         </div>
         <div className="flex items-center space-x-4">
           <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as PeriodOption)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           >
-            <option value="7d">최근 7일</option>
-            <option value="30d">최근 30일</option>
-            <option value="90d">최근 90일</option>
-            <option value="1y">최근 1년</option>
+            {PERIOD_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
           <Link href="/admin">
-            <Button variant="outline">
-              ← 대시보드로 돌아가기
-            </Button>
+            <Button variant="outline">대시보드로 돌아가기</Button>
           </Link>
         </div>
       </div>
@@ -243,253 +190,147 @@ export default function AnalyticsPage() {
         <Card className="mb-6">
           <div className="text-center py-4">
             <p className="text-red-600">{error}</p>
-            <Button onClick={fetchAnalyticsData} variant="outline" className="mt-2">
+            <Button onClick={() => setReloadKey((key) => key + 1)} variant="outline" className="mt-2">
               다시 시도
             </Button>
           </div>
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">총 예약</p>
-              <p className="text-2xl font-bold text-gray-900">{analytics.reservations.total}</p>
-              <p className="text-xs text-gray-500 mt-1">이번 달: {analytics.reservations.thisMonth}건</p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <span className="text-2xl">📅</span>
-            </div>
+      {!error && !analytics && (
+        <Card>
+          <div className="text-center py-12">
+            <p className="text-gray-500">표시할 분석 데이터가 없습니다.</p>
           </div>
         </Card>
+      )}
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
+      {analytics && (
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="p-6">
+              <p className="text-sm font-medium text-gray-600">전체 예약</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{analytics.analytics.total_reservations}건</p>
+              <p className="text-xs text-gray-500 mt-2">최근 10건의 예약 내역을 함께 확인하세요.</p>
+            </Card>
+            <Card className="p-6">
               <p className="text-sm font-medium text-gray-600">총 매출</p>
-              <p className="text-2xl font-bold text-gray-900">{formatPrice(analytics.reservations.revenue.total)}원</p>
-              <p className="text-xs text-gray-500 mt-1">이번 달: {formatPrice(analytics.reservations.revenue.thisMonth)}원</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <span className="text-2xl">💰</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">전체 사용자</p>
-              <p className="text-2xl font-bold text-gray-900">{analytics.users.total}</p>
-              <p className="text-xs text-gray-500 mt-1">이번 달 신규: {analytics.users.newThisMonth}명</p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-full">
-              <span className="text-2xl">👥</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
+              <p className="text-3xl font-bold text-green-600 mt-2">{formatCurrency(analytics.analytics.total_revenue)}원</p>
+              <p className="text-xs text-gray-500 mt-2">{selectedPeriodLabel} 기준 누적 금액</p>
+            </Card>
+            <Card className="p-6">
+              <p className="text-sm font-medium text-gray-600">운영 중인 시설</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{analytics.analytics.total_facilities}개</p>
+              <p className="text-xs text-gray-500 mt-2">활성화된 시설만 계산합니다.</p>
+            </Card>
+            <Card className="p-6">
               <p className="text-sm font-medium text-gray-600">평균 점유율</p>
-              <p className="text-2xl font-bold text-gray-900">{analytics.facilities.avgOccupancy}%</p>
-              <p className="text-xs text-gray-500 mt-1">활성 시설: {analytics.facilities.active}개</p>
-            </div>
-            <div className="p-3 bg-orange-100 rounded-full">
-              <span className="text-2xl">📊</span>
-            </div>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{analytics.analytics.occupancy_rate.toFixed(1)}%</p>
+              <p className="text-xs text-gray-500 mt-2">오늘 기준 실제 예약된 사이트 비율</p>
+            </Card>
           </div>
-        </Card>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">예약 현황</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">완료된 예약</span>
-                <div className="flex items-center">
-                  <div className="w-24 bg-gray-200 rounded-full h-2 mr-3">
-                    <div
-                      className="bg-green-500 h-2 rounded-full"
-                      style={{ width: `${(analytics.reservations.completed / analytics.reservations.total) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-sm font-medium">{analytics.reservations.completed}건</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">기간별 요약</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                {formatDate(analytics.period_stats.start_date)} ~ {formatDate(analytics.period_stats.end_date)} ({selectedPeriodLabel})
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="font-medium text-gray-500">확정 예약</p>
+                  <p className="text-xl font-semibold text-gray-900">{analytics.period_stats.confirmed_reservations}건</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="font-medium text-gray-500">대기 중</p>
+                  <p className="text-xl font-semibold text-yellow-600">{analytics.period_stats.pending_reservations}건</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="font-medium text-gray-500">취소</p>
+                  <p className="text-xl font-semibold text-red-600">{analytics.period_stats.cancelled_reservations}건</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="font-medium text-gray-500">전환율</p>
+                  <p className="text-xl font-semibold text-blue-600">{analytics.period_stats.conversion_rate.toFixed(1)}%</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">대기 중인 예약</span>
-                <div className="flex items-center">
-                  <div className="w-24 bg-gray-200 rounded-full h-2 mr-3">
-                    <div
-                      className="bg-yellow-500 h-2 rounded-full"
-                      style={{ width: `${(analytics.reservations.pending / analytics.reservations.total) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-sm font-medium">{analytics.reservations.pending}건</span>
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">사이트 운영 현황</h2>
+              <div className="space-y-3 text-sm text-gray-700">
+                <div className="flex justify-between items-center">
+                  <span>총 사이트</span>
+                  <span className="font-semibold">{analytics.site_stats.total_sites}개</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>오늘 예약된 사이트</span>
+                  <span className="font-semibold text-green-600">{analytics.site_stats.reserved_sites_today}개</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>오늘 점유율</span>
+                  <span className="font-semibold text-blue-600">{analytics.site_stats.occupancy_rate.toFixed(1)}%</span>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">취소된 예약</span>
-                <div className="flex items-center">
-                  <div className="w-24 bg-gray-200 rounded-full h-2 mr-3">
-                    <div
-                      className="bg-red-500 h-2 rounded-full"
-                      style={{ width: `${(analytics.reservations.cancelled / analytics.reservations.total) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-sm font-medium">{analytics.reservations.cancelled}건</span>
-                </div>
-              </div>
-            </div>
+            </Card>
           </div>
-        </Card>
 
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">사용자 통계</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">활성 사용자</span>
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-green-600">{analytics.users.active}명</span>
-                  <span className="text-xs text-gray-500 ml-2">
-                    ({Math.round((analytics.users.active / analytics.users.total) * 100)}%)
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">이메일 인증 완료</span>
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-blue-600">{analytics.users.verified}명</span>
-                  <span className="text-xs text-gray-500 ml-2">
-                    ({Math.round((analytics.users.verified / analytics.users.total) * 100)}%)
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">오늘 신규 가입</span>
-                <span className="text-sm font-medium">{analytics.users.newToday}명</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">이번 주 신규</span>
-                <span className="text-sm font-medium">{analytics.users.newThisWeek}명</span>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">최고 실적 시설</h3>
-            <div className="space-y-4">
-              {analytics.facilities.topPerforming.map((facility, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
-                      index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-600'
-                    }`}>
-                      {index + 1}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">시설별 성과</h2>
+              {analytics.facility_stats.length > 0 ? (
+                <div className="space-y-4">
+                  {analytics.facility_stats.slice(0, 5).map((facility) => (
+                    <div key={facility.facility_id} className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">{facility.facility_name}</p>
+                        <p className="text-xs text-gray-500">사이트 {facility.site_count}개 · 예약 {facility.total_reservations}건</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-green-600">{formatCurrency(facility.total_revenue)}원</p>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <p className="font-medium">{facility.name}</p>
-                      <p className="text-sm text-gray-600">{facility.reservations}건 예약</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{formatPrice(facility.revenue)}원</p>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        </Card>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-6">시설 통계가 없습니다.</p>
+              )}
+            </Card>
 
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">시간대별 예약 분포</h3>
-            <div className="space-y-2">
-              {analytics.trends.hourlyDistribution.map((hour) => (
-                <div key={hour.hour} className="flex items-center">
-                  <span className="w-12 text-sm text-gray-600">{hour.hour}시</span>
-                  <div className="flex-1 mx-3">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full"
-                        style={{ width: `${(hour.count / Math.max(...analytics.trends.hourlyDistribution.map(h => h.count))) * 100}%` }}
-                      ></div>
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">최근 예약</h2>
+              {analytics.analytics.recent_reservations.length > 0 ? (
+                <div className="space-y-3">
+                  {analytics.analytics.recent_reservations.map((reservation) => (
+                    <div key={reservation.id} className="p-3 border rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium text-gray-900">{reservation.facility_name}</p>
+                          <p className="text-sm text-gray-500">{reservation.site_name} · {formatDate(reservation.reservation_date)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-green-600">{formatCurrency(reservation.total_amount)}원</p>
+                          <p className="text-xs text-gray-500">{formatDateTime(reservation.created_at)}</p>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex items-center space-x-2 text-xs">
+                        <span className={`px-2 py-1 rounded-full font-medium ${reservation.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' : reservation.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                          {reservation.status}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full font-medium ${reservation.payment_status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' : reservation.payment_status === 'WAITING' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'}`}>
+                          {reservation.payment_status}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <span className="w-8 text-sm font-medium text-right">{hour.count}</span>
+                  ))}
                 </div>
-              ))}
-            </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-6">최근 예약 내역이 없습니다.</p>
+              )}
+            </Card>
           </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">일별 예약 추이 (최근 7일)</h3>
-            <div className="space-y-3">
-              {analytics.trends.dailyReservations.map((day) => (
-                <div key={day.date} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">
-                    {new Date(day.date).toLocaleDateString('ko-KR', {
-                      month: 'short',
-                      day: 'numeric',
-                      weekday: 'short'
-                    })}
-                  </span>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm">{day.count}건</span>
-                    <span className="text-sm font-medium text-green-600">
-                      {formatPrice(day.revenue)}원
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">월별 성장률</h3>
-            <div className="space-y-4">
-              {analytics.trends.monthlyComparison.map((month) => {
-                const growth = getGrowthPercentage(month.current, month.previous);
-                return (
-                  <div key={month.month} className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{month.month}</span>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm text-gray-600">
-                        {month.previous} → {month.current}
-                      </span>
-                      <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                        growth > 0
-                          ? 'bg-green-100 text-green-800'
-                          : growth < 0
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {growth > 0 ? '+' : ''}{growth}%
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </Card>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

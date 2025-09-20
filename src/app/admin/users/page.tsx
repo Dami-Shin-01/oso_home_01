@@ -11,20 +11,22 @@ interface User {
   email: string;
   name: string;
   phone: string | null;
-  role: 'CUSTOMER' | 'ADMIN' | 'MANAGER';
+  role: 'USER' | 'MANAGER' | 'ADMIN';
+  status: 'ACTIVE' | 'INACTIVE';
+  provider: string;
   is_active: boolean;
   email_verified: boolean;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   last_login_at: string | null;
 }
 
 interface UserReservation {
-  id: string;
   user_id: string;
   total_count: number;
   completed_count: number;
   cancelled_count: number;
+  pending_count: number;
   total_amount: number;
 }
 
@@ -116,6 +118,7 @@ export default function UsersManagementPage() {
       total_count: 0,
       completed_count: 0,
       cancelled_count: 0,
+      pending_count: 0,
       total_amount: 0
     };
   };
@@ -124,7 +127,7 @@ export default function UsersManagementPage() {
     switch (role) {
       case 'ADMIN': return 'bg-red-100 text-red-800';
       case 'MANAGER': return 'bg-purple-100 text-purple-800';
-      case 'CUSTOMER': return 'bg-blue-100 text-blue-800';
+      case 'USER': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -133,7 +136,7 @@ export default function UsersManagementPage() {
     switch (role) {
       case 'ADMIN': return '관리자';
       case 'MANAGER': return '매니저';
-      case 'CUSTOMER': return '고객';
+      case 'USER': return '고객';
       default: return '알 수 없음';
     }
   };
@@ -236,7 +239,7 @@ export default function UsersManagementPage() {
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="ALL">모든 역할</option>
-                <option value="CUSTOMER">고객</option>
+                <option value="USER">고객</option>
                 <option value="MANAGER">매니저</option>
                 <option value="ADMIN">관리자</option>
               </select>
@@ -363,7 +366,7 @@ export default function UsersManagementPage() {
                 <span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
                 고객
               </span>
-              <span className="font-semibold">{users.filter(u => u.role === 'CUSTOMER').length}명</span>
+              <span className="font-semibold">{users.filter(u => u.role === 'USER').length}명</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="flex items-center">

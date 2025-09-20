@@ -7,9 +7,30 @@ import {
 } from '@/lib/api-response';
 import type { DashboardStats } from '@/types/database';
 
+function normalizePeriod(value: string | null): 'week' | 'month' | 'quarter' | 'year' {
+  const normalized = (value ?? '').toLowerCase();
+
+  switch (normalized) {
+    case 'week':
+    case '7d':
+      return 'week';
+    case 'quarter':
+    case '90d':
+      return 'quarter';
+    case 'year':
+    case '1y':
+      return 'year';
+    case 'month':
+    case '30d':
+      return 'month';
+    default:
+      return 'month';
+  }
+}
+
 async function getAnalyticsHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const period = searchParams.get('period') || 'month'; // month, week, year
+  const period = normalizePeriod(searchParams.get('period') ?? searchParams.get('range')); // week, month, quarter, year
 
   // 기간별 날짜 계산
   const now = new Date();
@@ -17,19 +38,33 @@ async function getAnalyticsHandler(request: NextRequest) {
   let endDate: Date;
 
   switch (period) {
-    case 'week':
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-      endDate = now;
+    case 'week': {
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 6);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(now);
+      endDate.setHours(23, 59, 59, 999);
       break;
-    case 'year':
+    }
+    case 'quarter': {
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 89);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(now);
+      endDate.setHours(23, 59, 59, 999);
+      break;
+    }
+    case 'year': {
       startDate = new Date(now.getFullYear(), 0, 1);
-      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
       break;
+    }
     case 'month':
-    default:
+    default: {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
       break;
+    }
   }
 
   // 예약 통계 조회
