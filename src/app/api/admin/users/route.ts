@@ -88,7 +88,7 @@ async function getUsersHandler(request: NextRequest) {
 
   usersQuery = applyFilters(usersQuery);
 
-  const { data: users, error: usersError } = await usersQuery.returns<UserRow>();
+  const { data: users, error: usersError } = await usersQuery;
 
   if (usersError) {
     console.error('Admin users fetch error:', usersError);
@@ -128,8 +128,8 @@ async function getUsersHandler(request: NextRequest) {
     } else if (authData?.users) {
       for (const authUser of authData.users) {
         authUserMap.set(authUser.id, {
-          email_confirmed_at: authUser.email_confirmed_at,
-          last_sign_in_at: authUser.last_sign_in_at
+          email_confirmed_at: authUser.email_confirmed_at ?? null,
+          last_sign_in_at: authUser.last_sign_in_at ?? null
         });
       }
     }

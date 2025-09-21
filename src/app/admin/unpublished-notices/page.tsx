@@ -6,6 +6,9 @@ import Link from 'next/link';
 import Card from '@/components/atoms/Card';
 import Button from '@/components/atoms/Button';
 import { fetchWithAdminAuth } from '@/lib/admin-fetch';
+import type { Database } from '@/types/database';
+
+type Notice = Database['public']['Tables']['notices']['Row'];
 
 interface UnpublishedNotice {
   id: string;
@@ -62,7 +65,7 @@ export default function UnpublishedNoticesPage() {
       setLoading(true);
       const response = await fetchWithAdminAuth<{
         success: boolean;
-        data?: { notices?: Notice[] };
+        data?: { notices?: UnpublishedNotice[] };
         message?: string;
       }>('/api/admin/notices?published=false&limit=50');
 

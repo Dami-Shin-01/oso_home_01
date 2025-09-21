@@ -85,7 +85,7 @@ export default function TodayReservationsPage() {
     if (!checkAuth()) return;
 
     fetchTodayReservations();
-  }, [router, fetchTodayReservations]);
+  }, [router]);
 
   const fetchTodayReservations = useCallback(async () => {
     try {
@@ -332,7 +332,7 @@ const getTimeSlotText = (slots: number[]) => {
                           key={slot}
                           className={`inline-block px-2 py-1 text-xs font-medium rounded ${getTimeSlotColor(slot)}`}
                         >
-                          {getTimeSlotText(slot)}
+                          {getTimeSlotText([slot])}
                         </span>
                       ))}
                     </div>

@@ -1907,7 +1907,7 @@ ange/period 혼선)로 그래프가 깨지던 현상을 수정했습니다.
 
 #### 🔧 기술적 변경사항
 - src/lib/admin-fetch.ts: 관리자 화면에서 공통으로 쓸 수 있는 FetchWithAdminAuth 헬퍼를 신설해 토큰 헤더 처리와 에러 메시지를 표준화했습니다.
-- src/app/admin/pending-reservations/page.tsx, 	oday-reservations/page.tsx, cancelled-reservations/page.tsx, unpublished-notices/page.tsx: 목업 분기를 제거하고, fetchWithAdminAuth를 통해 실데이터 기반으로 목록/통계를 그리도록 전환했습니다.
+- src/app/admin/pending-reservations/page.tsx, oday-reservations/page.tsx, cancelled-reservations/page.tsx, unpublished-notices/page.tsx: 목업 분기를 제거하고, fetchWithAdminAuth를 통해 실데이터 기반으로 목록/통계를 그리도록 전환했습니다.
 - src/app/admin/reservations/page.tsx: 기존 정적 목업을 걷어내고 관리용 /api/admin/reservations/management 응답을 매핑하도록 재구성했습니다. 미구현 기능은 사용자에게 즉시 알림으로 노출되도록 처리했습니다.
 - src/app/api/admin/users/route.ts, users/stats/route.ts: 새 관리자 사용자/통계 API를 구현해 AdminReservationsPage와 향후 대시보드에서 재사용할 수 있는 DTO를 마련했습니다.
 - src/app/admin/analytics/page.tsx · src/app/api/admin/analytics/route.ts: 문서화된 스펙에 맞춰 응답 DTO와 쿼리 파라미터(period)를 통일하고, 기간별·시설별 카드 구성을 실제 데이터 구조에 맞게 재배치했습니다.
@@ -1919,7 +1919,7 @@ ange/period 혼선)로 그래프가 깨지던 현상을 수정했습니다.
 
 #### 🚀 배포 메모
 - 신규 API는 Service Role 키 기반 권한을 사용하므로, 배포 전 Supabase RLS 정책이 최신 상태인지 재확인해야 합니다.
-- ESLint 기준으로 공용 테스트 스크립트(admin-test.js, detailed-test.js, 	est-website.js)는 여전히 CommonJS 
+- ESLint 기준으로 공용 테스트 스크립트(admin-test.js, detailed-test.js, est-website.js)는 여전히 CommonJS 
 equire()를 사용 중이므로, 필요 시 후속 정리가 필요합니다.
 
 ### 🚧 관리자 문자열 정비·테스트 스크립트 개선 (진행 중)
@@ -1929,7 +1929,7 @@ equire()를 사용 중이므로, 필요 시 후속 정리가 필요합니다.
    - src/app/admin/reservations/page.tsx 내 깨진 한글·기호를 모두 정비했습니다.
    - 실데이터 매핑 상태와 etchWithAdminAuth 동작을 점검해 정상 노출을 확인했습니다.
 2. **테스트 스크립트의 CommonJS 예외 처리 적용**
-   - dmin-test.js, detailed-test.js, 	est-website.js 상단에 @typescript-eslint/no-require-imports 예외를 추가했습니다.
+   - dmin-test.js, detailed-test.js, est-website.js 상단에 @typescript-eslint/no-require-imports 예외를 추가했습니다.
    - 
 o-console는 실제 사용 사례가 없어 향후 ESM 전환 또는 예외 삭제를 검토 예정입니다.
 3. **API 경고 정리는 후속 과제로 유지**
@@ -1938,3 +1938,44 @@ o-console는 실제 사용 사례가 없어 향후 ESM 전환 또는 예외 삭�
 #### 📌 다음 단계
 - 테스트 스크립트 ESM 전환(또는 예외 구체화)으로 lint 경고 제거
 - API 라우트 전반의 미사용 인자/타입 경고 일괄 정리
+
+#### 해결된 문제
+1. **관리자 예약/공지 화면이 목업 데이터에 의존**하여 실제 오류나 권한 문제를 확인할 수 없었던 이슈를 제거했습니다.
+2. **사용자 관리 페이지가 폐기된 /api/admin/users 엔드포인트에 의존**하던 문제를 해결하고, 신규 관리용 API로 이관했습니다.
+3. **Analytics 페이지의 응답 스펙 불일치**(프런트·백엔드 구조 차이, 
+ange/period 혼선)로 그래프가 깨지던 현상을 수정했습니다.
+
+#### 🛠️ 기술적 변경사항
+- src/lib/admin-fetch.ts: 관리자 화면에서 공통으로 쓸 수 있는 etchWithAdminAuth 헬퍼를 신설해 토큰 헤더 처리와 에러 메시지를 표준화했습니다.
+- src/app/admin/pending-reservations/page.tsx, today-reservations/page.tsx, cancelled-reservations/page.tsx, unpublished-notices/page.tsx: 목업 분기를 제거하고, etchWithAdminAuth를 통해 실데이터 기반으로 목록·통계를 그리도록 전환했습니다.
+- src/app/admin/reservations/page.tsx: 기존 정적 목업을 걷어내고 관리용 /api/admin/reservations/management 응답을 매핑하도록 재구성했습니다. 미구현 기능은 사용자에게 즉시 알림으로 노출되도록 처리했습니다.
+- src/app/api/admin/users/route.ts, users/stats/route.ts: 새 관리자 사용자/통계 API를 구현해 AdminReservationsPage와 향후 대시보드에서 재사용할 수 있는 DTO를 마련했습니다.
+- src/app/admin/analytics/page.tsx · src/app/api/admin/analytics/route.ts: 문서화된 스펙에 맞춰 응답 DTO와 쿼리 파라미터(period)를 통일하고, 기간별·시설별 카드 구성을 실제 데이터 구조에 맞게 재배치했습니다.
+
+#### 📊 기능 영향
+- 관리자 전용 화면 전반이 실데이터 기반으로 동작하면서, 오류·권한·빈 상태를 정확히 파악할 수 있게 되었습니다.
+- 재사용 가능한 인증 헬퍼를 통해 관리자 페이지 추가 개발 시 중복 코드가 줄어듭니다.
+- Analytics, 대기·취소 예약 통계를 실시간으로 파악할 수 있어 운영 대응 속도가 향상됩니다.
+
+#### 🚀 배포 메모
+- 신규 API는 Service Role 키 기반 권한을 사용하므로, 배포 전 Supabase RLS 정책이 최신 상태인지 재확인해야 합니다.
+- ESLint 기준으로 공용 테스트 스크립트(dmin-test.js, detailed-test.js, est-website.js)는 여전히 CommonJS 
+equire()를 사용 중이므로, 필요 시 후속 정리가 필요합니다.
+
+### 🚧 관리자 문자열 정비·테스트 스크립트 개선 (진행 중)
+
+#### 🎯 처리 현황
+1. **관리자 예약 화면 문자열 복구 완료**
+   - src/app/admin/reservations/page.tsx 내 깨진 한글·특수문자를 모두 정리했습니다.
+   - 실데이터 매핑과 etchWithAdminAuth 동작을 다시 점검해 정상 노출을 확인했습니다.
+2. **테스트 스크립트의 CommonJS 예외 처리 적용**
+   - dmin-test.js, detailed-test.js, est-website.js 상단에 @typescript-eslint/no-require-imports 예외를 추가했습니다.
+   - 
+o-console는 실제 사용이 없어 남은 경고를 추후 ESM 전환 또는 세부 예외 조정으로 해소할 예정입니다.
+3. **API 경고 정리는 후속 과제로 유지**
+   - 미사용 매개변수·타입 경고를 일괄 정리할 준비 작업만 진행했으며, 영향 범위를 재검토한 뒤 한꺼번에 처리할 계획입니다.
+
+#### 📌 다음 단계
+- 테스트 스크립트 ESM 전환(또는 예외 구체화)으로 lint 경고 제거
+- API 라우트 전반의 미사용 인자·타입 경고 일괄 정리
+

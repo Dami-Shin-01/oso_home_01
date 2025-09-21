@@ -292,7 +292,7 @@ export default function AdminReservationsPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-lg font-semibold">{reservation.customer_name}</h3>
-                    <span className={px-2 py-1 text-xs font-medium rounded-full }>
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                       {reservation.customer_type === 'member' ? '회원' : '비회원'}
                     </span>
                     {getStatusBadge(reservation.status, reservation.payment_status)}
