@@ -16,22 +16,26 @@ export default function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseClasses = 'font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
-  
+  // DaisyUI 기본 클래스
+  const baseClasses = 'btn';
+
+  // variant 매핑 (DaisyUI 클래스)
   const variantClasses = {
-    primary: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 disabled:bg-green-300',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 disabled:bg-gray-300',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-300',
-    outline: 'border-2 border-green-600 text-green-600 hover:bg-green-50 focus:ring-green-500 disabled:border-green-300 disabled:text-green-300'
+    primary: 'btn-primary',
+    secondary: 'btn-secondary',
+    danger: 'btn-error',
+    outline: 'btn-outline btn-primary'
   };
 
+  // size 매핑 (DaisyUI 클래스)
   const sizeClasses = {
-    sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg'
+    sm: 'btn-sm',
+    md: '', // DaisyUI 기본 크기
+    lg: 'btn-lg'
   };
 
-  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
+  // 최종 클래스 조합
+  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`.trim();
 
   return (
     <button
@@ -40,11 +44,8 @@ export default function Button({
       {...props}
     >
       {loading ? (
-        <div className="flex items-center">
-          <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
-            <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v8z" />
-          </svg>
+        <div className="flex items-center gap-2">
+          <span className="loading loading-spinner loading-sm"></span>
           로딩 중...
         </div>
       ) : (

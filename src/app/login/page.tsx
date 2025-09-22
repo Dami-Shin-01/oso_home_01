@@ -143,7 +143,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-base-200 flex items-center justify-center py-12 px-4">
+    <div className="min-h-[80vh] bg-base-200 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
         {/* 헤더 */}
         <div className="text-center mb-8">

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import VideoPlayButton from '@/components/atoms/VideoPlayButton';
 
 export const revalidate = 300; // 5분마다 캐시 갱신
 
@@ -39,24 +40,7 @@ export default async function Home() {
           <div className="absolute inset-0 bg-black/40 z-10"></div>
 
           {/* 영상 일시정지/재생 버튼 (선택사항) */}
-          <button
-            className="absolute top-4 right-4 z-30 btn btn-circle btn-ghost text-white opacity-50 hover:opacity-100 hidden md:flex"
-            onClick={(e) => {
-              const video = e.currentTarget.parentElement?.querySelector('video');
-              if (video) {
-                if (video.paused) {
-                  video.play();
-                  e.currentTarget.innerHTML = '⏸️';
-                } else {
-                  video.pause();
-                  e.currentTarget.innerHTML = '▶️';
-                }
-              }
-            }}
-            aria-label="영상 재생/일시정지"
-          >
-            ⏸️
-          </button>
+          <VideoPlayButton />
 
           <div className="hero-content text-center text-white relative z-20">
             <div className="max-w-md">

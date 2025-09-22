@@ -13,18 +13,20 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   className = '',
   ...props
 }, ref) => {
-  const baseClasses = 'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-colors';
-  const errorClasses = error 
-    ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-    : 'border-gray-300 focus:border-green-500 focus:ring-green-500';
-  
-  const inputClasses = `${baseClasses} ${errorClasses} ${className}`;
+  // DaisyUI 기본 클래스
+  const baseClasses = 'input input-bordered w-full';
+
+  // 에러 상태에 따른 클래스
+  const stateClasses = error ? 'input-error' : '';
+
+  // 최종 클래스 조합
+  const inputClasses = `${baseClasses} ${stateClasses} ${className}`.trim();
 
   return (
-    <div className="w-full">
+    <div className="form-control w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {label}
+        <label className="label">
+          <span className="label-text font-medium">{label}</span>
         </label>
       )}
       <input
@@ -33,10 +35,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
         {...props}
       />
       {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        <label className="label">
+          <span className="label-text-alt text-error">{error}</span>
+        </label>
       )}
       {helperText && !error && (
-        <p className="mt-1 text-sm text-gray-500">{helperText}</p>
+        <label className="label">
+          <span className="label-text-alt text-base-content/70">{helperText}</span>
+        </label>
       )}
     </div>
   );
