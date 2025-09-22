@@ -14,8 +14,51 @@ export default async function Home() {
   return (
     <div className="min-h-screen">
         {/* 히어로 섹션 */}
-        <div className="hero min-h-screen bg-gradient-to-br from-primary to-primary-focus">
-          <div className="hero-content text-center text-primary-content">
+        <div className="hero min-h-screen relative overflow-hidden">
+          {/* 배경 영상 */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 w-full h-full object-cover z-0 hidden md:block"
+            poster="/images/hero-poster.jpg"
+          >
+            <source src="/videos/hero-video.mp4" type="video/mp4" />
+            <source src="/videos/hero-video.webm" type="video/webm" />
+          </video>
+
+          {/* 모바일용 정적 배경 이미지 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-focus md:hidden z-0"></div>
+
+          {/* 영상 로드 실패 시 폴백 배경 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-focus -z-10"></div>
+
+          {/* 다크 오버레이 */}
+          <div className="absolute inset-0 bg-black/40 z-10"></div>
+
+          {/* 영상 일시정지/재생 버튼 (선택사항) */}
+          <button
+            className="absolute top-4 right-4 z-30 btn btn-circle btn-ghost text-white opacity-50 hover:opacity-100 hidden md:flex"
+            onClick={(e) => {
+              const video = e.currentTarget.parentElement?.querySelector('video');
+              if (video) {
+                if (video.paused) {
+                  video.play();
+                  e.currentTarget.innerHTML = '⏸️';
+                } else {
+                  video.pause();
+                  e.currentTarget.innerHTML = '▶️';
+                }
+              }
+            }}
+            aria-label="영상 재생/일시정지"
+          >
+            ⏸️
+          </button>
+
+          <div className="hero-content text-center text-white relative z-20">
             <div className="max-w-md">
               <h1 className="text-5xl font-bold">
                 자연 속에서 즐기는

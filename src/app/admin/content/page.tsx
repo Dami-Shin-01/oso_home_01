@@ -679,8 +679,24 @@ export default function ContentManagementPage() {
 
       {/* 공지사항 작성 모달 */}
       {showNoticeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowNoticeModal(false);
+              setNoticeForm({
+                title: '',
+                content: '',
+                is_important: false,
+                is_published: false
+              });
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">새 공지사항 작성</h2>
@@ -926,8 +942,25 @@ export default function ContentManagementPage() {
 
       {/* 공지사항 수정 모달 */}
       {showEditNoticeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowEditNoticeModal(false);
+              setEditingNotice(null);
+              setNoticeForm({
+                title: '',
+                content: '',
+                is_important: false,
+                is_published: false
+              });
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">공지사항 수정</h2>

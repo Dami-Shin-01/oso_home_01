@@ -1,251 +1,389 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import Button from '@/components/atoms/Button';
-import Input from '@/components/atoms/Input';
-import Card from '@/components/atoms/Card';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { signUpCustomer, checkEmailExists, CustomerSignUpData } from '@/lib/auth-customer'
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  const [formData, setFormData] = useState<CustomerSignUpData>({
     email: '',
     password: '',
-    confirmPassword: '',
     name: '',
-    phone: ''
-  });
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+    phone: '',
+    marketingConsent: false
+  })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // 에러 초기화
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [emailChecked, setEmailChecked] = useState(false)
+  const [emailAvailable, setEmailAvailable] = useState(false)
 
-  const validateForm = () => {
-    const newErrors: {[key: string]: string} = {};
-    
-    if (!formData.email) {
-      newErrors.email = '이메일을 입력해주세요.';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = '올바른 이메일 형식을 입력해주세요.';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = '비밀번호를 입력해주세요.';
-    } else if (formData.password.length < 6) {
-      newErrors.password = '비밀번호는 6자 이상이어야 합니다.';
-    }
-    
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
-    }
-    
-    if (!formData.name) {
-      newErrors.name = '이름을 입력해주세요.';
-    }
-    
-    if (!formData.phone) {
-      newErrors.phone = '연락처를 입력해주세요.';
-    } else if (!/^010-\d{4}-\d{4}$/.test(formData.phone)) {
-      newErrors.phone = '올바른 연락처 형식을 입력해주세요. (010-0000-0000)';
-    }
-    
-    if (!agreedToTerms) {
-      newErrors.terms = '이용약관에 동의해주세요.';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  // 폼 검증 상태
+  const [validation, setValidation] = useState({
+    email: { valid: false, message: '' },
+    password: { valid: false, message: '' },
+    passwordConfirm: { valid: false, message: '' },
+    name: { valid: false, message: '' }
+  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-    
-    setIsLoading(true);
-    
+  // 이메일 형식 검증
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  // 비밀번호 강도 검증
+  const validatePassword = (password: string) => {
+    if (password.length < 8) {
+      return { valid: false, message: '비밀번호는 8자 이상이어야 합니다.' }
+    }
+    if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
+      return { valid: false, message: '비밀번호는 영문과 숫자를 포함해야 합니다.' }
+    }
+    return { valid: true, message: '사용 가능한 비밀번호입니다.' }
+  }
+
+  // 이름 검증
+  const validateName = (name: string) => {
+    if (name.length < 2) {
+      return { valid: false, message: '이름은 2글자 이상이어야 합니다.' }
+    }
+    return { valid: true, message: '' }
+  }
+
+  // 실시간 폼 검증
+  useEffect(() => {
+    setValidation({
+      email: {
+        valid: validateEmail(formData.email),
+        message: validateEmail(formData.email) ? '' : '올바른 이메일 형식을 입력해주세요.'
+      },
+      password: validatePassword(formData.password),
+      passwordConfirm: {
+        valid: passwordConfirm === formData.password && passwordConfirm.length > 0,
+        message: passwordConfirm === formData.password ? '' : '비밀번호가 일치하지 않습니다.'
+      },
+      name: validateName(formData.name)
+    })
+  }, [formData, passwordConfirm])
+
+  // 이메일 중복 확인
+  const handleEmailCheck = async () => {
+    if (!validation.email.valid) {
+      setError('올바른 이메일을 입력해주세요.')
+      return
+    }
+
+    setIsLoading(true)
     try {
-      // TODO: Supabase 회원가입 구현
-      console.log('회원가입 시도:', formData);
-      
-      // 임시 로직 - 추후 실제 인증으로 대체
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // 성공 시 로그인 페이지로 리다이렉트
-      alert('회원가입 성공! 로그인 페이지로 이동합니다. (임시)');
-      // router.push('/login');
-      
+      const exists = await checkEmailExists(formData.email)
+      setEmailAvailable(!exists)
+      setEmailChecked(true)
+
+      if (exists) {
+        setError('이미 사용중인 이메일입니다.')
+      } else {
+        setError('')
+        setSuccess('사용 가능한 이메일입니다.')
+      }
     } catch (error) {
-      console.error('회원가입 오류:', error);
-      setErrors({ general: '회원가입에 실패했습니다. 다시 시도해주세요.' });
+      setError('이메일 확인 중 오류가 발생했습니다.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
+
+  // 폼 제출 처리
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+
+    // 필수 필드 검증
+    if (!validation.email.valid || !validation.password.valid ||
+        !validation.passwordConfirm.valid || !validation.name.valid) {
+      setError('모든 필수 항목을 올바르게 입력해주세요.')
+      return
+    }
+
+    // 이메일 중복 확인 여부
+    if (!emailChecked || !emailAvailable) {
+      setError('이메일 중복 확인을 해주세요.')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const result = await signUpCustomer(formData)
+
+      if (result.success) {
+        setSuccess('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.')
+        setTimeout(() => {
+          router.push('/login?tab=customer')
+        }, 2000)
+      } else {
+        setError(result.error || '회원가입에 실패했습니다.')
+      }
+    } catch (error) {
+      setError('회원가입 중 오류가 발생했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 입력 필드 변경 처리
+  const handleInputChange = (field: keyof CustomerSignUpData, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+
+    // 이메일이 변경되면 중복 확인 상태 초기화
+    if (field === 'email') {
+      setEmailChecked(false)
+      setEmailAvailable(false)
+      setSuccess('')
+    }
+  }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-base-200 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
+        {/* 헤더 */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">회원가입</h1>
-          <p className="text-gray-600">
-            오소 바베큐장 계정을 만들어 편리하게 예약하세요
+          <h1 className="text-4xl font-bold text-base-content mb-2">
+            오소 바베큐장 회원가입
+          </h1>
+          <p className="text-base-content/70">
+            계정을 만들어 편리하게 예약하세요
           </p>
         </div>
 
-        <Card>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {errors.general && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <p className="text-sm text-red-600">{errors.general}</p>
+        {/* 메인 카드 */}
+        <div className="card w-full bg-base-100 shadow-xl">
+          <div className="card-body">
+            <form onSubmit={handleSubmit} className="space-y-6">
+
+              {/* 알림 메시지 */}
+              {error && (
+                <div className="alert alert-error">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {success && (
+                <div className="alert alert-success">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{success}</span>
+                </div>
+              )}
+
+              {/* 이메일 필드 */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">이메일 주소 *</span>
+                </label>
+                <div className="input-group">
+                  <input
+                    type="email"
+                    placeholder="example@email.com"
+                    className={`input input-bordered flex-1 ${
+                      formData.email && !validation.email.valid ? 'input-error' :
+                      validation.email.valid ? 'input-success' : ''
+                    }`}
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleEmailCheck}
+                    disabled={!validation.email.valid || isLoading}
+                    className={`btn ${emailAvailable && emailChecked ? 'btn-success' : 'btn-primary'}`}
+                  >
+                    {isLoading ? (
+                      <span className="loading loading-spinner loading-sm"></span>
+                    ) : emailChecked ? (
+                      emailAvailable ? '✓' : '✗'
+                    ) : (
+                      '중복확인'
+                    )}
+                  </button>
+                </div>
+                {formData.email && validation.email.message && (
+                  <label className="label">
+                    <span className="label-text-alt text-error">{validation.email.message}</span>
+                  </label>
+                )}
+                {emailChecked && (
+                  <label className="label">
+                    <span className={`label-text-alt ${emailAvailable ? 'text-success' : 'text-error'}`}>
+                      {emailAvailable ? '✓ 사용 가능한 이메일입니다' : '✗ 이미 사용중인 이메일입니다'}
+                    </span>
+                  </label>
+                )}
               </div>
-            )}
 
-            <Input
-              label="이메일"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              placeholder="example@email.com"
-              helperText="로그인 시 사용할 이메일입니다"
-              required
-            />
-
-            <Input
-              label="비밀번호"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              placeholder="6자 이상 입력하세요"
-              required
-            />
-
-            <Input
-              label="비밀번호 확인"
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              error={errors.confirmPassword}
-              placeholder="비밀번호를 다시 입력하세요"
-              required
-            />
-
-            <Input
-              label="이름"
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              error={errors.name}
-              placeholder="홍길동"
-              required
-            />
-
-            <Input
-              label="연락처"
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              error={errors.phone}
-              placeholder="010-0000-0000"
-              helperText="예약 확인 시 사용됩니다"
-              required
-            />
-
-            {/* 약관 동의 */}
-            <div className="space-y-3">
-              <div className="flex items-start">
+              {/* 비밀번호 필드 */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">비밀번호 *</span>
+                </label>
                 <input
-                  id="terms"
-                  type="checkbox"
-                  checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  type="password"
+                  placeholder="8자 이상, 영문+숫자 포함"
+                  className={`input input-bordered ${
+                    formData.password && !validation.password.valid ? 'input-error' :
+                    validation.password.valid ? 'input-success' : ''
+                  }`}
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  required
                 />
-                <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
-                  <span className="text-red-500">*</span> 
-                  <Link href="#" className="text-green-600 hover:text-green-800 underline">
-                    이용약관
-                  </Link>
-                  {' '}및{' '}
-                  <Link href="#" className="text-green-600 hover:text-green-800 underline">
-                    개인정보처리방침
-                  </Link>
-                  에 동의합니다
+                {formData.password && validation.password.message && (
+                  <label className="label">
+                    <span className={`label-text-alt ${validation.password.valid ? 'text-success' : 'text-error'}`}>
+                      {validation.password.message}
+                    </span>
+                  </label>
+                )}
+              </div>
+
+              {/* 비밀번호 확인 필드 */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">비밀번호 확인 *</span>
+                </label>
+                <input
+                  type="password"
+                  placeholder="비밀번호를 다시 입력하세요"
+                  className={`input input-bordered ${
+                    passwordConfirm && !validation.passwordConfirm.valid ? 'input-error' :
+                    validation.passwordConfirm.valid ? 'input-success' : ''
+                  }`}
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  required
+                />
+                {passwordConfirm && validation.passwordConfirm.message && (
+                  <label className="label">
+                    <span className="label-text-alt text-error">{validation.passwordConfirm.message}</span>
+                  </label>
+                )}
+              </div>
+
+              {/* 이름 필드 */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">이름 *</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="홍길동"
+                  className={`input input-bordered ${
+                    formData.name && !validation.name.valid ? 'input-error' :
+                    validation.name.valid ? 'input-success' : ''
+                  }`}
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  required
+                />
+                {formData.name && validation.name.message && (
+                  <label className="label">
+                    <span className="label-text-alt text-error">{validation.name.message}</span>
+                  </label>
+                )}
+              </div>
+
+              {/* 휴대폰 번호 필드 */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">휴대폰 번호</span>
+                  <span className="label-text-alt">예약 확인 시 사용됩니다</span>
+                </label>
+                <input
+                  type="tel"
+                  placeholder="010-1234-5678"
+                  className="input input-bordered"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                />
+              </div>
+
+              {/* 마케팅 수신 동의 */}
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">이벤트 및 프로모션 정보 수신에 동의 (선택)</span>
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-primary"
+                    checked={formData.marketingConsent}
+                    onChange={(e) => handleInputChange('marketingConsent', e.target.checked)}
+                  />
                 </label>
               </div>
-              {errors.terms && (
-                <p className="text-sm text-red-600">{errors.terms}</p>
-              )}
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              loading={isLoading}
-              disabled={isLoading || !agreedToTerms}
-            >
-              회원가입
-            </Button>
-          </form>
-
-          {/* 소셜 회원가입 */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+              {/* 제출 버튼 */}
+              <div className="form-control mt-8">
+                <button
+                  type="submit"
+                  disabled={isLoading || !validation.email.valid || !validation.password.valid ||
+                           !validation.passwordConfirm.valid || !validation.name.valid ||
+                           !emailChecked || !emailAvailable}
+                  className="btn btn-primary btn-lg"
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      처리중...
+                    </>
+                  ) : (
+                    '회원가입'
+                  )}
+                </button>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">또는</span>
-              </div>
-            </div>
 
-            <div className="mt-6 space-y-3">
-              <button className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <span className="mr-2">🟡</span>
+              {/* 이용약관 */}
+              <div className="text-center text-sm opacity-70">
+                회원가입 시{' '}
+                <Link href="#" className="link link-primary">이용약관</Link> 및{' '}
+                <Link href="#" className="link link-primary">개인정보처리방침</Link>에 동의하는 것으로 간주됩니다.
+              </div>
+
+            </form>
+
+            {/* 구분선 */}
+            <div className="divider">또는</div>
+
+            {/* 소셜 로그인 (미래 기능) */}
+            <div className="space-y-3">
+              <button className="btn btn-outline btn-block" disabled>
+                <span className="text-yellow-500">📱</span>
                 카카오로 시작하기
-              </button>
-              
-              <button className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <span className="mr-2">🟢</span>
-                네이버로 시작하기
+                <div className="badge badge-ghost">준비중</div>
               </button>
             </div>
-          </div>
 
-          {/* 링크 */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              이미 계정이 있으신가요?{' '}
-              <Link href="/login" className="text-green-600 hover:text-green-800 font-medium">
-                로그인
-              </Link>
-            </p>
+            {/* 로그인 링크 */}
+            <div className="text-center mt-6">
+              <p className="text-base-content/70">
+                이미 계정이 있으신가요?{' '}
+                <Link href="/login?tab=customer" className="link link-primary font-medium">
+                  로그인하기
+                </Link>
+              </p>
+            </div>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
-  );
+  )
 }

@@ -1,208 +1,283 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Button from '@/components/atoms/Button';
-import Input from '@/components/atoms/Input';
-import Card from '@/components/atoms/Card';
-import { API_ENDPOINTS } from '@/constants';
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { API_ENDPOINTS } from '@/constants'
+import { signInCustomer } from '@/lib/auth-customer'
+
+type UserType = 'customer' | 'admin'
 
 export default function LoginPage() {
-  const router = useRouter();
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [userType, setUserType] = useState<UserType>('customer')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
-  });
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
-  const [isLoading, setIsLoading] = useState(false);
+  })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // 에러 초기화
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+  // URL 파라미터에서 탭 상태 초기화
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'customer' || tab === 'admin') {
+      setUserType(tab)
     }
-  };
+  }, [searchParams])
 
+  // 폼 검증
   const validateForm = () => {
-    const newErrors: {[key: string]: string} = {};
-    
-    if (!formData.email) {
-      newErrors.email = '이메일을 입력해주세요.';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = '올바른 이메일 형식을 입력해주세요.';
+    if (!formData.email || !formData.password) {
+      setError('이메일과 비밀번호를 모두 입력해주세요.')
+      return false
     }
-    
-    if (!formData.password) {
-      newErrors.password = '비밀번호를 입력해주세요.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError('올바른 이메일 형식을 입력해주세요.')
+      return false
     }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    if (formData.password.length < 6) {
+      setError('비밀번호는 6자 이상이어야 합니다.')
+      return false
+    }
+    return true
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-
+  // 고객 로그인 처리
+  const handleCustomerLogin = async () => {
     try {
-      // 실제 로그인 API 호출
+      const result = await signInCustomer({
+        email: formData.email,
+        password: formData.password
+      })
+
+      if (result.success) {
+        setSuccess('로그인이 완료되었습니다! 홈페이지로 이동합니다.')
+        setTimeout(() => {
+          router.push('/')
+        }, 1500)
+      } else {
+        setError(result.error || '로그인에 실패했습니다.')
+      }
+    } catch (error) {
+      setError('로그인 중 오류가 발생했습니다.')
+    }
+  }
+
+  // 관리자 로그인 처리
+  const handleAdminLogin = async () => {
+    try {
       const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      });
+        body: JSON.stringify(formData),
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || '로그인에 실패했습니다.');
-      }
+      if (response.ok) {
+        // 로컬 스토리지에 토큰 저장
+        if (data.data.accessToken) {
+          localStorage.setItem('accessToken', data.data.accessToken)
+        }
+        if (data.data.refreshToken) {
+          localStorage.setItem('refreshToken', data.data.refreshToken)
+        }
+        if (data.data.user) {
+          localStorage.setItem('user', JSON.stringify(data.data.user))
+        }
 
-      // 로그인 성공
-      console.log('로그인 성공:', data);
-
-      // 로컬 스토리지에 토큰 저장
-      if (data.data.accessToken) {
-        localStorage.setItem('accessToken', data.data.accessToken);
-      }
-      if (data.data.refreshToken) {
-        localStorage.setItem('refreshToken', data.data.refreshToken);
-      }
-
-      // 사용자 정보 저장
-      if (data.data.user) {
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-      }
-
-      // 역할에 따른 리다이렉트
-      const userRole = data.data.user?.role;
-      if (userRole === 'ADMIN' || userRole === 'MANAGER') {
-        // 관리자는 대시보드로
-        router.push('/admin');
+        if (data.data.user.role === 'ADMIN' || data.data.user.role === 'MANAGER') {
+          setSuccess('관리자 로그인이 완료되었습니다! 관리자 페이지로 이동합니다.')
+          setTimeout(() => {
+            router.push('/admin')
+          }, 1500)
+        } else {
+          setError('관리자 권한이 없습니다.')
+        }
       } else {
-        // 일반 사용자는 메인 페이지로
-        router.push('/');
+        setError(data.error || '로그인에 실패했습니다.')
       }
-
     } catch (error) {
-      console.error('로그인 오류:', error);
-      setErrors({
-        general: error instanceof Error ? error.message : '로그인에 실패했습니다. 다시 시도해주세요.'
-      });
-    } finally {
-      setIsLoading(false);
+      setError('서버 오류가 발생했습니다.')
     }
-  };
+  }
+
+  // 폼 제출 처리
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+
+    if (!validateForm()) {
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      if (userType === 'customer') {
+        await handleCustomerLogin()
+      } else {
+        await handleAdminLogin()
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 탭 변경 처리
+  const handleTabChange = (newUserType: UserType) => {
+    setUserType(newUserType)
+    setError('')
+    setSuccess('')
+    // URL 파라미터 업데이트
+    const newUrl = new URL(window.location.href)
+    newUrl.searchParams.set('tab', newUserType)
+    window.history.replaceState({}, '', newUrl)
+  }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-base-200 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
+        {/* 헤더 */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">로그인</h1>
-          <p className="text-gray-600">
-            오소 바베큐장 계정으로 로그인하세요
+          <h1 className="text-4xl font-bold text-base-content mb-2">
+            오소 바베큐장 로그인
+          </h1>
+          <p className="text-base-content/70">
+            계정에 로그인하여 서비스를 이용하세요
           </p>
         </div>
 
-        <Card>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {errors.general && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <p className="text-sm text-red-600">{errors.general}</p>
+        {/* 메인 카드 */}
+        <div className="card w-full bg-base-100 shadow-xl">
+          <div className="card-body">
+            {/* 탭 */}
+            <div className="tabs tabs-boxed grid w-full grid-cols-2 mb-6">
+              <button
+                className={`tab ${userType === 'customer' ? 'tab-active' : ''}`}
+                onClick={() => handleTabChange('customer')}
+              >
+                고객 로그인
+              </button>
+              <button
+                className={`tab ${userType === 'admin' ? 'tab-active' : ''}`}
+                onClick={() => handleTabChange('admin')}
+              >
+                관리자 로그인
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* 알림 메시지 */}
+              {error && (
+                <div className="alert alert-error">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {success && (
+                <div className="alert alert-success">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{success}</span>
+                </div>
+              )}
+
+              {/* 이메일 필드 */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">이메일</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder={userType === 'admin' ? 'admin@osobbq.com' : 'example@email.com'}
+                  className="input input-bordered"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  required
+                />
               </div>
+
+              {/* 비밀번호 필드 */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">비밀번호</span>
+                </label>
+                <input
+                  type="password"
+                  placeholder="비밀번호를 입력하세요"
+                  className="input input-bordered"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  required
+                />
+                {userType === 'customer' && (
+                  <label className="label">
+                    <Link href="#" className="label-text-alt link link-hover">비밀번호를 잊으셨나요?</Link>
+                  </label>
+                )}
+              </div>
+
+              {/* 제출 버튼 */}
+              <div className="form-control mt-6">
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="btn btn-primary btn-lg"
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      로그인 중...
+                    </>
+                  ) : (
+                    `${userType === 'admin' ? '관리자' : '고객'} 로그인`
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {/* 회원가입 링크 (고객용만) */}
+            {userType === 'customer' && (
+              <>
+                <div className="divider">또는</div>
+                <div className="text-center space-y-3">
+                  <p className="text-base-content/70">
+                    아직 계정이 없으신가요?{' '}
+                    <Link href="/register" className="link link-primary font-medium">
+                      회원가입하기
+                    </Link>
+                  </p>
+
+                  <p className="text-sm">
+                    <Link href="/guest-reservation" className="link link-neutral">
+                      비회원으로 예약 조회하기
+                    </Link>
+                  </p>
+                </div>
+              </>
             )}
 
-            <Input
-              label="이메일"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              placeholder="example@email.com"
-              required
-            />
-
-            <Input
-              label="비밀번호"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              placeholder="비밀번호를 입력하세요"
-              required
-            />
-
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              loading={isLoading}
-              disabled={isLoading}
-            >
-              로그인
-            </Button>
-          </form>
-
-          {/* 소셜 로그인 */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">또는</span>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              <button className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <span className="mr-2">🟡</span>
-                카카오로 로그인
-              </button>
-              
-              <button className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <span className="mr-2">🟢</span>
-                네이버로 로그인
-              </button>
+            {/* 홈 링크 */}
+            <div className="text-center mt-4">
+              <Link href="/" className="link link-neutral">
+                홈으로 돌아가기
+              </Link>
             </div>
           </div>
-
-          {/* 링크 */}
-          <div className="mt-6 text-center space-y-2">
-            <p className="text-sm text-gray-600">
-              계정이 없으신가요?{' '}
-              <Link href="/register" className="text-green-600 hover:text-green-800 font-medium">
-                회원가입
-              </Link>
-            </p>
-            
-            <p className="text-sm">
-              <Link href="/guest-reservation" className="text-gray-500 hover:text-gray-700">
-                비회원으로 예약 조회하기
-              </Link>
-            </p>
-          </div>
-        </Card>
+        </div>
       </div>
     </div>
-  );
+  )
 }

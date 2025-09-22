@@ -808,8 +808,29 @@ export default function FacilitiesManagementPage() {
 
       {/* 시설 등록 모달 */}
       {showFacilityModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowFacilityModal(false);
+              setFacilityForm({
+                name: '',
+                description: '',
+                type: '',
+                capacity: 1,
+                weekday_price: 0,
+                weekend_price: 0,
+                is_active: true,
+                amenities: []
+              });
+              setAmenityInput('');
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">새 시설 등록</h2>
@@ -1017,8 +1038,26 @@ export default function FacilitiesManagementPage() {
 
       {/* 구역 등록 모달 */}
       {showSiteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSiteModal(false);
+              setSiteForm({
+                facility_id: '',
+                site_number: '',
+                name: '',
+                description: '',
+                capacity: 1,
+                is_active: true
+              });
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">새 구역 등록</h2>
@@ -1188,8 +1227,30 @@ export default function FacilitiesManagementPage() {
 
       {/* 시설 수정 모달 */}
       {showEditFacilityModal && selectedFacility && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowEditFacilityModal(false);
+              setSelectedFacility(null);
+              setFacilityForm({
+                name: '',
+                description: '',
+                type: '',
+                capacity: 1,
+                weekday_price: 0,
+                weekend_price: 0,
+                is_active: true,
+                amenities: []
+              });
+              setAmenityInput('');
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">시설 수정</h2>
@@ -1399,8 +1460,20 @@ export default function FacilitiesManagementPage() {
 
       {/* 구역 관리 모달 */}
       {showSiteManagementModal && selectedFacility && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSiteManagementModal(false);
+              setSelectedFacility(null);
+              setFacilityManagementSites([]);
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">

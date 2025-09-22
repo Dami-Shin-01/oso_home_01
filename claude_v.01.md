@@ -1382,10 +1382,30 @@ curl -X GET http://localhost:3000/api/admin/dashboard/tasks \
 - ✅ **시설/구역 관리**: 모달 기반 실시간 관리 시스템
 
 ---
-**마지막 업데이트**: 2025-09-19
-**프로젝트 상태**: Production Ready ✅ - 웹사이트 품질 최적화 완성
+**마지막 업데이트**: 2025-09-22
+**프로젝트 상태**: Production Ready ✅ - 히어로 섹션 영상 배경 추가 완성
 
-**최신 변경사항 (2025-09-19 저녁 - Playwright MCP를 통한 품질 최적화 완료)**:
+**최신 변경사항 (2025-09-22 - 히어로 섹션 영상 배경 추가)**:
+
+- ✅ **메인 페이지 히어로 섹션에 배경 영상 구현**
+  - 영상 자동 재생/반복/음소거로 배경에서 흐르는 방식 구현
+  - MP4, WebM 다중 형식 지원 및 폴백 처리
+  - 반응형 최적화: 데스크톱 영상 재생, 모바일 정적 배경
+  - 다크 오버레이 추가로 텍스트 가독성 확보
+
+- ✅ **사용자 경험 및 성능 최적화**
+  - 영상 재생/일시정지 컨트롤 버튼 제공
+  - `preload="metadata"`로 초기 로딩 최적화
+  - 영상 로드 실패 시 그라디언트 폴백 배경 처리
+  - 접근성 향상: `aria-label` 및 키보드 지원
+
+- ✅ **필요한 에셋 디렉토리 구조 생성**
+  - `/public/videos/` - 영상 파일 저장소
+  - `/public/images/` - 포스터 이미지 저장소
+  - 영상 파일 경로: `/videos/hero-video.mp4`, `/videos/hero-video.webm`
+  - 포스터 이미지: `/images/hero-poster.jpg`
+
+**이전 변경사항 (2025-09-19 저녁 - Playwright MCP를 통한 품질 최적화 완료)**:
 
 - ✅ **Playwright MCP 기반 종합 웹사이트 분석 완료**
   - 비동기화 문제, 클릭 동작 오류, 미구현 부분 전면 점검
@@ -1959,7 +1979,7 @@ ange/period 혼선)로 그래프가 깨지던 현상을 수정했습니다.
 
 #### 🚀 배포 메모
 - 신규 API는 Service Role 키 기반 권한을 사용하므로, 배포 전 Supabase RLS 정책이 최신 상태인지 재확인해야 합니다.
-- ESLint 기준으로 공용 테스트 스크립트(dmin-test.js, detailed-test.js, est-website.js)는 여전히 CommonJS 
+- ESLint 기준으로 공용 테스트 스크립트(admin-test.js, detailed-test.js, est-website.js)는 여전히 CommonJS 
 equire()를 사용 중이므로, 필요 시 후속 정리가 필요합니다.
 
 ### 🚧 관리자 문자열 정비·테스트 스크립트 개선 (진행 중)
@@ -1967,9 +1987,9 @@ equire()를 사용 중이므로, 필요 시 후속 정리가 필요합니다.
 #### 🎯 처리 현황
 1. **관리자 예약 화면 문자열 복구 완료**
    - src/app/admin/reservations/page.tsx 내 깨진 한글·특수문자를 모두 정리했습니다.
-   - 실데이터 매핑과 etchWithAdminAuth 동작을 다시 점검해 정상 노출을 확인했습니다.
+   - 실데이터 매핑과 FetchWithAdminAuth 동작을 다시 점검해 정상 노출을 확인했습니다.
 2. **테스트 스크립트의 CommonJS 예외 처리 적용**
-   - dmin-test.js, detailed-test.js, est-website.js 상단에 @typescript-eslint/no-require-imports 예외를 추가했습니다.
+   - admin-test.js, detailed-test.js, est-website.js 상단에 @typescript-eslint/no-require-imports 예외를 추가했습니다.
    - 
 o-console는 실제 사용이 없어 남은 경고를 추후 ESM 전환 또는 세부 예외 조정으로 해소할 예정입니다.
 3. **API 경고 정리는 후속 과제로 유지**

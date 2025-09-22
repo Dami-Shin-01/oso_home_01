@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+        .tab:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+        .tab:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>로그인 테스트</h1>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('customer')">고객 로그인</div>
+            <div class="tab" onclick="switchTab('admin')">관리자 로그인</div>
+        </div>
+
+        <div id="message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">이메일:</label>
+                <input type="email" id="email" required placeholder="example@email.com">
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호:</label>
+                <input type="password" id="password" required placeholder="비밀번호를 입력하세요">
+            </div>
+
+            <button type="submit" id="loginBtn">로그인</button>
+        </form>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="http://localhost:3006/login" target="_blank">실제 로그인 페이지 열기</a> |
+            <a href="http://localhost:3006/register" target="_blank">회원가입 페이지 열기</a>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'customer';
+
+        function switchTab(tab) {
+            currentTab = tab;
+
+            // 탭 스타일 업데이트
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 플레이스홀더 업데이트
+            const emailInput = document.getElementById('email');
+            if (tab === 'admin') {
+                emailInput.placeholder = 'admin@osobbq.com';
+            } else {
+                emailInput.placeholder = 'example@email.com';
+            }
+
+            // 폼 초기화
+            document.getElementById('loginForm').reset();
+            document.getElementById('message').innerHTML = '';
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+        }
+
+        async function handleCustomerLogin(email, password) {
+            // 고객 로그인은 Supabase 직접 호출
+            try {
+                const response = await fetch('https://nrblnfmknolgsqpcqite.supabase.co/auth/v1/token?grant_type=password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yYmxuZm1rbm9sZ3NxcGNxaXRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4Nzg3NDEsImV4cCI6MjA3MjQ1NDc0MX0.8zy753R0nLtzr7a4UdpD1JjVUnNzikSfQTbO2sqnrUo'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('고객 로그인 성공!', 'success');
+                    console.log('고객 로그인 데이터:', data);
+                } else {
+                    showMessage(`고객 로그인 실패: ${data.error_description || data.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`고객 로그인 오류: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleAdminLogin(email, password) {
+            // 관리자 로그인은 기존 API 사용
+            try {
+                const response = await fetch('http://localhost:3006/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(`관리자 로그인 성공! 역할: ${data.data.user.role}`, 'success');
+                    console.log('관리자 로그인 데이터:', data);
+                } else {
+                    showMessage(`관리자 로그인 실패: ${data.error || data.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`관리자 로그인 오류: ${error.message}`, 'error');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = '로그인 중...';
+
+            try {
+                if (currentTab === 'customer') {
+                    await handleCustomerLogin(email, password);
+                } else {
+                    await handleAdminLogin(email, password);
+                }
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '로그인';
+            }
+        });
+
+        // 관리자 계정 정보 미리 입력
+        document.querySelector('.tab:last-child').addEventListener('click', () => {
+            setTimeout(() => {
+                document.getElementById('email').value = 'admin@osobbq.com';
+                document.getElementById('password').value = 'Admin123!@#';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
