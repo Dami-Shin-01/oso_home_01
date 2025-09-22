@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { API_ENDPOINTS } from '@/constants'
@@ -8,7 +8,7 @@ import { signInCustomer } from '@/lib/auth-customer'
 
 type UserType = 'customer' | 'admin'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [userType, setUserType] = useState<UserType>('customer')
@@ -279,5 +279,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[80vh] bg-base-200 flex items-center justify-center"><span className="loading loading-spinner loading-lg"></span></div>}>
+      <LoginForm />
+    </Suspense>
   )
 }

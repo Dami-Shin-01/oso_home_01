@@ -293,6 +293,130 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          id: string
+          email: string
+          password_hash: string | null
+          name: string
+          phone: string | null
+          created_at: string
+          updated_at: string
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          email: string
+          password_hash?: string | null
+          name: string
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          email?: string
+          password_hash?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          is_active?: boolean
+        }
+        Relationships: []
+      }
+      customer_profiles: {
+        Row: {
+          id: string
+          customer_id: string
+          birth_date: string | null
+          address: string | null
+          marketing_consent: boolean
+          preferred_contact: string
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          birth_date?: string | null
+          address?: string | null
+          marketing_consent?: boolean
+          preferred_contact?: string
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          birth_date?: string | null
+          address?: string | null
+          marketing_consent?: boolean
+          preferred_contact?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      reservation_payments: {
+        Row: {
+          id: string
+          reservation_id: string
+          amount: number
+          payment_method: string
+          payment_status: string
+          transaction_id: string | null
+          paid_at: string | null
+          refunded_at: string | null
+          refund_amount: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          reservation_id: string
+          amount: number
+          payment_method: string
+          payment_status?: string
+          transaction_id?: string | null
+          paid_at?: string | null
+          refunded_at?: string | null
+          refund_amount?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          reservation_id?: string
+          amount?: number
+          payment_method?: string
+          payment_status?: string
+          transaction_id?: string | null
+          paid_at?: string | null
+          refunded_at?: string | null
+          refund_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_payments_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -337,6 +461,18 @@ export type NoticeUpdate = Database['public']['Tables']['notices']['Update']
 export type FaqRow = Database['public']['Tables']['faqs']['Row']
 export type FaqInsert = Database['public']['Tables']['faqs']['Insert']
 export type FaqUpdate = Database['public']['Tables']['faqs']['Update']
+
+export type CustomerRow = Database['public']['Tables']['customers']['Row']
+export type CustomerInsert = Database['public']['Tables']['customers']['Insert']
+export type CustomerUpdate = Database['public']['Tables']['customers']['Update']
+
+export type CustomerProfileRow = Database['public']['Tables']['customer_profiles']['Row']
+export type CustomerProfileInsert = Database['public']['Tables']['customer_profiles']['Insert']
+export type CustomerProfileUpdate = Database['public']['Tables']['customer_profiles']['Update']
+
+export type ReservationPaymentRow = Database['public']['Tables']['reservation_payments']['Row']
+export type ReservationPaymentInsert = Database['public']['Tables']['reservation_payments']['Insert']
+export type ReservationPaymentUpdate = Database['public']['Tables']['reservation_payments']['Update']
 
 // Extended types for API responses and complex queries
 export interface ReservationWithDetails extends ReservationRow {
