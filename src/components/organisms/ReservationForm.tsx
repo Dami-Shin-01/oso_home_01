@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Calendar from '@/components/molecules/Calendar';
 import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
 import Card from '@/components/atoms/Card';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ReservationData {
   facility_id: string;
@@ -19,17 +20,27 @@ interface ReservationData {
   special_requests?: string;
 }
 
+interface Facility {
+  id: string;
+  name: string;
+  type: string;
+  weekday_price: number;
+  weekend_price: number;
+  amenities?: string[];
+}
+
+interface Site {
+  id: string;
+  name: string;
+  type: string;
+  capacity: number;
+}
+
 interface ReservationFormProps {
-  isLoggedIn?: boolean;
-  userId?: string;
   onSubmit?: (data: ReservationData) => void;
 }
 
-export default function ReservationForm({
-  isLoggedIn = false,
-  userId,
-  onSubmit
-}: ReservationFormProps) {
+export default function ReservationForm({ onSubmit }: ReservationFormProps) {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<number[]>([]);
   const [selectedFacilityId, setSelectedFacilityId] = useState<string>('');
@@ -41,12 +52,45 @@ export default function ReservationForm({
   });
   const [specialRequests, setSpecialRequests] = useState('');
   const [loading, setLoading] = useState(false);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [facilityLoading, setFacilityLoading] = useState(true);
 
-  // 가격 계산 (임시 - 실제로는 시설별 가격을 가져와야 함)
+  const { user, isAuthenticated } = useAuth();
+
+  // 실제 시설 데이터 로드
+  useEffect(() => {
+    fetchFacilities();
+  }, []);
+
+  const fetchFacilities = async () => {
+    try {
+      const response = await fetch('/api/facilities');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setFacilities(result.data.facilities || []);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch facilities:', error);
+    } finally {
+      setFacilityLoading(false);
+    }
+  };
+
+  // 실제 가격 계산 (시설별 주중/주말 가격 적용)
   const calculateTotal = () => {
-    const basePrice = 50000; // 기본 가격
-    const timeSlotPrice = 20000; // 시간대별 추가 가격
-    return basePrice + (selectedTimeSlots.length - 1) * timeSlotPrice;
+    if (!selectedFacilityId || selectedTimeSlots.length === 0) return 0;
+
+    const facility = facilities.find(f => f.id === selectedFacilityId);
+    if (!facility) return 0;
+
+    const selectedDateObj = new Date(selectedDate);
+    const isWeekend = selectedDateObj.getDay() === 0 || selectedDateObj.getDay() === 6;
+    const basePrice = isWeekend ? facility.weekend_price : facility.weekday_price;
+
+    return basePrice * selectedTimeSlots.length;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +101,7 @@ export default function ReservationForm({
       return;
     }
 
-    if (!isLoggedIn && (!guestInfo.name || !guestInfo.phone)) {
+    if (!isAuthenticated && (!guestInfo.name || !guestInfo.phone)) {
       alert('이름과 연락처를 입력해주세요.');
       return;
     }
@@ -74,15 +118,18 @@ export default function ReservationForm({
         special_requests: specialRequests || undefined
       };
 
-      if (isLoggedIn && userId) {
-        reservationData.user_id = userId;
+      let apiEndpoint = '/api/reservations'; // 게스트 예약용
+
+      if (isAuthenticated && user) {
+        reservationData.user_id = user.id;
+        apiEndpoint = '/api/customer/reservations'; // 고객 예약용
       } else {
         reservationData.guest_name = guestInfo.name;
         reservationData.guest_phone = guestInfo.phone;
         reservationData.guest_email = guestInfo.email || undefined;
       }
 
-      const response = await fetch('/api/reservations', {
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,11 +139,19 @@ export default function ReservationForm({
 
       const result = await response.json();
 
-      if (response.ok) {
-        alert('예약이 완료되었습니다!');
+      if (response.ok && result.success) {
+        alert(result.message || '예약이 완료되었습니다!');
+
+        // 무통장 입금 안내 표시 (인증된 사용자의 경우)
+        if (isAuthenticated && result.data.reservation.payment_info) {
+          const paymentInfo = result.data.reservation.payment_info;
+          alert(`예약이 완료되었습니다!\n\n입금 정보:\n계좌: ${paymentInfo.bank_account}\n금액: ${paymentInfo.amount.toLocaleString()}원\n\n입금 확인 후 예약이 확정됩니다.`);
+        }
+
         if (onSubmit) {
           onSubmit(reservationData);
         }
+
         // 폼 초기화
         setSelectedDate('');
         setSelectedTimeSlots([]);
@@ -105,7 +160,9 @@ export default function ReservationForm({
         setGuestInfo({ name: '', phone: '', email: '' });
         setSpecialRequests('');
       } else {
-        alert(result.error || '예약에 실패했습니다.');
+        // API 에러 메시지 처리
+        const errorMessage = result.error?.message || result.message || '예약에 실패했습니다.';
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('예약 요청 실패:', error);
@@ -192,7 +249,7 @@ export default function ReservationForm({
             </Card>
 
             {/* 예약자 정보 입력 */}
-            {!isLoggedIn && (
+            {!isAuthenticated && (
               <Card className="p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">예약자 정보</h3>
 

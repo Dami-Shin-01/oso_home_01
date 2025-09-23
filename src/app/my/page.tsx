@@ -1,86 +1,140 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Card from '@/components/atoms/Card';
 import { RESERVATION_STATUS, PAYMENT_STATUS, TIME_SLOT_LABELS } from '@/constants';
+import { useAuth } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
-// 임시 데이터 - 추후 실제 API로 대체
-const mockUser = {
-  id: '1',
-  name: '홍길동',
-  email: 'hong@example.com',
-  phone: '010-1234-5678',
-  created_at: '2024-08-15'
-};
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  created_at: string;
+  customer_profiles?: {
+    address?: string;
+    marketing_consent: boolean;
+    preferred_contact?: string;
+    notes?: string;
+  }[];
+}
 
-const mockReservations = [
-  {
-    id: 'RES001',
-    facility_name: '프라이빗룸 A',
-    site_name: 'A-1',
-    reservation_date: '2024-09-20',
-    time_slots: [2],
-    total_amount: 90000,
-    status: RESERVATION_STATUS.CONFIRMED,
-    payment_status: PAYMENT_STATUS.COMPLETED,
-    created_at: '2024-09-10'
-  },
-  {
-    id: 'RES002', 
-    facility_name: '텐트동 B',
-    site_name: 'B-3',
-    reservation_date: '2024-09-25',
-    time_slots: [1, 2],
-    total_amount: 150000,
-    status: RESERVATION_STATUS.PENDING,
-    payment_status: PAYMENT_STATUS.WAITING,
-    created_at: '2024-09-11'
-  },
-  {
-    id: 'RES003',
-    facility_name: 'VIP동',
-    site_name: 'VIP-1',
-    reservation_date: '2024-08-15',
-    time_slots: [3],
-    total_amount: 120000,
-    status: RESERVATION_STATUS.CONFIRMED,
-    payment_status: PAYMENT_STATUS.COMPLETED,
-    created_at: '2024-08-10'
-  }
-];
+interface Reservation {
+  id: string;
+  facility_id: string;
+  site_id: string;
+  reservation_date: string;
+  time_slots: number[];
+  total_amount: number;
+  status: string;
+  special_requests?: string;
+  created_at: string;
+  facilities?: {
+    name: string;
+    type: string;
+  };
+  sites?: {
+    name: string;
+    type: string;
+  };
+  reservation_payments?: {
+    payment_method: string;
+    amount: number;
+    status: string;
+  }[];
+}
 
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
-  const [user] = useState(mockUser);
-  const [reservations] = useState(mockReservations);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [reservationsLoading, setReservationsLoading] = useState(true);
+  const { user } = useAuth();
+
+  // 데이터 로드
+  useEffect(() => {
+    if (user) {
+      fetchReservations();
+    }
+  }, [user]);
+
+  const fetchReservations = async () => {
+    try {
+      const response = await fetch('/api/customer/reservations');
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setReservations(result.data.reservations || []);
+      } else {
+        console.error('Reservations fetch failed:', result.error);
+      }
+    } catch (error) {
+      console.error('Reservations fetch error:', error);
+    } finally {
+      setReservationsLoading(false);
+    }
+  };
+
 
   // 예약 필터링
   const today = new Date();
-  const upcomingReservations = reservations.filter(
-    r => new Date(r.reservation_date) >= today
-  );
-  const pastReservations = reservations.filter(
-    r => new Date(r.reservation_date) < today
-  );
+  today.setHours(0, 0, 0, 0);
 
-  const getStatusBadge = (status: string, paymentStatus: string) => {
-    if (status === RESERVATION_STATUS.PENDING && paymentStatus === PAYMENT_STATUS.WAITING) {
+  const upcomingReservations = reservations.filter(r => {
+    const reservationDate = new Date(r.reservation_date);
+    reservationDate.setHours(0, 0, 0, 0);
+    return reservationDate >= today;
+  });
+
+  const pastReservations = reservations.filter(r => {
+    const reservationDate = new Date(r.reservation_date);
+    reservationDate.setHours(0, 0, 0, 0);
+    return reservationDate < today;
+  });
+
+  // 예약 취소 핸들러
+  const handleCancelReservation = async (reservationId: string) => {
+    if (!confirm('정말로 이 예약을 취소하시겠습니까?')) return;
+
+    try {
+      const response = await fetch(`/api/customer/reservations/${reservationId}`, {
+        method: 'DELETE'
+      });
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert(result.message || '예약이 취소되었습니다.');
+        await fetchReservations(); // 목록 새로고침
+      } else {
+        alert(result.error?.message || '예약 취소에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Cancellation error:', error);
+      alert('예약 취소 중 오류가 발생했습니다.');
+    }
+  };
+
+  const getStatusBadge = (status: string, reservation: Reservation) => {
+    const paymentStatus = reservation.reservation_payments?.[0]?.status;
+
+    if (status === 'PENDING') {
       return <span className="px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-800 rounded-full">입금 대기</span>;
     }
-    if (status === RESERVATION_STATUS.CONFIRMED) {
+    if (status === 'CONFIRMED') {
       return <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">예약 확정</span>;
     }
-    if (status === RESERVATION_STATUS.CANCELLED) {
+    if (status === 'CANCELLED') {
       return <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">취소됨</span>;
     }
     return <span className="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">알 수 없음</span>;
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-8">마이페이지</h1>
+    <ProtectedRoute>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <h1 className="text-3xl font-bold mb-8">마이페이지</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* 사용자 정보 */}
@@ -103,26 +157,37 @@ export default function MyPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">가입일:</span>
-                <span className="font-medium">{user.created_at}</span>
+                <span className="font-medium">{new Date(user.created_at).toLocaleDateString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">총 예약:</span>
                 <span className="font-medium">{reservations.length}건</span>
               </div>
+              {user.customer_profiles?.[0]?.address && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">주소:</span>
+                  <span className="font-medium text-xs">{user.customer_profiles[0].address}</span>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 space-y-2">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => alert('회원정보 수정 기능 구현 예정')}
-              >
-                회원정보 수정
-              </Button>
+              <Link href="/my/profile/edit">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                >
+                  회원정보 수정
+                </Button>
+              </Link>
               <Button
                 variant="danger"
                 className="w-full"
-                onClick={() => alert('회원탈퇴 기능 구현 예정')}
+                onClick={() => {
+                  if (confirm('정말로 회원탈퇴를 하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                    alert('회원탈퇴 기능은 고객센터를 통해 진행해주세요.');
+                  }
+                }}
               >
                 회원탈퇴
               </Button>
@@ -165,87 +230,117 @@ export default function MyPage() {
 
             {/* 예약 목록 */}
             <div className="space-y-4">
-              {(activeTab === 'upcoming' ? upcomingReservations : pastReservations).map((reservation) => (
-                <div key={reservation.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-lg">{reservation.facility_name}</h4>
-                        {getStatusBadge(reservation.status, reservation.payment_status)}
-                      </div>
-                      <p className="text-gray-600 text-sm">예약번호: {reservation.id}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-lg">
-                        {reservation.total_amount.toLocaleString()}원
-                      </p>
-                      <p className="text-gray-500 text-sm">
-                        {reservation.created_at} 예약
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">이용일:</span>
-                      <p className="font-medium">{reservation.reservation_date}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">시간:</span>
-                      <p className="font-medium">
-                        {reservation.time_slots.map(slot => TIME_SLOT_LABELS[slot]).join(', ')}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">장소:</span>
-                      <p className="font-medium">{reservation.site_name}</p>
-                    </div>
-                  </div>
-
-                  {/* 액션 버튼 */}
-                  <div className="mt-4 flex gap-2">
-                    <Link
-                      href={`/my/reservations/${reservation.id}`}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                    >
-                      상세 보기
-                    </Link>
-                    
-                    {activeTab === 'upcoming' && reservation.status === RESERVATION_STATUS.CONFIRMED && (
-                      <>
-                        <span className="text-gray-300">|</span>
-                        <button
-                          onClick={() => alert('예약 변경 기능 구현 예정')}
-                          className="text-green-600 hover:text-green-800 text-sm font-medium"
-                        >
-                          예약 변경
-                        </button>
-                        <span className="text-gray-300">|</span>
-                        <button
-                          onClick={() => alert('예약 취소 기능 구현 예정')}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                          취소 문의
-                        </button>
-                      </>
-                    )}
-
-                    {activeTab === 'upcoming' && reservation.status === RESERVATION_STATUS.PENDING && (
-                      <>
-                        <span className="text-gray-300">|</span>
-                        <button
-                          onClick={() => alert('입금 안내 확인')}
-                          className="text-orange-600 hover:text-orange-800 text-sm font-medium"
-                        >
-                          입금 안내
-                        </button>
-                      </>
-                    )}
+              {reservationsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="text-center">
+                    <div className="loading loading-spinner loading-md mb-2"></div>
+                    <p className="text-gray-600">예약 내역을 불러오는 중...</p>
                   </div>
                 </div>
-              ))}
+              ) : (
+                (activeTab === 'upcoming' ? upcomingReservations : pastReservations).map((reservation) => (
+                  <div key={reservation.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-lg">
+                            {reservation.facilities?.name || '시설명 없음'}
+                          </h4>
+                          {getStatusBadge(reservation.status, reservation)}
+                        </div>
+                        <p className="text-gray-600 text-sm">예약번호: {reservation.id}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-lg">
+                          {reservation.total_amount.toLocaleString()}원
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                          {new Date(reservation.created_at).toLocaleDateString()} 예약
+                        </p>
+                      </div>
+                    </div>
 
-              {(activeTab === 'upcoming' ? upcomingReservations : pastReservations).length === 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">이용일:</span>
+                        <p className="font-medium">{reservation.reservation_date}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">시간:</span>
+                        <p className="font-medium">
+                          {reservation.time_slots.map(slot => TIME_SLOT_LABELS[slot] || `${slot}시간대`).join(', ')}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">장소:</span>
+                        <p className="font-medium">{reservation.sites?.name || '사이트명 없음'}</p>
+                      </div>
+                    </div>
+
+                    {/* 특별 요청사항 */}
+                    {reservation.special_requests && (
+                      <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
+                        <span className="text-gray-600">특별 요청사항: </span>
+                        <span className="text-gray-800">{reservation.special_requests}</span>
+                      </div>
+                    )}
+
+                    {/* 액션 버튼 */}
+                    <div className="mt-4 flex gap-2">
+                      <Link
+                        href={`/my/reservations/${reservation.id}`}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        상세 보기
+                      </Link>
+
+                      {activeTab === 'upcoming' && reservation.status !== 'CANCELLED' && (
+                        <>
+                          <span className="text-gray-300">|</span>
+                          <button
+                            onClick={() => {
+                              const reservationDate = new Date(reservation.reservation_date);
+                              const today = new Date();
+                              const diffDays = Math.ceil((reservationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                              if (diffDays <= 1) {
+                                alert('예약일 당일 및 이후에는 취소할 수 없습니다.');
+                                return;
+                              }
+
+                              handleCancelReservation(reservation.id);
+                            }}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            예약 취소
+                          </button>
+                        </>
+                      )}
+
+                      {activeTab === 'upcoming' && reservation.status === 'PENDING' && (
+                        <>
+                          <span className="text-gray-300">|</span>
+                          <button
+                            onClick={() => {
+                              const paymentInfo = reservation.reservation_payments?.[0];
+                              if (paymentInfo) {
+                                alert(`입금 안내\n\n계좌: ${process.env.NEXT_PUBLIC_BANK_ACCOUNT || '문의 바랍니다'}\n금액: ${paymentInfo.amount.toLocaleString()}원\n\n입금 확인 후 예약이 확정됩니다.`);
+                              } else {
+                                alert('결제 정보를 찾을 수 없습니다.');
+                              }
+                            }}
+                            className="text-orange-600 hover:text-orange-800 text-sm font-medium"
+                          >
+                            입금 안내
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+
+              {!reservationsLoading && (activeTab === 'upcoming' ? upcomingReservations : pastReservations).length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-gray-500 mb-4">
                     {activeTab === 'upcoming' ? '다가오는 예약이' : '지난 예약이'} 없습니다.
@@ -261,6 +356,7 @@ export default function MyPage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
