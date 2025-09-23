@@ -66,8 +66,12 @@ export function validateEnv(): void {
   }
 }
 
-// 앱 시작 시 환경 변수 검증 실행
-if (typeof window === 'undefined') {
-  // 서버 사이드에서만 실행
-  validateEnv();
+// 앱 시작 시 환경 변수 검증 실행 (조건부)
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'development') {
+  // 서버 사이드에서만 실행 (개발 모드 제외)
+  try {
+    validateEnv();
+  } catch (error) {
+    console.warn('Environment validation warning:', error);
+  }
 }
