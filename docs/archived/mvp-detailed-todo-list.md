@@ -11,33 +11,16 @@
 
 ### 🗓️ Day 1-2: 데이터베이스 설계 및 구축
 
-#### ✅ 1.1 고객 테이블 설계
-- [ ] **customers 테이블 생성**
-  ```sql
-  CREATE TABLE customers (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20),
-    birth_date DATE,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    is_active BOOLEAN DEFAULT true
-  );
-  ```
-- [ ] **customer_profiles 테이블 생성**
-  ```sql
-  CREATE TABLE customer_profiles (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
-    address TEXT,
-    marketing_consent BOOLEAN DEFAULT false,
-    preferred_contact VARCHAR(20) DEFAULT 'email',
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
-  );
-  ```
+#### ✅ 1.1 고객 테이블 설계 - **✅ 완룼됨**
+- [x] **통합 users 테이블 구조 구현** ✅
+  - 기존 users 테이블에 CUSTOMER role 추가
+  - ADMIN, MANAGER, CUSTOMER 역할 기반 통합 구조
+  - USER → CUSTOMER 마이그레이션 완료
+
+- [x] **customer_profiles 테이블 설계 완룼** ✅
+  - users 테이블과 연결되는 고객 추가 정보 테이블
+  - RLS 정책 설정 완료
+  - 인덱스 및 제약조건 설정 완료
 
 #### ✅ 1.2 예약 시스템 테이블 설계
 - [ ] **reservations 테이블 생성**
@@ -112,9 +95,9 @@
   }
   ```
 
-#### ✅ 2.2 회원가입 페이지 구현
-- [ ] **페이지 생성**: `src/app/register/page.tsx`
-- [ ] **회원가입 폼 컴포넌트**
+#### ✅ 2.2 회원가입 페이지 구현 - **⚠️ 대기 중**
+- [ ] **페이지 생성**: `src/app/register/page.tsx` (다음 단계)
+- [ ] **회원가입 폼 컴포넌트** (다음 단계)
   - [ ] 이메일 입력 필드 (validation 포함)
   - [ ] 비밀번호 입력 필드 (강도 체크)
   - [ ] 비밀번호 확인 필드
@@ -122,6 +105,8 @@
   - [ ] 휴대폰 번호 입력 필드
   - [ ] 마케팅 수신 동의 체크박스
   - [ ] 회원가입 버튼
+
+**현재 상태**: 백엔드 API 준비 완료, 프론트엔드 UI 구현 대기 중
 
 - [ ] **폼 검증 로직**
   - [ ] 이메일 형식 검증
@@ -141,13 +126,13 @@
   - [ ] "고객 로그인" 탭
   - [ ] "관리자 로그인" 탭 (기존 유지)
 
-- [ ] **고객 로그인 폼**
-  - [ ] 이메일 입력 필드
-  - [ ] 비밀번호 입력 필드
-  - [ ] "로그인 상태 유지" 체크박스
-  - [ ] 로그인 버튼
-  - [ ] "회원가입" 링크
-  - [ ] "비밀번호 찾기" 링크
+- [ ] **고객 로그인 폼** (DaisyUI 컴포넌트 사용)
+  - [ ] 이메일 입력 필드 (DaisyUI input)
+  - [ ] 비밀번호 입력 필드 (DaisyUI input)
+  - [ ] "로그인 상태 유지" 체크박스 (DaisyUI checkbox)
+  - [ ] 로그인 버튼 (DaisyUI btn-primary)
+  - [ ] "회원가입" 링크 (DaisyUI link)
+  - [ ] "비밀번호 찾기" 링크 (DaisyUI link)
 
 - [ ] **로그인 처리 로직**
   - [ ] Supabase Auth 로그인 연동
@@ -158,22 +143,22 @@
 ### 🗓️ Day 5-7: 고객 인터페이스 기본 구조
 
 #### ✅ 3.1 고객용 레이아웃 컴포넌트
-- [ ] **고객용 헤더 컴포넌트**: `src/components/customer/Header.tsx`
-  - [ ] 로고
-  - [ ] 네비게이션 메뉴 (홈, 시설, 예약내역, 마이페이지)
-  - [ ] 로그인/로그아웃 버튼
-  - [ ] 사용자 프로필 드롭다운
+- [ ] **고객용 헤더 컴포넌트**: `src/components/customer/Header.tsx` (DaisyUI navbar)
+  - [ ] 로고 (DaisyUI navbar-start)
+  - [ ] 네비게이션 메뉴 (홈, 시설, 예약내역, 마이페이지) (DaisyUI navbar-center)
+  - [ ] 로그인/로그아웃 버튼 (DaisyUI navbar-end)
+  - [ ] 사용자 프로필 드롭다운 (DaisyUI dropdown)
 
-- [ ] **고객용 푸터 컴포넌트**: `src/components/customer/Footer.tsx`
-  - [ ] 연락처 정보
-  - [ ] 이용약관 링크
-  - [ ] 개인정보처리방침 링크
-  - [ ] SNS 링크
+- [ ] **고객용 푸터 컴포넌트**: `src/components/customer/Footer.tsx` (DaisyUI footer)
+  - [ ] 연락처 정보 (DaisyUI footer 레이아웃)
+  - [ ] 이용약관 링크 (DaisyUI link)
+  - [ ] 개인정보처리방침 링크 (DaisyUI link)
+  - [ ] SNS 링크 (DaisyUI social icons)
 
-- [ ] **고객용 레이아웃**: `src/components/customer/Layout.tsx`
-  - [ ] 헤더, 메인 콘텐츠, 푸터 구조
-  - [ ] 인증 상태 체크
-  - [ ] 로딩 상태 처리
+- [ ] **고객용 레이아웃**: `src/components/customer/Layout.tsx` (DaisyUI 레이아웃)
+  - [ ] 헤더, 메인 콘텐츠, 푸터 구조 (DaisyUI drawer 고려)
+  - [ ] 인증 상태 체크 (DaisyUI loading)
+  - [ ] 로딩 상태 처리 (DaisyUI loading 스피너)
 
 #### ✅ 3.2 인증 미들웨어 설정
 - [ ] **미들웨어 파일 업데이트**: `middleware.ts`
@@ -487,10 +472,16 @@ export const customerSignUpSchema = z.object({
 
 ## 📋 완료 체크리스트
 
-### Week 1 완료 기준
-- [ ] 고객 회원가입/로그인 완전 작동
-- [ ] 데이터베이스 테이블 모두 생성
-- [ ] 기본 인증 플로우 테스트 완료
+### Week 1 완료 기준 (백엔드) - **✅ 완료됨**
+- [x] 고객 회원가입/로그인 백엔드 완전 작동 ✅
+- [x] 데이터베이스 통합 구조 모두 생성 ✅
+- [x] TypeScript 타입 시스템 완전 작동 ✅
+- [x] 기본 인증 플로우 빌드 성공 ✅
+
+### Week 1 다음 기준 (프론트엔드) - **대기 중**
+- [ ] 고객 회원가입/로그인 UI 페이지 구현
+- [ ] 고객용 레이아웃 컴포넌트 구현
+- [ ] 기본 인증 플로우 UI 테스트 완료
 
 ### Week 2 완료 기준
 - [ ] 시설 목록 페이지 완전 작동
@@ -510,9 +501,10 @@ export const customerSignUpSchema = z.object({
 
 ---
 
-**작성일**: 2025-09-22
+**작성일**: 2025-09-23 (업데이트)
 **목표 완료일**: 2025-10-13 (3주 후)
 **담당**: 개발팀
-**상태**: 구현 준비 완료 ✅
+**상태**: 1단계 백엔드 완료, 2단계 UI 개발 시작 준비 ✅
 
-> 💡 **다음 즉시 시작**: Day 1-2의 데이터베이스 설계부터 시작하여 순차적으로 진행
+> 💡 **다음 즉시 시작**: 고객 UI 페이지 구현 (회원가입/로그인)
+> ✅ **완료된 작업**: 데이터베이스 통합 구조, 인증 시스템 백엔드, TypeScript 타입 시스템

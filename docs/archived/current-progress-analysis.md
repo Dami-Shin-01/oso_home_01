@@ -1,6 +1,6 @@
 # 📊 현재 진행 상황 분석 - MVP 체크리스트 업데이트
 
-## 🎯 분석 날짜: 2025-09-22
+## 🎯 분석 날짜: 2025-09-23 (업데이트)
 
 ## 📋 `claude_v.01.md` 기반 현재 완료 상황
 
@@ -13,16 +13,16 @@
 - [x] **Tailwind CSS + DaisyUI** 설정 완료
 - [x] **GitHub + Vercel 자동 배포** 완료
 
-#### 🗃️ 2. 데이터베이스 스키마 - **80% 완료**
-- [x] **users 테이블** 생성 완료 ✅
+#### 🗃️ 2. 데이터베이스 스키마 - **100% 완료**
+- [x] **users 테이블** 생성 완료 (통합 구조) ✅
 - [x] **facilities 테이블** 생성 완료 ✅
 - [x] **sites 테이블** 생성 완료 ✅
 - [x] **reservations 테이블** 생성 완료 ✅
 - [x] **notices 테이블** 생성 완료 ✅
 - [x] **faqs 테이블** 생성 완료 ✅
-- [ ] ❌ **customers 테이블** (고객 전용) - 미생성
-- [ ] ❌ **customer_profiles 테이블** - 미생성
-- [ ] ❌ **reservation_payments 테이블** - 미생성
+- [x] **customer_profiles 테이블** 설계 완료 (통합 구조) ✅
+- [x] **reservation_payments 테이블** 설계 완료 ✅
+- [x] **통합 고객 시스템 마이그레이션** 완료 ✅
 
 #### 🔐 3. 관리자 인증 시스템 - **100% 완료**
 - [x] **관리자 로그인** 완전 작동 ✅
@@ -51,15 +51,19 @@
 
 ### 📅 **Week 1 작업 상태 (Day 1-7)**
 
-#### ✅ 1.1 고객 테이블 설계 - **❌ 미완료 (0%)**
-**현재 상황**: 기존 `users` 테이블이 있지만 고객 전용 설계 필요
-- [ ] ❌ customers 테이블 생성 - **즉시 필요**
-- [ ] ❌ customer_profiles 테이블 생성 - **즉시 필요**
-- [ ] ❌ reservation_payments 테이블 생성 - **즉시 필요**
+#### ✅ 1.1 고객 테이블 설계 - **✅ 완료 (100%)**
+**현재 상황**: 통합 고객 시스템 구축 완료
+- [x] ✅ users 테이블 통합 구조 구현 (ADMIN, MANAGER, CUSTOMER role)
+- [x] ✅ customer_profiles 테이블 설계 완료
+- [x] ✅ reservation_payments 테이블 설계 완료
+- [x] ✅ USER → CUSTOMER 역할 마이그레이션 완료
+- [x] ✅ TypeScript 타입 정의 업데이트 완료
+- [x] ✅ RLS 정책 설계 완료
 
-**⚠️ 주의사항**:
-- 기존 `users` 테이블과 새로운 `customers` 테이블 관계 정의 필요
-- 관리자와 고객 데이터 분리 전략 수립 필요
+**✅ 완료된 작업**:
+- 통합 구조 설계 및 구현
+- 데이터베이스 마이그레이션 스크립트 작성
+- TypeScript 타입 오류 해결
 
 #### ✅ 1.2 예약 시스템 테이블 설계 - **✅ 완료 (100%)**
 **현재 상황**: 기존 `reservations` 테이블이 회원/비회원 모두 지원 가능하도록 설계됨
@@ -67,16 +71,20 @@
 - [x] ✅ 회원/비회원 구분 지원
 - [x] ✅ 결제 상태 관리 포함
 
-#### ✅ 1.3 RLS 정책 설정 - **⚠️ 부분 완료 (50%)**
-**현재 상황**: 관리자용 RLS는 설정됨, 고객용 RLS 추가 필요
+#### ✅ 1.3 RLS 정책 설정 - **✅ 완료 (100%)**
+**현재 상황**: 통합 시스템 RLS 정책 완료
 - [x] ✅ 관리자 RLS 정책 완료
-- [ ] ❌ 고객 RLS 정책 미설정
+- [x] ✅ 고객 RLS 정책 설계 완료
+- [x] ✅ customer_profiles 테이블 RLS 정책 완료
+- [x] ✅ reservation_payments 테이블 RLS 정책 완료
 
-#### ✅ 2.1 Supabase Auth 설정 확장 - **⚠️ 부분 완료 (60%)**
-**현재 상황**: 관리자 인증은 완료, 고객 인증 설정 필요
+#### ✅ 2.1 Supabase Auth 설정 확장 - **✅ 완료 (100%)**
+**현재 상황**: 통합 인증 시스템 완료
 - [x] ✅ 기본 Supabase Auth 연동 완료
 - [x] ✅ 환경 변수 설정 완료
-- [ ] ❌ 고객용 인증 유틸리티 함수 미생성
+- [x] ✅ 고객용 인증 유틸리티 함수 생성 완료 (`auth-customer.ts`)
+- [x] ✅ 통합 구조 기반 인증 시스템 구현 완료
+- [x] ✅ 인증 헬퍼 함수 업데이트 완료
 
 #### ✅ 2.2 회원가입 페이지 구현 - **❌ 미완료 (0%)**
 **현재 상황**: 관리자 로그인만 있음, 고객 회원가입 페이지 없음
@@ -132,47 +140,27 @@
 
 ## 🎯 **즉시 시작해야 할 우선순위 작업**
 
-### 🚨 **Critical Priority (이번 주 내 완료 필수)**
+### ✅ **완료된 기반 작업**
 
-#### 1. **데이터베이스 확장 (Day 1)**
-```sql
--- 즉시 실행 필요
-CREATE TABLE customers (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  name VARCHAR(100) NOT NULL,
-  phone VARCHAR(20),
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW(),
-  is_active BOOLEAN DEFAULT true
-);
+#### 1. **데이터베이스 통합 시스템 구축 ✅**
+- ✅ 통합 customer 시스템 완료
+- ✅ users 테이블 role 기반 구조 완료
+- ✅ customer_profiles 테이블 설계 완료
+- ✅ reservation_payments 테이블 설계 완료
+- ✅ USER → CUSTOMER 마이그레이션 완료
+- ✅ TypeScript 타입 정의 업데이트 완료
 
-CREATE TABLE customer_profiles (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
-  birth_date DATE,
-  address TEXT,
-  marketing_consent BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW()
-);
+#### 2. **고객 인증 시스템 기초 ✅**
+- ✅ `src/lib/auth-customer.ts` 구현 완료
+- ✅ `src/lib/auth-helpers.ts` 업데이트 완료
+- ✅ 통합 구조 기반 인증 시스템 완료
 
-CREATE TABLE reservation_payments (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  reservation_id UUID REFERENCES reservations(id),
-  amount DECIMAL(10,2) NOT NULL,
-  payment_method VARCHAR(20) NOT NULL,
-  payment_status VARCHAR(20) DEFAULT 'pending',
-  transaction_id VARCHAR(100),
-  paid_at TIMESTAMP,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
+### 🚨 **다음 즉시 진행 작업 (Day 1-2)**
 
-#### 2. **고객 인증 시스템 기초 (Day 2-3)**
-- **즉시 생성 필요**: `src/lib/auth-customer.ts`
-- **즉시 생성 필요**: `src/app/register/page.tsx`
-- **즉시 수정 필요**: `src/app/login/page.tsx` (고객 탭 추가)
+#### 3. **고객 UI 페이지 구현 (즉시 시작)**
+- **즉시 생성 필요**: `src/app/register/page.tsx` (DaisyUI 컴포넌트 사용)
+- **즉시 수정 필요**: `src/app/login/page.tsx` (고객 탭 추가, DaisyUI 스타일)
+- **UI 프레임워크**: DaisyUI + Tailwind CSS 적용
 
 #### 3. **고객용 레이아웃 (Day 4-5)**
 - **즉시 생성 필요**: `src/components/customer/Header.tsx`
@@ -196,15 +184,16 @@ CREATE TABLE reservation_payments (
 
 ---
 
-## 📊 **현재 전체 MVP 진행률: 25%**
+## 📊 **현재 전체 MVP 진행률: 45%**
 
-### 완료된 부분 (25%)
+### 완료된 부분 (45%)
 - ✅ 기반 인프라 (100%)
-- ✅ 관리자 시스템 (95%)
-- ✅ 기본 데이터베이스 스키마 (80%)
+- ✅ 관리자 시스템 (100%)
+- ✅ 통합 데이터베이스 스키마 (100%)
+- ✅ 고객 인증 시스템 기반 (80%)
 
-### 미완료된 부분 (75%)
-- ❌ 고객 인증 시스템 (0%)
+### 미완료된 부분 (55%)
+- ⚠️ 고객 UI/UX 시스템 (0%)
 - ❌ 고객 예약 시스템 (0%)
 - ❌ 고객 마이페이지 (0%)
 - ❌ 결제 시스템 (0%)
@@ -213,11 +202,11 @@ CREATE TABLE reservation_payments (
 
 ## 🚀 **수정된 MVP 일정**
 
-### **Week 1 (수정됨): 고객 시스템 기반 구축**
-- **Day 1**: 데이터베이스 확장 (customers 테이블 등)
-- **Day 2-3**: 고객 인증 시스템 구현
-- **Day 4-5**: 고객용 레이아웃 및 UI 컴포넌트
-- **Day 6-7**: 시설 조회 페이지 구현
+### **Week 1 (업데이트됨): 고객 UI 시스템 구축**
+- **Day 1-2**: 고객 회원가입/로그인 페이지 구현 (DaisyUI 컴포넌트)
+- **Day 3-4**: 고객용 레이아웃 및 UI 컴포넌트 (DaisyUI 테마)
+- **Day 5-6**: 시설 조회 페이지 구현 (DaisyUI 카드, 모달)
+- **Day 7**: 예약 프로세스 기본 구조 (DaisyUI 폼 컴포넌트)
 
 ### **Week 2: 예약 시스템 구현**
 - **Day 8-10**: 예약 프로세스 기본 구현
@@ -231,13 +220,15 @@ CREATE TABLE reservation_payments (
 
 ## 💡 **핵심 발견사항**
 
-1. **✅ 강점**: 관리자 시스템이 완벽하게 구축되어 있어 백엔드 API 기반이 탄탄함
-2. **⚠️ 주의점**: 기존 `users` 테이블과 새로운 `customers` 테이블 관계 설계 필요
-3. **🚨 긴급**: 고객용 데이터베이스 테이블 즉시 생성 필요
-4. **🎯 기회**: 기존 시설 데이터를 활용하여 고객 시설 조회 페이지 빠른 구현 가능
+1. **✅ 강점**: 관리자 시스템과 통합 데이터베이스 구조가 완벽하게 구축됨
+2. **✅ 완료**: 통합 고객 시스템 아키텍처 구축 완료 (users + customer_profiles)
+3. **🎯 다음 단계**: 고객용 UI/UX 개발에 집중 가능
+4. **🎯 기회**: 기존 시설 데이터와 통합 구조를 활용한 빠른 개발 가능
+5. **💪 기술 기반**: TypeScript, Supabase, Next.js 기반 안정적 구조 완성
+6. **🎨 UI 준비**: DaisyUI + Tailwind CSS 설정 완료로 일관된 디자인 시스템 적용 가능
 
 ---
 
-**분석 완료일**: 2025-09-22
-**다음 업데이트**: MVP Week 1 완료 후
-**상태**: 즉시 개발 착수 권장 🚀
+**분석 완료일**: 2025-09-23
+**다음 업데이트**: 고객 UI 구현 완료 후
+**상태**: 통합 시스템 기반 완료, UI 개발 착수 준비 완료 🚀
