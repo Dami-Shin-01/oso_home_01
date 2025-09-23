@@ -14,7 +14,7 @@ type UserRow = {
   email: string;
   name: string;
   phone?: string | null;
-  role: 'USER' | 'MANAGER' | 'ADMIN';
+  role: 'CUSTOMER' | 'MANAGER' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE';
   provider: string;
   created_at: string;
@@ -26,7 +26,7 @@ interface NormalizedUser {
   email: string;
   name: string;
   phone: string | null;
-  role: 'USER' | 'MANAGER' | 'ADMIN';
+  role: 'CUSTOMER' | 'MANAGER' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE';
   provider: string;
   created_at: string;

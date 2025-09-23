@@ -6,7 +6,7 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   name: string;
-  role: 'USER' | 'MANAGER' | 'ADMIN';
+  role: 'CUSTOMER' | 'MANAGER' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -84,7 +84,7 @@ export async function requireAdminAccess(request: NextRequest): Promise<Authenti
 export async function requireManagerAccess(request: NextRequest): Promise<AuthenticatedUser> {
   const user = await getAuthenticatedUser(request);
 
-  if (user.role === 'USER') {
+  if (user.role === 'CUSTOMER') {
     throw ApiErrors.Forbidden(
       '매니저 이상의 권한이 필요합니다.',
       'INSUFFICIENT_PERMISSIONS'
@@ -99,7 +99,7 @@ export async function requireManagerAccess(request: NextRequest): Promise<Authen
  */
 export async function requireRole(
   request: NextRequest,
-  allowedRoles: ('USER' | 'MANAGER' | 'ADMIN')[]
+  allowedRoles: ('CUSTOMER' | 'MANAGER' | 'ADMIN')[]
 ): Promise<AuthenticatedUser> {
   const user = await getAuthenticatedUser(request);
 

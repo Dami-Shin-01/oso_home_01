@@ -52,27 +52,30 @@ export const signUpCustomer = async (signUpData: CustomerSignUpData): Promise<Au
       }
     }
 
-    // 2. customers 테이블에 추가 정보 저장
+    // 2. users 테이블에 고객 정보 저장
     if (authData.user) {
-      const { error: customerError } = await supabase
-        .from('customers')
+      const { error: userError } = await supabase
+        .from('users')
         .insert({
           id: authData.user.id,
           email: signUpData.email,
           name: signUpData.name,
-          phone: signUpData.phone || null
+          phone: signUpData.phone || null,
+          role: 'CUSTOMER',
+          status: 'ACTIVE',
+          provider: 'email'
         })
 
-      if (customerError) {
-        // Auth에서는 생성되었지만 customers 테이블 삽입 실패
-        console.error('Customer table insertion failed:', customerError)
+      if (userError) {
+        // Auth에서는 생성되었지만 users 테이블 삽입 실패
+        console.error('User table insertion failed:', userError)
         return {
           success: false,
           error: '회원 정보 저장에 실패했습니다. 다시 시도해주세요.'
         }
       }
 
-      // 3. customer_profiles 테이블에 프로필 정보 저장
+      // 3. customer_profiles 테이블에 프로필 정보 저장 (선택사항)
       if (signUpData.marketingConsent !== undefined) {
         const { error: profileError } = await supabase
           .from('customer_profiles')
@@ -119,16 +122,25 @@ export const signInCustomer = async (signInData: CustomerSignInData): Promise<Au
       }
     }
 
-    // 고객 테이블에서 추가 정보 조회
+    // users 테이블에서 고객 정보 조회
     if (data.user) {
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .select('*')
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select(`
+          *,
+          customer_profiles (
+            address,
+            marketing_consent,
+            preferred_contact,
+            notes
+          )
+        `)
         .eq('id', data.user.id)
+        .eq('role', 'CUSTOMER')
         .single()
 
-      if (customerError) {
-        console.error('Customer data fetch failed:', customerError)
+      if (userError) {
+        console.error('User data fetch failed:', userError)
         // 로그인은 성공했지만 고객 정보 조회 실패
         return {
           success: true,
@@ -143,7 +155,7 @@ export const signInCustomer = async (signInData: CustomerSignInData): Promise<Au
         success: true,
         data: {
           ...data,
-          customer: customerData
+          customer: userData
         }
       }
     }
@@ -203,9 +215,9 @@ export const getCurrentCustomer = async (): Promise<AuthResponse> => {
       }
     }
 
-    // 고객 정보 조회
+    // 고객 정보 조회 (users 테이블에서)
     const { data: customerData, error: customerError } = await supabase
-      .from('customers')
+      .from('users')
       .select(`
         *,
         customer_profiles (
@@ -216,6 +228,7 @@ export const getCurrentCustomer = async (): Promise<AuthResponse> => {
         )
       `)
       .eq('id', user.id)
+      .eq('role', 'CUSTOMER')
       .single()
 
     if (customerError) {
@@ -278,9 +291,10 @@ export const resetPassword = async (email: string): Promise<AuthResponse> => {
 export const checkEmailExists = async (email: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .from('customers')
+      .from('users')
       .select('email')
       .eq('email', email)
+      .eq('role', 'CUSTOMER')
       .single()
 
     if (error && error.code !== 'PGRST116') { // PGRST116은 데이터 없음 오류
@@ -303,20 +317,21 @@ export const updateCustomerProfile = async (
   updateData: Partial<CustomerSignUpData>
 ): Promise<AuthResponse> => {
   try {
-    // customers 테이블 업데이트
-    const { error: customerError } = await supabase
-      .from('customers')
+    // users 테이블 업데이트
+    const { error: userError } = await supabase
+      .from('users')
       .update({
         name: updateData.name,
         phone: updateData.phone,
         updated_at: new Date().toISOString()
       })
       .eq('id', customerId)
+      .eq('role', 'CUSTOMER')
 
-    if (customerError) {
+    if (userError) {
       return {
         success: false,
-        error: customerError.message
+        error: userError.message
       }
     }
 

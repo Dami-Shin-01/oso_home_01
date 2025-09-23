@@ -19,7 +19,7 @@ export type Database = {
           password: string | null
           name: string
           phone: string | null
-          role: 'USER' | 'MANAGER' | 'ADMIN'
+          role: 'ADMIN' | 'MANAGER' | 'CUSTOMER'
           status: 'ACTIVE' | 'INACTIVE'
           provider: 'email' | 'kakao'
           provider_id: string | null
@@ -32,7 +32,7 @@ export type Database = {
           password?: string | null
           name: string
           phone?: string | null
-          role?: 'USER' | 'MANAGER' | 'ADMIN'
+          role?: 'ADMIN' | 'MANAGER' | 'CUSTOMER'
           status?: 'ACTIVE' | 'INACTIVE'
           provider?: 'email' | 'kakao'
           provider_id?: string | null
@@ -45,7 +45,7 @@ export type Database = {
           password?: string | null
           name?: string
           phone?: string | null
-          role?: 'USER' | 'MANAGER' | 'ADMIN'
+          role?: 'ADMIN' | 'MANAGER' | 'CUSTOMER'
           status?: 'ACTIVE' | 'INACTIVE'
           provider?: 'email' | 'kakao'
           provider_id?: string | null
@@ -293,38 +293,6 @@ export type Database = {
         }
         Relationships: []
       }
-      customers: {
-        Row: {
-          id: string
-          email: string
-          password_hash: string | null
-          name: string
-          phone: string | null
-          created_at: string
-          updated_at: string
-          is_active: boolean
-        }
-        Insert: {
-          id?: string
-          email: string
-          password_hash?: string | null
-          name: string
-          phone?: string | null
-          created_at?: string
-          updated_at?: string
-          is_active?: boolean
-        }
-        Update: {
-          id?: string
-          email?: string
-          password_hash?: string | null
-          name?: string
-          phone?: string | null
-          updated_at?: string
-          is_active?: boolean
-        }
-        Relationships: []
-      }
       customer_profiles: {
         Row: {
           id: string
@@ -425,7 +393,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      user_role: 'USER' | 'MANAGER' | 'ADMIN'
+      user_role: 'ADMIN' | 'MANAGER' | 'CUSTOMER'
       user_status: 'ACTIVE' | 'INACTIVE'
       provider_type: 'email' | 'kakao'
       reservation_status: 'PENDING' | 'CONFIRMED' | 'CANCELLED'
@@ -462,9 +430,6 @@ export type FaqRow = Database['public']['Tables']['faqs']['Row']
 export type FaqInsert = Database['public']['Tables']['faqs']['Insert']
 export type FaqUpdate = Database['public']['Tables']['faqs']['Update']
 
-export type CustomerRow = Database['public']['Tables']['customers']['Row']
-export type CustomerInsert = Database['public']['Tables']['customers']['Insert']
-export type CustomerUpdate = Database['public']['Tables']['customers']['Update']
 
 export type CustomerProfileRow = Database['public']['Tables']['customer_profiles']['Row']
 export type CustomerProfileInsert = Database['public']['Tables']['customer_profiles']['Insert']
