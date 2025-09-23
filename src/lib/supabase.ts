@@ -2,47 +2,18 @@ import { createClient } from '@supabase/supabase-js';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/database';
 
-// 환경 변수 안전하게 가져오기
-const getSupabaseUrl = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
-  }
-  return url;
-};
+// 클라이언트에서 안전하게 사용할 수 있는 환경 변수들 (NEXT_PUBLIC_ 접두사)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const getSupabaseAnonKey = () => {
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!key) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable');
-  }
-  return key;
-};
-
-const getSupabaseServiceKey = () => {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) {
-    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
-  }
-  return key;
-};
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing required Supabase environment variables. Please check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file.');
+}
 
 // 서버 사이드용 클라이언트 (타입 안전성 보장)
 export const supabase = createClient<Database>(
-  getSupabaseUrl(),
-  getSupabaseAnonKey()
-);
-
-// 관리자용 클라이언트 (서비스 롤 키 사용)
-export const supabaseAdmin = createClient<Database>(
-  getSupabaseUrl(),
-  getSupabaseServiceKey(),
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
+  supabaseUrl,
+  supabaseAnonKey
 );
 
 // 클라이언트 컴포넌트용 클라이언트
