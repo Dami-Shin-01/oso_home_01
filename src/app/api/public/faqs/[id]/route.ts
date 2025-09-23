@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   createSuccessResponse,
   ApiErrors,
@@ -18,7 +18,7 @@ async function getFaqHandler(
   }
 
   // FAQ 조회
-  const { data: faq, error: faqError } = await supabase
+  const { data: faq, error: faqError } = await supabaseAdmin
     .from('faqs')
     .select(`
       id,

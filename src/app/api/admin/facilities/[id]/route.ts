@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabaseAdmin, type Database } from '@/lib/supabase';
+import { supabaseAdmin, type Database } from '@/lib/supabase-admin';
 import {
   createSuccessResponse,
   ApiErrors,

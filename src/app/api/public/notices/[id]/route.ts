@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   createSuccessResponse,
   ApiErrors,
@@ -18,7 +18,7 @@ async function getNoticeHandler(
   }
 
   // 공지사항 조회
-  const { data: notice, error: noticeError } = await supabase
+  const { data: notice, error: noticeError } = await supabaseAdmin
     .from('notices')
     .select(`
       id,
@@ -44,7 +44,7 @@ async function getNoticeHandler(
   }
 
   // 조회수 증가
-  const { error: updateError } = await supabase
+  const { error: updateError } = await supabaseAdmin
     .from('notices')
     .update({ view_count: (notice.view_count || 0) + 1 })
     .eq('id', id);

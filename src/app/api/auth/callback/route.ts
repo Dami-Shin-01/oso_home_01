@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabaseAdmin.auth.exchangeCodeForSession(code);
 
     if (error || !data.user) {
       console.error('Code exchange error:', error);
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 사용자 프로필 확인 및 생성
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('id', data.user.id)
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     if (!existingProfile) {
       const provider = data.user.app_metadata?.provider || 'unknown';
-      const { data: newProfile, error: insertError } = await supabase
+      const { data: newProfile, error: insertError } = await supabaseAdmin
         .from('users')
         .insert([
           {

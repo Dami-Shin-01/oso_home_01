@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: authData, error: signInError } = await supabase.auth.signInWithOAuth({
+    const { data: authData, error: signInError } = await supabaseAdmin.auth.signInWithOAuth({
       provider: provider as 'kakao',
       options: {
         redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`

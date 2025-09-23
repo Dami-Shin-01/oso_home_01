@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   createSuccessResponse,
   createErrorResponse,
@@ -21,7 +21,7 @@ async function getNoticesHandler(request: NextRequest) {
   const offset = (page - 1) * limit;
 
   // 쿼리 빌더 설정
-  let query = supabase
+  let query = supabaseAdmin
     .from('notices')
     .select(`
       id,
@@ -57,7 +57,7 @@ async function getNoticesHandler(request: NextRequest) {
   }
 
   // 전체 개수 조회
-  let countQuery = supabase
+  let countQuery = supabaseAdmin
     .from('notices')
     .select('*', { count: 'exact', head: true })
     .eq('is_published', true);

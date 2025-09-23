@@ -37,3 +37,6 @@ export const supabaseAdmin = createClient<Database>(
 
 // 서버 전용임을 명시하는 타입
 export type AdminClient = typeof supabaseAdmin;
+
+// Re-export Database type for convenience
+export type { Database } from '@/types/database';

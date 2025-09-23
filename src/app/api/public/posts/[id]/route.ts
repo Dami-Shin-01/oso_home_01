@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     let tableName = '';
     let postType = '';
 
-    const { data: announcement, error: announcementError } = await supabase
+    const { data: announcement, error: announcementError } = await supabaseAdmin
       .from('announcements')
       .select('*')
       .eq('id', id)
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       tableName = 'announcements';
       postType = 'NOTICE';
     } else {
-      const { data: faq, error: faqError } = await supabase
+      const { data: faq, error: faqError } = await supabaseAdmin
         .from('faqs')
         .select('*')
         .eq('id', id)
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { data: previousPost } = await supabase
+    const { data: previousPost } = await supabaseAdmin
       .from(tableName)
       .select('id, title')
       .eq('is_active', true)
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .limit(1)
       .single();
 
-    const { data: nextPost } = await supabase
+    const { data: nextPost } = await supabaseAdmin
       .from(tableName)
       .select('id, title')
       .eq('is_active', true)

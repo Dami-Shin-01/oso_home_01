@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   createSuccessResponse,
   ApiErrors,
@@ -20,7 +20,7 @@ async function getFaqsHandler(request: NextRequest) {
   const offset = (page - 1) * limit;
 
   // 쿼리 빌더 설정
-  let query = supabase
+  let query = supabaseAdmin
     .from('faqs')
     .select(`
       id,
@@ -51,7 +51,7 @@ async function getFaqsHandler(request: NextRequest) {
   }
 
   // 전체 개수 조회
-  let countQuery = supabase
+  let countQuery = supabaseAdmin
     .from('faqs')
     .select('*', { count: 'exact', head: true })
     .eq('is_published', true);
@@ -68,7 +68,7 @@ async function getFaqsHandler(request: NextRequest) {
   }
 
   // 카테고리 목록 조회
-  const { data: categories, error: categoriesError } = await supabase
+  const { data: categories, error: categoriesError } = await supabaseAdmin
     .from('faqs')
     .select('category')
     .eq('is_published', true)

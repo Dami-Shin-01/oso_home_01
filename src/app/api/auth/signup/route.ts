@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    const { data: authData, error: signUpError } = await supabaseAdmin.auth.signUp({
       email,
       password,
       options: {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (authData.user) {
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabaseAdmin
         .from('users')
         .insert([
           {
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
       if (insertError) {
         console.error('User profile creation error:', insertError);
-        await supabase.auth.admin.deleteUser(authData.user.id);
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
         
         return NextResponse.json(
           { error: '사용자 프로필 생성에 실패했습니다.' },
