@@ -131,6 +131,18 @@ export default function MyPage() {
     return <span className="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">알 수 없음</span>;
   };
 
+  if (!user) {
+    return (
+      <ProtectedRoute>
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          <div className="text-center">
+            <p>사용자 정보를 불러오고 있습니다...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -156,8 +168,8 @@ export default function MyPage() {
                 <span className="font-medium">{user.phone}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">가입일:</span>
-                <span className="font-medium">{new Date(user.created_at).toLocaleDateString()}</span>
+                <span className="text-gray-600">이메일:</span>
+                <span className="font-medium">{user.email}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">총 예약:</span>

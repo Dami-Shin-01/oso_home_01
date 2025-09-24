@@ -181,8 +181,8 @@ async function getCustomerReservationsHandler(request: NextRequest) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (status) {
-    query = query.eq('status', status);
+  if (status && ['PENDING', 'CONFIRMED', 'CANCELLED'].includes(status)) {
+    query = query.eq('status', status as 'PENDING' | 'CONFIRMED' | 'CANCELLED');
   }
 
   const { data: reservations, error: fetchError } = await query;

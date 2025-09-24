@@ -12,8 +12,8 @@ interface Params {
 }
 
 // 특정 예약 조회
-async function getReservationHandler(request: NextRequest, { params }: { params: Params }) {
-  const { id } = params;
+async function getReservationHandler(request: NextRequest, { params }: { params: Promise<Params> }) {
+  const { id } = await params;
 
   // 인증 확인
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -65,8 +65,8 @@ async function getReservationHandler(request: NextRequest, { params }: { params:
 }
 
 // 예약 수정 (제한적)
-async function updateReservationHandler(request: NextRequest, { params }: { params: Params }) {
-  const { id } = params;
+async function updateReservationHandler(request: NextRequest, { params }: { params: Promise<Params> }) {
+  const { id } = await params;
   const body = await request.json();
 
   // 인증 확인
@@ -140,8 +140,8 @@ async function updateReservationHandler(request: NextRequest, { params }: { para
 }
 
 // 예약 취소
-async function cancelReservationHandler(request: NextRequest, { params }: { params: Params }) {
-  const { id } = params;
+async function cancelReservationHandler(request: NextRequest, { params }: { params: Promise<Params> }) {
+  const { id } = await params;
 
   // 인증 확인
   const { data: { user }, error: authError } = await supabase.auth.getUser();
