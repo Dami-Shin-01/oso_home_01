@@ -42,9 +42,9 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
   };
 
   // 모든 이미지 URL 가져오기
-  const getAllImages = (facility: Facility) => {
+  const getAllImages = (facility: Facility): string[] => {
     if (facility.images && facility.images.length > 0) {
-      return facility.images.map(getImageUrl).filter(Boolean);
+      return facility.images.map(getImageUrl).filter((url): url is string => url !== null);
     }
     return [];
   };
