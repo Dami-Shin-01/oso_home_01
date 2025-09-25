@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/atoms/Card';
 import Button from '@/components/atoms/Button';
+import ImageUploadSection from '@/components/admin/ImageUploadSection';
 
 interface Facility {
   id: string;
@@ -15,6 +16,7 @@ interface Facility {
   weekday_price: number;
   weekend_price: number;
   amenities: string[];
+  images: string[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -48,6 +50,15 @@ export default function FacilitiesManagementPage() {
   // 선택된 시설/구역 상태
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [facilityManagementSites, setFacilityManagementSites] = useState<Site[]>([]);
+
+  // 이미지 관련 상태
+  interface ImageData {
+    index: number;
+    path: string;
+    url: string;
+    name: string;
+  }
+  const [facilityImages, setFacilityImages] = useState<ImageData[]>([]);
 
   // 시설 등록 폼 상태
   const [facilityForm, setFacilityForm] = useState({
@@ -260,7 +271,7 @@ export default function FacilitiesManagementPage() {
   };
 
   // 시설 수정 모달 열기
-  const openEditFacilityModal = (facility: Facility) => {
+  const openEditFacilityModal = async (facility: Facility) => {
     setSelectedFacility(facility);
     setFacilityForm({
       name: facility.name,
@@ -273,6 +284,25 @@ export default function FacilitiesManagementPage() {
       amenities: facility.amenities || []
     });
     setAmenityInput('');
+
+    // 이미지 로드
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/admin/facilities/${facility.id}/images`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFacilityImages(data.data.images || []);
+      } else {
+        setFacilityImages([]);
+      }
+    } catch (err) {
+      console.error('Images load error:', err);
+      setFacilityImages([]);
+    }
+
     setShowEditFacilityModal(true);
   };
 
@@ -1422,6 +1452,18 @@ export default function FacilitiesManagementPage() {
                   )}
                   <p className="text-xs text-gray-500 mt-1">예: 주차장, 화장실, 세면대, 그릴, 테이블 등</p>
                 </div>
+
+                {/* 이미지 관리 섹션 */}
+                {selectedFacility && (
+                  <div>
+                    <ImageUploadSection
+                      facilityId={selectedFacility.id}
+                      images={facilityImages}
+                      onImagesChange={setFacilityImages}
+                      disabled={saving}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1431,6 +1473,7 @@ export default function FacilitiesManagementPage() {
                 onClick={() => {
                   setShowEditFacilityModal(false);
                   setSelectedFacility(null);
+                  setFacilityImages([]);
                   setFacilityForm({
                     name: '',
                     description: '',
