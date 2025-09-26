@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import Button from '@/components/atoms/Button';
 
 interface ImageData {
@@ -290,11 +291,15 @@ export default function ImageUploadSection({
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {images.map((image, index) => (
               <div key={`${image.path}-${index}`} className="relative group border rounded-lg overflow-hidden">
-                <img
-                  src={image.url}
-                  alt={image.name}
-                  className="w-full h-24 object-cover"
-                />
+                <div className="relative w-full h-24">
+                  <Image
+                    src={image.url}
+                    alt={image.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  />
+                </div>
 
                 {/* 대표 이미지 표시 */}
                 {index === 0 && (

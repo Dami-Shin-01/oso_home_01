@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FACILITY_TYPE_LABELS } from '@/constants';
+import { getFeaturedImageUrl, getAllImageUrls } from '@/lib/image-utils';
 
 interface Facility {
   id: string;
@@ -27,26 +29,14 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
   const [filterType, setFilterType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
 
-  // 이미지 URL 생성 함수
-  const getImageUrl = (imagePath: string) => {
-    if (!imagePath) return null;
-    return `https://nrblnfmknolgsqpcqite.supabase.co/storage/v1/object/public/facility-images/${imagePath}`;
-  };
-
   // 대표 이미지 (첫 번째 이미지) 가져오기
   const getFeaturedImage = (facility: Facility) => {
-    if (facility.images && facility.images.length > 0) {
-      return getImageUrl(facility.images[0]);
-    }
-    return null;
+    return getFeaturedImageUrl(facility.images);
   };
 
   // 모든 이미지 URL 가져오기
   const getAllImages = (facility: Facility): string[] => {
-    if (facility.images && facility.images.length > 0) {
-      return facility.images.map(getImageUrl).filter((url): url is string => url !== null);
-    }
-    return [];
+    return getAllImageUrls(facility.images);
   };
 
   // 필터링된 시설 목록
@@ -141,24 +131,23 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
                 {/* 이미지 영역 */}
                 <figure className="px-4 pt-4">
                   {getFeaturedImage(facility) ? (
-                    <img
-                      src={getFeaturedImage(facility)!}
-                      alt={facility.name}
-                      className="w-full h-48 object-cover rounded-xl"
-                      onError={(e) => {
-                        // 이미지 로드 실패 시 placeholder 표시
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl flex items-center justify-center ${getFeaturedImage(facility) ? 'hidden' : ''}`}>
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">🏕️</div>
-                      <span className="text-base-content/60 text-sm">이미지 준비중</span>
+                    <div className="relative w-full h-48 rounded-xl overflow-hidden">
+                      <Image
+                        src={getFeaturedImage(facility)!}
+                        alt={facility.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
                     </div>
-                  </div>
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🏕️</div>
+                        <span className="text-base-content/60 text-sm">이미지 준비중</span>
+                      </div>
+                    </div>
+                  )}
                 </figure>
 
                 {/* 카드 본문 */}
@@ -301,11 +290,15 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
                   {/* 메인 이미지 */}
                   <div className="aspect-video">
                     {getFeaturedImage(selectedFacility) ? (
-                      <img
-                        src={getFeaturedImage(selectedFacility)!}
-                        alt={`${selectedFacility.name} 메인 이미지`}
-                        className="w-full h-full object-cover rounded-xl"
-                      />
+                      <div className="relative w-full h-full rounded-xl overflow-hidden">
+                        <Image
+                          src={getFeaturedImage(selectedFacility)!}
+                          alt={`${selectedFacility.name} 메인 이미지`}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                        />
+                      </div>
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl flex items-center justify-center">
                         <div className="text-center">
@@ -320,11 +313,15 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
                   <div className="grid grid-cols-2 gap-2">
                     {getAllImages(selectedFacility).slice(1, 5).map((imageUrl, index) => (
                       <div key={index} className="aspect-square">
-                        <img
-                          src={imageUrl}
-                          alt={`${selectedFacility.name} 이미지 ${index + 2}`}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
+                        <div className="relative w-full h-full rounded-lg overflow-hidden">
+                          <Image
+                            src={imageUrl}
+                            alt={`${selectedFacility.name} 이미지 ${index + 2}`}
+                            fill
+                            className="object-cover"
+                            sizes="25vw"
+                          />
+                        </div>
                       </div>
                     ))}
                     {/* 빈 슬롯을 placeholder로 채우기 */}
