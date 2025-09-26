@@ -3,7 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   createSuccessResponse,
   createErrorResponse,
-  withErrorHandling
+  withErrorHandling,
+  ApiErrors
 } from '@/lib/api-response';
 
 async function testStorageHandler(request: NextRequest) {
@@ -83,9 +84,10 @@ async function testStorageHandler(request: NextRequest) {
   } catch (error: any) {
     console.error('Storage test error:', error);
     return createErrorResponse(
-      'Storage 테스트 중 오류가 발생했습니다.',
-      'STORAGE_TEST_ERROR',
-      500
+      ApiErrors.InternalServerError(
+        'Storage 테스트 중 오류가 발생했습니다.',
+        'STORAGE_TEST_ERROR'
+      )
     );
   }
 }
