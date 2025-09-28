@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import VideoPlayButton from '@/components/atoms/VideoPlayButton';
+import { getFeaturedImageUrl } from '@/lib/image-utils';
 
 export const revalidate = 300; // 5분마다 캐시 갱신
 
@@ -66,8 +68,8 @@ export default async function Home() {
                 <div className="bg-base-100/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
                   <h3 className="text-lg font-semibold text-base-content mb-3">빠른 시설 검색</h3>
                   <div className="flex gap-2">
-                    <select className="select select-bordered flex-1">
-                      <option disabled selected>시설 유형 선택</option>
+                    <select className="select select-bordered flex-1" defaultValue="">
+                      <option disabled value="">시설 유형 선택</option>
                       <option value="야외">야외</option>
                       <option value="실내">실내</option>
                       <option value="독채">독채</option>
@@ -154,9 +156,24 @@ export default async function Home() {
               facilities.map((facility) => (
                 <div key={facility.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
                   <figure className="px-4 pt-4">
-                    <div className="aspect-video bg-base-200 rounded-lg w-full flex items-center justify-center">
-                      <span className="text-base-content/50">이미지 준비중</span>
-                    </div>
+                    {getFeaturedImageUrl(facility.images) ? (
+                      <div className="relative aspect-video w-full rounded-lg overflow-hidden">
+                        <Image
+                          src={getFeaturedImageUrl(facility.images)!}
+                          alt={facility.name}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg w-full flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-4xl mb-2">🏕️</div>
+                          <span className="text-base-content/60 text-sm">이미지 준비중</span>
+                        </div>
+                      </div>
+                    )}
                   </figure>
                   <div className="card-body">
                     <h3 className="card-title">{facility.name}</h3>
