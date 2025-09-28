@@ -28,6 +28,15 @@ export function getSupabaseImageUrl(imagePath: string, bucket: string = 'facilit
 }
 
 export function getFacilityImageUrl(imagePath: string): string | null {
+  if (!imagePath) return null;
+
+  // 정적 파일 경로 처리 (/images/로 시작하는 경우)
+  if (imagePath.startsWith('/images/')) {
+    // 정적 이미지의 경우 그대로 반환하되, 실제 접근 가능성은 클라이언트에서 처리
+    return imagePath;
+  }
+
+  // Supabase Storage 경로 처리
   return getSupabaseImageUrl(imagePath, 'facility-images');
 }
 

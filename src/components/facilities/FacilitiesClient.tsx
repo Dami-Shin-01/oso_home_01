@@ -28,6 +28,7 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   // 대표 이미지 (첫 번째 이미지) 가져오기
   const getFeaturedImage = (facility: Facility) => {
@@ -37,6 +38,16 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
   // 모든 이미지 URL 가져오기
   const getAllImages = (facility: Facility): string[] => {
     return getAllImageUrls(facility.images);
+  };
+
+  // 이미지 로딩 오류 처리
+  const handleImageError = (imageUrl: string) => {
+    setImageErrors(prev => ({ ...prev, [imageUrl]: true }));
+  };
+
+  // 이미지가 오류인지 확인
+  const isImageError = (imageUrl: string) => {
+    return imageErrors[imageUrl] || false;
   };
 
   // 필터링된 시설 목록
@@ -130,7 +141,7 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
               <div key={facility.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
                 {/* 이미지 영역 */}
                 <figure className="px-4 pt-4">
-                  {getFeaturedImage(facility) ? (
+                  {getFeaturedImage(facility) && !isImageError(getFeaturedImage(facility)!) ? (
                     <div className="relative w-full h-48 rounded-xl overflow-hidden">
                       <Image
                         src={getFeaturedImage(facility)!}
@@ -138,13 +149,16 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
                         fill
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        onError={() => handleImageError(getFeaturedImage(facility)!)}
                       />
                     </div>
                   ) : (
                     <div className="w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-4xl mb-2">🏕️</div>
-                        <span className="text-base-content/60 text-sm">이미지 준비중</span>
+                        <span className="text-base-content/60 text-sm">
+                          {getFeaturedImage(facility) ? '이미지 로딩 실패' : '이미지 준비중'}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -289,7 +303,7 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* 메인 이미지 */}
                   <div className="aspect-video">
-                    {getFeaturedImage(selectedFacility) ? (
+                    {getFeaturedImage(selectedFacility) && !isImageError(getFeaturedImage(selectedFacility)!) ? (
                       <div className="relative w-full h-full rounded-xl overflow-hidden">
                         <Image
                           src={getFeaturedImage(selectedFacility)!}
@@ -297,13 +311,16 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
                           fill
                           className="object-cover"
                           sizes="(max-width: 768px) 100vw, 50vw"
+                          onError={() => handleImageError(getFeaturedImage(selectedFacility)!)}
                         />
                       </div>
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl flex items-center justify-center">
                         <div className="text-center">
                           <div className="text-6xl mb-4">🏕️</div>
-                          <span className="text-base-content/60">메인 이미지</span>
+                          <span className="text-base-content/60">
+                            {getFeaturedImage(selectedFacility) ? '이미지 로딩 실패' : '메인 이미지'}
+                          </span>
                         </div>
                       </div>
                     )}
@@ -313,15 +330,22 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
                   <div className="grid grid-cols-2 gap-2">
                     {getAllImages(selectedFacility).slice(1, 5).map((imageUrl, index) => (
                       <div key={index} className="aspect-square">
-                        <div className="relative w-full h-full rounded-lg overflow-hidden">
-                          <Image
-                            src={imageUrl}
-                            alt={`${selectedFacility.name} 이미지 ${index + 2}`}
-                            fill
-                            className="object-cover"
-                            sizes="25vw"
-                          />
-                        </div>
+                        {!isImageError(imageUrl) ? (
+                          <div className="relative w-full h-full rounded-lg overflow-hidden">
+                            <Image
+                              src={imageUrl}
+                              alt={`${selectedFacility.name} 이미지 ${index + 2}`}
+                              fill
+                              className="object-cover"
+                              sizes="25vw"
+                              onError={() => handleImageError(imageUrl)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-accent/20 to-info/20 rounded-lg flex items-center justify-center">
+                            <span className="text-xs text-center text-base-content/60">이미지<br/>로딩 실패</span>
+                          </div>
+                        )}
                       </div>
                     ))}
                     {/* 빈 슬롯을 placeholder로 채우기 */}
