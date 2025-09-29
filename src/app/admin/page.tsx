@@ -373,28 +373,28 @@ export default function AdminDashboard() {
         <Card>
           <h3 className="text-lg font-semibold mb-6">빠른 액션</h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             <Link href="/admin/reservations">
               <div className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors">
                 <span className="text-2xl mb-2 block">📋</span>
                 <p className="text-sm font-medium">예약 관리</p>
               </div>
             </Link>
-            
+
             <Link href="/admin/content">
               <div className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors">
                 <span className="text-2xl mb-2 block">📝</span>
                 <p className="text-sm font-medium">콘텐츠 관리</p>
               </div>
             </Link>
-            
+
             <Link href="/admin/facilities">
               <div className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors">
                 <span className="text-2xl mb-2 block">🏢</span>
                 <p className="text-sm font-medium">시설 관리</p>
               </div>
             </Link>
-            
+
             <Link href="/admin/users">
               <div className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors">
                 <span className="text-2xl mb-2 block">👥</span>
@@ -402,7 +402,14 @@ export default function AdminDashboard() {
               </div>
             </Link>
 
-            <button 
+            <Link href="/admin/environment">
+              <div className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors">
+                <span className="text-2xl mb-2 block">⚙️</span>
+                <p className="text-sm font-medium">환경변수 설정</p>
+              </div>
+            </Link>
+
+            <button
               onClick={() => setShowDbTest(!showDbTest)}
               className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors"
             >
