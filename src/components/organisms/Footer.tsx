@@ -1,8 +1,14 @@
 import Link from 'next/link';
-import { CONTACT_INFO, ROUTES } from '@/constants';
+import { ROUTES } from '@/constants';
+import { getPublicStoreConfig } from '@/lib/store-config';
+import { getBankAccountForEmail } from '@/lib/bank-account';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+
+  // 환경변수에서 매장 정보 가져오기
+  const storeConfig = getPublicStoreConfig();
+  const bankAccount = getBankAccountForEmail();
 
   return (
     <footer className="bg-gray-800 text-white">
@@ -10,16 +16,16 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* 회사 정보 */}
           <div className="md:col-span-2">
-            <h3 className="text-xl font-bold mb-4">오소 바베큐장</h3>
+            <h3 className="text-xl font-bold mb-4">{storeConfig.basic.name}</h3>
             <p className="text-gray-300 mb-4 leading-relaxed">
-              자연 속에서 즐기는 특별한 바베큐 시간<br />
+              {storeConfig.seo.description}<br />
               가족, 친구들과 함께하는 소중한 추억을 만들어보세요.
             </p>
             <div className="space-y-2 text-sm text-gray-400">
-              <p><strong>주소:</strong> {CONTACT_INFO.ADDRESS}</p>
-              <p><strong>전화:</strong> {CONTACT_INFO.PHONE}</p>
-              <p><strong>영업시간:</strong> {CONTACT_INFO.BUSINESS_HOURS}</p>
-              <p><strong>휴무일:</strong> {CONTACT_INFO.CLOSED_DAY}</p>
+              <p><strong>주소:</strong> {storeConfig.location.address}</p>
+              <p><strong>전화:</strong> {storeConfig.basic.phone}</p>
+              <p><strong>영업시간:</strong> {storeConfig.location.businessHours}</p>
+              <p><strong>휴무일:</strong> {storeConfig.location.closedDay}</p>
             </div>
           </div>
 
@@ -58,7 +64,7 @@ export default function Footer() {
               <Link href={ROUTES.REGISTER} className="block text-gray-300 hover:text-white text-sm transition-colors">
                 회원가입
               </Link>
-              <a href={`tel:${CONTACT_INFO.PHONE}`} className="block text-gray-300 hover:text-white text-sm transition-colors">
+              <a href={`tel:${storeConfig.basic.phone}`} className="block text-gray-300 hover:text-white text-sm transition-colors">
                 전화 문의
               </a>
             </div>
@@ -70,7 +76,7 @@ export default function Footer() {
           <div className="bg-gray-700 rounded-lg p-4">
             <h4 className="text-lg font-semibold mb-2">입금 계좌 정보</h4>
             <p className="text-gray-300 text-sm">
-              <strong>{CONTACT_INFO.BANK_ACCOUNT}</strong> ({CONTACT_INFO.ACCOUNT_HOLDER})
+              <strong>{bankAccount.bank} {bankAccount.accountNumber}</strong> ({bankAccount.accountHolder})
             </p>
           </div>
         </div>
@@ -78,7 +84,7 @@ export default function Footer() {
         {/* 저작권 */}
         <div className="mt-8 pt-8 border-t border-gray-700 text-center">
           <p className="text-gray-400 text-sm">
-            © {currentYear} 오소 바베큐장. All rights reserved.
+            © {currentYear} {storeConfig.basic.name}. All rights reserved.
           </p>
         </div>
       </div>

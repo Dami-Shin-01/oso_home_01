@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Button from '@/components/atoms/Button';
+import { getAllTimeSlots } from '@/lib/time-slots';
 
 interface TimeSlot {
   id: number;
@@ -35,11 +36,10 @@ interface CalendarProps {
   selectedSiteId?: string;
 }
 
-const TIME_SLOTS: TimeSlot[] = [
-  { id: 1, name: '1부', time: '10:00-14:00', available: true },
-  { id: 2, name: '2부', time: '14:00-18:00', available: true },
-  { id: 3, name: '3부', time: '18:00-22:00', available: true }
-];
+// 환경변수에서 시간대 정보를 가져오는 함수
+const getTimeSlots = (): TimeSlot[] => {
+  return getAllTimeSlots();
+};
 
 export default function Calendar({
   onDateSelect,
@@ -215,7 +215,7 @@ export default function Calendar({
                 <div>
                   <h4 className="text-md font-medium text-gray-700 mb-3">이용 시간대</h4>
                   <div className="grid grid-cols-3 gap-3">
-                    {TIME_SLOTS.map(slot => (
+                    {getTimeSlots().map(slot => (
                       <button
                         key={slot.id}
                         onClick={() => handleTimeSlotToggle(slot.id)}
@@ -260,7 +260,7 @@ export default function Calendar({
                           </div>
 
                           <div className="flex space-x-1">
-                            {TIME_SLOTS.map(slot => {
+                            {getTimeSlots().map(slot => {
                               const available = site.available_time_slots.includes(slot.id);
                               return (
                                 <div

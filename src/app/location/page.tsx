@@ -1,4 +1,7 @@
+import { getPublicStoreConfig } from '@/lib/store-config';
+
 export default function LocationPage() {
+  const storeConfig = getPublicStoreConfig();
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">오시는 길</h1>
@@ -11,8 +14,8 @@ export default function LocationPage() {
             <p className="text-gray-600">카카오맵 API 연동 예정</p>
           </div>
           <div className="space-y-2 text-sm text-gray-600">
-            <p><strong>주소:</strong> 서울특별시 강남구 테헤란로 123</p>
-            <p><strong>지번:</strong> 서울특별시 강남구 역삼동 123-45</p>
+            <p><strong>주소:</strong> {storeConfig.location.address}</p>
+            <p><strong>지번:</strong> {storeConfig.location.detailedAddress}</p>
           </div>
         </div>
 
@@ -52,9 +55,9 @@ export default function LocationPage() {
           <div className="mt-6 pt-6 border-t">
             <h4 className="font-semibold text-lg mb-2">📞 연락처</h4>
             <div className="space-y-1 text-sm text-gray-600">
-              <p><strong>전화:</strong> 02-1234-5678</p>
-              <p><strong>영업시간:</strong> 오전 10시 - 오후 10시</p>
-              <p><strong>휴무일:</strong> 매주 월요일</p>
+              <p><strong>전화:</strong> {storeConfig.basic.phone}</p>
+              <p><strong>영업시간:</strong> {storeConfig.location.businessHours}</p>
+              <p><strong>휴무일:</strong> {storeConfig.location.closedDay}</p>
             </div>
           </div>
         </div>

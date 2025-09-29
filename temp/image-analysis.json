@@ -1,0 +1,56 @@
+{
+  "total_facilities": 5,
+  "facilities_with_images": 5,
+  "facilities_without_images": 0,
+  "static_path_images": [
+    {
+      "facility_id": "7a749847-e41c-417a-b32a-e177283eca71",
+      "facility_name": "VIP동",
+      "image_index": 0,
+      "image_path": "/images/vip-d-1.jpg",
+      "type": "static"
+    },
+    {
+      "facility_id": "7a749847-e41c-417a-b32a-e177283eca71",
+      "facility_name": "VIP동",
+      "image_index": 1,
+      "image_path": "/images/vip-d-2.jpg",
+      "type": "static"
+    }
+  ],
+  "storage_path_images": [
+    {
+      "facility_id": "59c44376-3e36-4602-b8cf-07d88c375796",
+      "facility_name": "야외 야장테이블",
+      "image_index": 0,
+      "image_path": "59c44376-3e36-4602-b8cf-07d88c375796/1758768999252-i712sfwbs.png",
+      "type": "storage"
+    },
+    {
+      "facility_id": "ea23dde5-272b-4b8c-88b2-74b3b2533a2d",
+      "facility_name": "야외 소파테이블",
+      "image_index": 0,
+      "image_path": "ea23dde5-272b-4b8c-88b2-74b3b2533a2d/1758769084526-tocxab8tj.jpg",
+      "type": "storage"
+    },
+    {
+      "facility_id": "703ac708-12db-4c66-8e1b-a22508b37bee",
+      "facility_name": "텐트동",
+      "image_index": 0,
+      "image_path": "703ac708-12db-4c66-8e1b-a22508b37bee/1758856276457-ncvkyqr74.jpg",
+      "type": "storage"
+    },
+    {
+      "facility_id": "b30f0d0a-d59c-4085-ad8f-c714b51aae3a",
+      "facility_name": "프라이빗룸",
+      "image_index": 0,
+      "image_path": "b30f0d0a-d59c-4085-ad8f-c714b51aae3a/1758856339528-oypzt40r9.jpg",
+      "type": "storage"
+    }
+  ],
+  "summary": {
+    "static_path_count": 2,
+    "storage_path_count": 4,
+    "total_images": 6
+  }
+}

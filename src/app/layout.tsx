@@ -4,20 +4,38 @@ import "./globals.css";
 import Header from "@/components/organisms/Header";
 import Footer from "@/components/organisms/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { getStoreSEOInfo } from "@/lib/store-config";
 
 const inter = Inter({
   subsets: ["latin"],
   display: 'swap',
 });
 
+// 환경변수에서 SEO 정보 가져오기
+const seoInfo = getStoreSEOInfo();
+
 export const metadata: Metadata = {
-  title: "오소 바베큐장 예약 시스템",
-  description: "바베큐장 시설 대여를 위한 간편한 예약 시스템",
-  keywords: ["바베큐", "예약", "바베큐장", "가족 모임", "야외 활동"],
+  title: seoInfo.title,
+  description: seoInfo.description,
+  keywords: seoInfo.keywords,
   openGraph: {
-    title: "오소 바베큐장 예약 시스템",
-    description: "자연 속에서 즐기는 특별한 바베큐 시간",
+    title: seoInfo.title,
+    description: seoInfo.description,
     type: "website",
+    images: [
+      {
+        url: seoInfo.ogImageUrl,
+        width: 1200,
+        height: 630,
+        alt: seoInfo.title,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: seoInfo.title,
+    description: seoInfo.description,
+    images: [seoInfo.ogImageUrl],
   },
 };
 

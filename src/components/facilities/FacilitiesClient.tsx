@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FACILITY_TYPE_LABELS } from '@/constants';
 import { getFeaturedImageUrl, getAllImageUrls } from '@/lib/image-utils';
+import { getAllTimeSlots } from '@/lib/time-slots';
 
 interface Facility {
   id: string;
@@ -416,9 +417,11 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
                     <div>
                       <h4 className="font-bold text-lg mb-2">이용 시간</h4>
                       <div className="space-y-2">
-                        <div className="badge badge-outline">1부: 10:00-14:00</div>
-                        <div className="badge badge-outline">2부: 14:00-18:00</div>
-                        <div className="badge badge-outline">3부: 18:00-22:00</div>
+                        {getAllTimeSlots().map(slot => (
+                          <div key={slot.id} className="badge badge-outline">
+                            {slot.name}: {slot.time}
+                          </div>
+                        ))}
                       </div>
                     </div>
 

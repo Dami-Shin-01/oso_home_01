@@ -6,11 +6,15 @@ import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/constants';
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeController from './ThemeController';
+import { getPublicStoreConfig } from '@/lib/store-config';
 
 export default function Header() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+
+  // 환경변수에서 매장 정보 가져오기 (클라이언트 안전한 정보만)
+  const storeConfig = getPublicStoreConfig();
 
   const navigationItems = [
     { name: '홈', href: ROUTES.HOME },
@@ -115,7 +119,7 @@ export default function Header() {
 
         {/* 로고 */}
         <Link href={ROUTES.HOME} className="btn btn-ghost text-xl text-primary font-bold">
-          🍖 오소 바베큐장
+          🍖 {storeConfig.basic.name}
         </Link>
       </div>
 

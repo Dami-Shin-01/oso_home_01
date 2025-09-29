@@ -7,6 +7,9 @@ import {
   validateRequiredFields,
   withErrorHandling
 } from '@/lib/api-response';
+import { sendReservationConfirmationEmail, EmailTemplateData } from '@/lib/email';
+import { getBankAccountForApi } from '@/lib/bank-account';
+import { getTimeSlotById } from '@/lib/time-slots';
 
 // 고객 예약 생성 (인증된 사용자만)
 async function createCustomerReservationHandler(request: NextRequest) {
@@ -133,6 +136,56 @@ async function createCustomerReservationHandler(request: NextRequest) {
     // 이 경우 경고 로그만 남기고 예약은 성공으로 처리
   }
 
+  // 이메일 알림 발송 (비동기로 처리하여 응답 속도에 영향 없도록)
+  try {
+    // 고객 이메일 정보 조회
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('email, name')
+      .eq('id', user.id)
+      .single();
+
+    if (!userError && userData?.email) {
+      // 시간대 문자열 생성
+      const timeSlotText = time_slots.map((slotId: number) => {
+        const timeSlot = getTimeSlotById(slotId);
+        return timeSlot ? `${timeSlot.name} (${timeSlot.time})` : `${slotId}부`;
+      }).join(', ');
+
+      const emailData: EmailTemplateData = {
+        customerName: userData.name || '고객님',
+        facilityName: reservation.facilities?.name || '시설',
+        reservationDate: new Date(reservation_date).toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        reservationTime: timeSlotText,
+        totalAmount: total_amount,
+        reservationId: reservation.id
+      };
+
+      // 예약 확인 이메일 발송 (비동기)
+      sendReservationConfirmationEmail(userData.email, emailData)
+        .then(result => {
+          if (result.success) {
+            console.log(`예약 확인 이메일 발송 성공: ${reservation.id}`);
+          } else {
+            console.error(`예약 확인 이메일 발송 실패: ${reservation.id}`, result.error);
+          }
+        })
+        .catch(error => {
+          console.error(`예약 확인 이메일 발송 중 오류: ${reservation.id}`, error);
+        });
+    }
+  } catch (emailError) {
+    console.error('이메일 발송 준비 중 오류:', emailError);
+    // 이메일 발송 실패는 전체 예약 프로세스에 영향을 주지 않음
+  }
+
+  // 환경 변수에서 계좌 정보 가져오기
+  const bankAccountInfo = getBankAccountForApi();
+
   return createSuccessResponse({
     reservation: {
       ...reservation,
@@ -140,7 +193,7 @@ async function createCustomerReservationHandler(request: NextRequest) {
         method: 'BANK_TRANSFER',
         amount: total_amount,
         status: 'PENDING',
-        bank_account: process.env.BANK_ACCOUNT_INFO || '계좌 정보를 확인해주세요.'
+        ...bankAccountInfo
       }
     }
   }, '예약이 성공적으로 생성되었습니다. 입금 안내를 확인해주세요.');

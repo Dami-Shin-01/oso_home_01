@@ -6,6 +6,7 @@ import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
 import Card from '@/components/atoms/Card';
 import { useAuth } from '@/contexts/AuthContext';
+import { getTimeSlotConfig } from '@/lib/time-slots';
 
 interface ReservationData {
   facility_id: string;
@@ -178,13 +179,11 @@ export default function ReservationForm({ onSubmit }: ReservationFormProps) {
   };
 
   const getTimeSlotText = () => {
-    const slotNames = {
-      1: '1부 (10:00-14:00)',
-      2: '2부 (14:00-18:00)',
-      3: '3부 (18:00-22:00)'
-    };
-
-    return selectedTimeSlots.map(id => slotNames[id as keyof typeof slotNames]).join(', ');
+    const timeSlotConfig = getTimeSlotConfig();
+    return selectedTimeSlots.map(id => {
+      const slot = timeSlotConfig[id];
+      return slot ? `${slot.name} (${slot.time})` : `${id}부`;
+    }).join(', ');
   };
 
   return (

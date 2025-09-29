@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Card from '@/components/atoms/Card';
-import { TIME_SLOT_LABELS } from '@/constants';
+import { getTimeSlotLabel } from '@/lib/time-slots';
 
 interface DashboardStats {
   monthlyRevenue: number;
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
                           {reservation.facility_name} | {reservation.reservation_date}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {reservation.time_slots.map(slot => TIME_SLOT_LABELS[slot]).join(', ')}
+                          {reservation.time_slots.map(slot => getTimeSlotLabel(slot)).join(', ')}
                         </p>
                       </div>
                     </div>

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Card from '@/components/atoms/Card';
-import { RESERVATION_STATUS, PAYMENT_STATUS, TIME_SLOT_LABELS } from '@/constants';
+import { RESERVATION_STATUS, PAYMENT_STATUS } from '@/constants';
+import { getTimeSlotLabel } from '@/lib/time-slots';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -280,7 +281,7 @@ export default function MyPage() {
                       <div>
                         <span className="text-gray-600">시간:</span>
                         <p className="font-medium">
-                          {reservation.time_slots.map(slot => TIME_SLOT_LABELS[slot] || `${slot}시간대`).join(', ')}
+                          {reservation.time_slots.map(slot => getTimeSlotLabel(slot)).join(', ')}
                         </p>
                       </div>
                       <div>

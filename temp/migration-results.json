@@ -1,0 +1,8 @@
+[
+  {
+    "success": false,
+    "facilityId": "7a749847-e41c-417a-b32a-e177283eca71",
+    "facilityName": "VIP동",
+    "error": "new row for relation \"facility_image_logs\" violates check constraint \"facility_image_logs_action_check\""
+  }
+]

@@ -19,25 +19,20 @@ export const PAYMENT_STATUS = {
   REFUNDED: 'REFUNDED'       // 환불 완료
 } as const;
 
-// 시간대 정의
+// 시간대 정의 (환경변수 기반 유틸리티로 대체됨)
 export const TIME_SLOTS = {
-  SLOT_1: 1,  // 1부: 10:00-14:00
-  SLOT_2: 2,  // 2부: 14:00-18:00
-  SLOT_3: 3,  // 3부: 18:00-22:00
-  SLOT_4: 4   // 4부: 22:00-02:00 (추후 확장)
+  SLOT_1: 1,
+  SLOT_2: 2,
+  SLOT_3: 3,
+  SLOT_4: 4
 } as const;
 
-export const TIME_SLOT_LABELS: Record<number, string> = {
-  [TIME_SLOTS.SLOT_1]: '1부 (10:00-14:00)',
-  [TIME_SLOTS.SLOT_2]: '2부 (14:00-18:00)',
-  [TIME_SLOTS.SLOT_3]: '3부 (18:00-22:00)',
-  [TIME_SLOTS.SLOT_4]: '4부 (22:00-02:00)'
-};
-
-// 타입 가드 함수 추가
-export const getTimeSlotLabel = (slot: number): string => {
-  return TIME_SLOT_LABELS[slot] || `${slot}부 (시간 미정)`;
-};
+// 레거시 호환성을 위해 유지 (새 코드에서는 time-slots.ts 사용 권장)
+export {
+  getTimeSlotLabel,
+  getLegacyTimeSlotLabels as TIME_SLOT_LABELS,
+  getTimeSlotOptions
+} from '@/lib/time-slots';
 
 // 공간 타입
 export const FACILITY_TYPES = {
@@ -120,12 +115,13 @@ export const ROUTES = {
   ADMIN: '/admin'
 } as const;
 
-// 연락처 정보
-export const CONTACT_INFO = {
-  PHONE: '02-1234-5678',
-  ADDRESS: '서울특별시 강남구 테헤란로 123',
-  BUSINESS_HOURS: '오전 10시 - 오후 10시',
-  CLOSED_DAY: '매주 월요일',
-  BANK_ACCOUNT: '농협 123-456-789012',
-  ACCOUNT_HOLDER: '오소바베큐장'
-} as const;
+// 연락처 정보 (환경변수 기반 유틸리티로 대체됨)
+// 레거시 호환성을 위해 유지 (새 코드에서는 store-config.ts 사용 권장)
+export {
+  getStoreBasicInfo as CONTACT_INFO,
+  getStoreLocationInfo
+} from '@/lib/store-config';
+
+export {
+  getBankAccountForEmail
+} from '@/lib/bank-account';
