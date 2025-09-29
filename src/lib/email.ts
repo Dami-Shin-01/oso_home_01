@@ -9,7 +9,9 @@ import { getStoreBasicInfo, getStorePolicies } from '@/lib/store-config';
 import { getPolicyForEmail } from '@/lib/policies';
 
 // Resend 클라이언트 초기화
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 // 이메일 템플릿 타입 정의
 export interface EmailTemplateData {
@@ -30,6 +32,11 @@ export async function sendReservationConfirmationEmail(
   data: EmailTemplateData
 ) {
   try {
+    if (!resend) {
+      console.warn('Resend API key not configured. Email not sent.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
     const storeInfo = getStoreBasicInfo();
     const { data: result, error } = await resend.emails.send({
       from: `${storeInfo.name} <${storeInfo.noreplyEmail}>`,
@@ -59,6 +66,11 @@ export async function sendReservationConfirmedEmail(
   data: EmailTemplateData
 ) {
   try {
+    if (!resend) {
+      console.warn('Resend API key not configured. Email not sent.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
     const storeInfo = getStoreBasicInfo();
     const { data: result, error } = await resend.emails.send({
       from: `${storeInfo.name} <${storeInfo.noreplyEmail}>`,
@@ -88,6 +100,11 @@ export async function sendReservationReminderEmail(
   data: EmailTemplateData
 ) {
   try {
+    if (!resend) {
+      console.warn('Resend API key not configured. Email not sent.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
     const storeInfo = getStoreBasicInfo();
     const { data: result, error } = await resend.emails.send({
       from: `${storeInfo.name} <${storeInfo.noreplyEmail}>`,
@@ -117,6 +134,11 @@ export async function sendReservationCancelledEmail(
   data: EmailTemplateData
 ) {
   try {
+    if (!resend) {
+      console.warn('Resend API key not configured. Email not sent.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
     const storeInfo = getStoreBasicInfo();
     const { data: result, error } = await resend.emails.send({
       from: `${storeInfo.name} <${storeInfo.noreplyEmail}>`,
