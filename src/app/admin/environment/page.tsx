@@ -9,7 +9,7 @@ interface EnvironmentVariable {
   key: string;
   value: string;
   description: string;
-  category: 'database' | 'auth' | 'payment' | 'email' | 'storage' | 'other';
+  category: 'store' | 'operation' | 'payment' | 'email' | 'policy' | 'marketing' | 'social';
   required: boolean;
   sensitive: boolean;
 }
@@ -197,24 +197,26 @@ export default function EnvironmentManagementPage() {
 
   const getCategoryColor = (category: string) => {
     const colors = {
-      database: 'bg-blue-100 text-blue-800',
-      auth: 'bg-green-100 text-green-800',
+      store: 'bg-blue-100 text-blue-800',
+      operation: 'bg-green-100 text-green-800',
       payment: 'bg-yellow-100 text-yellow-800',
       email: 'bg-purple-100 text-purple-800',
-      storage: 'bg-pink-100 text-pink-800',
-      other: 'bg-gray-100 text-gray-800'
+      policy: 'bg-orange-100 text-orange-800',
+      marketing: 'bg-pink-100 text-pink-800',
+      social: 'bg-gray-100 text-gray-800'
     };
-    return colors[category as keyof typeof colors] || colors.other;
+    return colors[category as keyof typeof colors] || colors.social;
   };
 
   const getCategoryLabel = (category: string) => {
     const labels = {
-      database: '데이터베이스',
-      auth: '인증',
-      payment: '결제',
+      store: '매장 정보',
+      operation: '운영 설정',
+      payment: '결제 정보',
       email: '이메일',
-      storage: '스토리지',
-      other: '기타'
+      policy: '정책 설정',
+      marketing: '마케팅',
+      social: '소셜 미디어'
     };
     return labels[category as keyof typeof labels] || '기타';
   };
