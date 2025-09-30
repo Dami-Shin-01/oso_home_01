@@ -147,10 +147,12 @@ async function createCustomerReservationHandler(request: NextRequest) {
 
     if (!userError && userData?.email) {
       // 시간대 문자열 생성
-      const timeSlotText = time_slots.map((slotId: number) => {
-        const timeSlot = getTimeSlotById(slotId);
+      const timeSlotPromises = time_slots.map(async (slotId: number) => {
+        const timeSlot = await getTimeSlotById(slotId);
         return timeSlot ? `${timeSlot.name} (${timeSlot.time})` : `${slotId}부`;
-      }).join(', ');
+      });
+      const timeSlotTexts = await Promise.all(timeSlotPromises);
+      const timeSlotText = timeSlotTexts.join(', ');
 
       const emailData: EmailTemplateData = {
         customerName: userData.name || '고객님',

@@ -53,7 +53,7 @@ async function getEnvironmentHandler(request: NextRequest) {
     const envVars: EnvironmentVariable[] = settings?.map((setting: StoreSetting) => ({
       key: setting.key,
       value: setting.value,
-      description: setting.description || '',
+      description: setting.description ?? '',
       category: setting.category,
       required: setting.is_required,
       sensitive: false, // 데이터베이스 설정은 민감하지 않음

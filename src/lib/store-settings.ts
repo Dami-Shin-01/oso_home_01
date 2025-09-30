@@ -5,20 +5,10 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { StoreSettingRow } from '@/types/database';
 
-// 설정 타입 정의
-export interface StoreSetting {
-  id: string;
-  key: string;
-  value: string;
-  category: 'store' | 'operation' | 'payment' | 'policy' | 'marketing' | 'social';
-  description?: string;
-  data_type: 'string' | 'number' | 'boolean' | 'json';
-  is_required: boolean;
-  is_public: boolean;
-  created_at: string;
-  updated_at: string;
-}
+// 설정 타입 정의 (데이터베이스 타입과 일치하도록 import)
+export type StoreSetting = StoreSettingRow;
 
 // 설정 카테고리별 타입
 export interface StoreBasicInfo {
