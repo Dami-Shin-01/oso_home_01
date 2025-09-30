@@ -385,6 +385,44 @@ export type Database = {
           }
         ]
       }
+      store_settings: {
+        Row: {
+          id: string
+          key: string
+          value: string
+          category: 'store' | 'operation' | 'payment' | 'policy' | 'marketing' | 'social'
+          description: string | null
+          data_type: 'string' | 'number' | 'boolean' | 'json'
+          is_required: boolean
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: string
+          category: 'store' | 'operation' | 'payment' | 'policy' | 'marketing' | 'social'
+          description?: string | null
+          data_type?: 'string' | 'number' | 'boolean' | 'json'
+          is_required?: boolean
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: string
+          category?: 'store' | 'operation' | 'payment' | 'policy' | 'marketing' | 'social'
+          description?: string | null
+          data_type?: 'string' | 'number' | 'boolean' | 'json'
+          is_required?: boolean
+          is_public?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -438,6 +476,10 @@ export type CustomerProfileUpdate = Database['public']['Tables']['customer_profi
 export type ReservationPaymentRow = Database['public']['Tables']['reservation_payments']['Row']
 export type ReservationPaymentInsert = Database['public']['Tables']['reservation_payments']['Insert']
 export type ReservationPaymentUpdate = Database['public']['Tables']['reservation_payments']['Update']
+
+export type StoreSettingRow = Database['public']['Tables']['store_settings']['Row']
+export type StoreSettingInsert = Database['public']['Tables']['store_settings']['Insert']
+export type StoreSettingUpdate = Database['public']['Tables']['store_settings']['Update']
 
 // Extended types for API responses and complex queries
 export interface ReservationWithDetails extends ReservationRow {
