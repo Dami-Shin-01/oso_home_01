@@ -79,7 +79,7 @@ export default function EnvironmentManagementPage() {
       });
 
       if (!response.ok) {
-        throw new Error('환경변수를 가져올 수 없습니다.');
+        throw new Error('매장 설정을 가져올 수 없습니다.');
       }
 
       const data = await response.json();
@@ -251,7 +251,7 @@ export default function EnvironmentManagementPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">환경변수를 불러오는 중...</p>
+            <p className="text-gray-600">매장 설정을 불러오는 중...</p>
           </div>
         </div>
       </div>
@@ -433,12 +433,12 @@ export default function EnvironmentManagementPage() {
       </div>
 
       {/* 주의사항 */}
-      <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <h4 className="font-medium text-yellow-800 mb-2">⚠️ 주의사항</h4>
-        <ul className="text-sm text-yellow-700 space-y-1">
-          <li>• 환경변수 변경 후에는 애플리케이션을 재시작해야 합니다.</li>
+      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="font-medium text-blue-800 mb-2">ℹ️ 안내사항</h4>
+        <ul className="text-sm text-blue-700 space-y-1">
+          <li>• 설정 변경사항은 데이터베이스에 즉시 반영되며 재시작이 필요하지 않습니다.</li>
           <li>• 민감한 정보는 안전하게 관리하세요.</li>
-          <li>• 필수 환경변수를 삭제하면 애플리케이션이 정상 작동하지 않을 수 있습니다.</li>
+          <li>• 필수 설정을 삭제하면 애플리케이션이 정상 작동하지 않을 수 있습니다.</li>
           <li>• 변경 전에 현재 설정을 백업해두는 것을 권장합니다.</li>
         </ul>
       </div>

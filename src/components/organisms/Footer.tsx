@@ -1,14 +1,46 @@
+'use client';
+
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { ROUTES } from '@/constants';
 import { getPublicStoreConfig } from '@/lib/store-config';
 import { getBankAccountForEmail } from '@/lib/bank-account';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [storeConfig, setStoreConfig] = useState({
+    basic: { name: '바베큐장', phone: '02-0000-0000', email: 'info@bbq.com' },
+    location: { address: '서울특별시', detailedAddress: '', businessHours: '10:00-22:00', closedDay: '매주 월요일' },
+    timeSlots: { slot1: '10:00-14:00', slot2: '14:00-18:00', slot3: '18:00-22:00', slot4: '', slot1Name: '1부', slot2Name: '2부', slot3Name: '3부', slot4Name: '' },
+    policies: { cancellationPolicy: '', refundPolicy: '', termsOfServiceUrl: '/terms', privacyPolicyUrl: '/privacy' },
+    seo: { title: '바베큐장', description: '바베큐장 예약 시스템', keywords: [], ogImageUrl: '' },
+    social: { instagramUrl: '', facebookUrl: '', blogUrl: '' }
+  });
+  const [bankAccount, setBankAccount] = useState({
+    bank: '은행명',
+    accountNumber: '계좌번호',
+    accountHolder: '예금주'
+  });
 
-  // 환경변수에서 매장 정보 가져오기
-  const storeConfig = getPublicStoreConfig();
-  const bankAccount = getBankAccountForEmail();
+  // 데이터베이스에서 매장 정보 가져오기
+  useEffect(() => {
+    const loadStoreData = async () => {
+      try {
+        const config = await getPublicStoreConfig();
+        setStoreConfig(config);
+      } catch (error) {
+        console.error('Failed to load store config in Footer:', error);
+      }
+
+      try {
+        const account = await getBankAccountForEmail();
+        setBankAccount(account);
+      } catch (error) {
+        console.error('Failed to load bank account in Footer:', error);
+      }
+    };
+    loadStoreData();
+  }, []);
 
   return (
     <footer className="bg-gray-800 text-white">

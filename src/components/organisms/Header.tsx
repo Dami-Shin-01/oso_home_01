@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/constants';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,10 +11,26 @@ import { getPublicStoreConfig } from '@/lib/store-config';
 export default function Header() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [storeConfig, setStoreConfig] = useState({
+    basic: { name: '바베큐장', phone: '', email: '' },
+    location: { address: '', businessHours: '', closedDay: '' },
+    seo: { title: '', description: '' },
+    social: { instagramUrl: '', facebookUrl: '', blogUrl: '' }
+  });
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 
-  // 환경변수에서 매장 정보 가져오기 (클라이언트 안전한 정보만)
-  const storeConfig = getPublicStoreConfig();
+  // 데이터베이스에서 매장 정보 가져오기 (클라이언트 안전한 정보만)
+  useEffect(() => {
+    const loadStoreConfig = async () => {
+      try {
+        const config = await getPublicStoreConfig();
+        setStoreConfig(config);
+      } catch (error) {
+        console.error('Failed to load store config:', error);
+      }
+    };
+    loadStoreConfig();
+  }, []);
 
   const navigationItems = [
     { name: '홈', href: ROUTES.HOME },

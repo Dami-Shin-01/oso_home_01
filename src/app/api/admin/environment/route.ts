@@ -6,248 +6,26 @@ import {
   withErrorHandling
 } from '@/lib/api-response';
 import { verifyAdminAuth } from '@/lib/auth-utils';
-import fs from 'fs';
-import path from 'path';
+import { createAdminClient } from '@/lib/supabase/admin';
+import type { StoreSetting } from '@/lib/store-settings';
 
-// 환경변수 타입 정의
+// 환경변수 타입 정의 (데이터베이스 기반)
 interface EnvironmentVariable {
   key: string;
   value: string;
   description: string;
-  category: 'store' | 'operation' | 'payment' | 'email' | 'policy' | 'marketing' | 'social';
+  category: 'store' | 'operation' | 'payment' | 'policy' | 'marketing' | 'social';
   required: boolean;
   sensitive: boolean;
+  dataType: 'string' | 'number' | 'boolean' | 'json';
+  isPublic: boolean;
 }
 
-// 관리 가능한 환경변수 목록 (비즈니스 설정 중심)
-const MANAGEABLE_ENV_VARS: Record<string, Omit<EnvironmentVariable, 'value'>> = {
-  // 매장 기본 정보
-  'STORE_NAME': {
-    key: 'STORE_NAME',
-    description: '매장 이름',
-    category: 'store',
-    required: true,
-    sensitive: false
-  },
-  'STORE_PHONE': {
-    key: 'STORE_PHONE',
-    description: '매장 전화번호',
-    category: 'store',
-    required: true,
-    sensitive: false
-  },
-  'STORE_EMAIL': {
-    key: 'STORE_EMAIL',
-    description: '매장 이메일',
-    category: 'store',
-    required: true,
-    sensitive: false
-  },
-  'STORE_NOREPLY_EMAIL': {
-    key: 'STORE_NOREPLY_EMAIL',
-    description: '자동 발송 이메일 주소',
-    category: 'store',
-    required: true,
-    sensitive: false
-  },
-  'STORE_ADMIN_EMAIL': {
-    key: 'STORE_ADMIN_EMAIL',
-    description: '관리자 이메일',
-    category: 'store',
-    required: true,
-    sensitive: false
-  },
-
-  // 매장 위치 및 운영 정보
-  'STORE_ADDRESS': {
-    key: 'STORE_ADDRESS',
-    description: '매장 주소',
-    category: 'store',
-    required: true,
-    sensitive: false
-  },
-  'STORE_DETAILED_ADDRESS': {
-    key: 'STORE_DETAILED_ADDRESS',
-    description: '매장 상세 주소',
-    category: 'store',
-    required: false,
-    sensitive: false
-  },
-  'STORE_BUSINESS_HOURS': {
-    key: 'STORE_BUSINESS_HOURS',
-    description: '영업 시간',
-    category: 'store',
-    required: true,
-    sensitive: false
-  },
-  'STORE_CLOSED_DAY': {
-    key: 'STORE_CLOSED_DAY',
-    description: '정기 휴무일',
-    category: 'store',
-    required: false,
-    sensitive: false
-  },
-
-  // 시간대 설정
-  'TIME_SLOT_1': {
-    key: 'TIME_SLOT_1',
-    description: '1시간대 (예: 10:00-14:00)',
-    category: 'operation',
-    required: true,
-    sensitive: false
-  },
-  'TIME_SLOT_2': {
-    key: 'TIME_SLOT_2',
-    description: '2시간대 (예: 14:00-18:00)',
-    category: 'operation',
-    required: true,
-    sensitive: false
-  },
-  'TIME_SLOT_3': {
-    key: 'TIME_SLOT_3',
-    description: '3시간대 (예: 18:00-22:00)',
-    category: 'operation',
-    required: true,
-    sensitive: false
-  },
-  'TIME_SLOT_4': {
-    key: 'TIME_SLOT_4',
-    description: '4시간대 (예: 22:00-02:00)',
-    category: 'operation',
-    required: false,
-    sensitive: false
-  },
-  'TIME_SLOT_1_NAME': {
-    key: 'TIME_SLOT_1_NAME',
-    description: '1시간대 이름 (예: 1부)',
-    category: 'operation',
-    required: true,
-    sensitive: false
-  },
-  'TIME_SLOT_2_NAME': {
-    key: 'TIME_SLOT_2_NAME',
-    description: '2시간대 이름 (예: 2부)',
-    category: 'operation',
-    required: true,
-    sensitive: false
-  },
-  'TIME_SLOT_3_NAME': {
-    key: 'TIME_SLOT_3_NAME',
-    description: '3시간대 이름 (예: 3부)',
-    category: 'operation',
-    required: true,
-    sensitive: false
-  },
-  'TIME_SLOT_4_NAME': {
-    key: 'TIME_SLOT_4_NAME',
-    description: '4시간대 이름 (예: 4부)',
-    category: 'operation',
-    required: false,
-    sensitive: false
-  },
-
-  // 은행 계좌 정보
-  'BANK_NAME': {
-    key: 'BANK_NAME',
-    description: '은행명',
-    category: 'payment',
-    required: true,
-    sensitive: false
-  },
-  'BANK_ACCOUNT_NUMBER': {
-    key: 'BANK_ACCOUNT_NUMBER',
-    description: '계좌번호',
-    category: 'payment',
-    required: true,
-    sensitive: false
-  },
-  'BANK_ACCOUNT_HOLDER': {
-    key: 'BANK_ACCOUNT_HOLDER',
-    description: '예금주',
-    category: 'payment',
-    required: true,
-    sensitive: false
-  },
-
-  // 비즈니스 정책
-  'CANCELLATION_POLICY': {
-    key: 'CANCELLATION_POLICY',
-    description: '취소 정책',
-    category: 'policy',
-    required: true,
-    sensitive: false
-  },
-  'REFUND_POLICY': {
-    key: 'REFUND_POLICY',
-    description: '환불 정책',
-    category: 'policy',
-    required: true,
-    sensitive: false
-  },
-  'MAX_ADVANCE_BOOKING_DAYS': {
-    key: 'MAX_ADVANCE_BOOKING_DAYS',
-    description: '최대 예약 가능 일수',
-    category: 'policy',
-    required: true,
-    sensitive: false
-  },
-  'MIN_ADVANCE_BOOKING_HOURS': {
-    key: 'MIN_ADVANCE_BOOKING_HOURS',
-    description: '최소 예약 선행 시간',
-    category: 'policy',
-    required: true,
-    sensitive: false
-  },
-
-  // SEO 및 마케팅
-  'SITE_TITLE': {
-    key: 'SITE_TITLE',
-    description: '사이트 제목',
-    category: 'marketing',
-    required: true,
-    sensitive: false
-  },
-  'SITE_DESCRIPTION': {
-    key: 'SITE_DESCRIPTION',
-    description: '사이트 설명',
-    category: 'marketing',
-    required: true,
-    sensitive: false
-  },
-  'SITE_KEYWORDS': {
-    key: 'SITE_KEYWORDS',
-    description: '사이트 키워드',
-    category: 'marketing',
-    required: false,
-    sensitive: false
-  },
-
-  // 소셜 미디어
-  'SOCIAL_INSTAGRAM_URL': {
-    key: 'SOCIAL_INSTAGRAM_URL',
-    description: '인스타그램 URL',
-    category: 'social',
-    required: false,
-    sensitive: false
-  },
-  'SOCIAL_FACEBOOK_URL': {
-    key: 'SOCIAL_FACEBOOK_URL',
-    description: '페이스북 URL',
-    category: 'social',
-    required: false,
-    sensitive: false
-  },
-  'SOCIAL_BLOG_URL': {
-    key: 'SOCIAL_BLOG_URL',
-    description: '블로그 URL',
-    category: 'social',
-    required: false,
-    sensitive: false
-  }
-};
+// 데이터베이스에서 관리되는 설정들은 더 이상 하드코딩하지 않음
+// 모든 설정은 store_settings 테이블에서 동적으로 로드됨
 
 /**
- * 환경변수 목록 조회
+ * 환경변수 목록 조회 (데이터베이스 기반)
  */
 async function getEnvironmentHandler(request: NextRequest) {
   // 관리자 권한 확인
@@ -257,25 +35,31 @@ async function getEnvironmentHandler(request: NextRequest) {
   }
 
   try {
-    const envVars: EnvironmentVariable[] = [];
+    const supabase = createAdminClient();
 
-    // 관리 가능한 환경변수들 조회
-    Object.entries(MANAGEABLE_ENV_VARS).forEach(([key, config]) => {
-      const value = process.env[key] || '';
+    // 모든 설정을 데이터베이스에서 조회
+    const { data: settings, error } = await supabase
+      .from('store_settings')
+      .select('*')
+      .order('category', { ascending: true })
+      .order('key', { ascending: true });
 
-      envVars.push({
-        ...config,
-        value: config.sensitive && value ? '***HIDDEN***' : value
-      });
-    });
+    if (error) {
+      console.error('Database query error:', error);
+      throw ApiErrors.InternalServerError('설정을 조회하는 중 오류가 발생했습니다.');
+    }
 
-    // 카테고리별로 정렬
-    envVars.sort((a, b) => {
-      if (a.category !== b.category) {
-        return a.category.localeCompare(b.category);
-      }
-      return a.key.localeCompare(b.key);
-    });
+    // 데이터베이스 형식을 환경변수 형식으로 변환
+    const envVars: EnvironmentVariable[] = settings?.map((setting: StoreSetting) => ({
+      key: setting.key,
+      value: setting.value,
+      description: setting.description || '',
+      category: setting.category,
+      required: setting.is_required,
+      sensitive: false, // 데이터베이스 설정은 민감하지 않음
+      dataType: setting.data_type,
+      isPublic: setting.is_public
+    })) || [];
 
     return createSuccessResponse({
       variables: envVars,
@@ -284,12 +68,14 @@ async function getEnvironmentHandler(request: NextRequest) {
 
   } catch (error) {
     console.error('Environment variables fetch error:', error);
-    throw ApiErrors.InternalServerError('환경변수를 가져오는 중 오류가 발생했습니다.');
+    throw error instanceof Error && error.message.includes('ApiError')
+      ? error
+      : ApiErrors.InternalServerError('환경변수를 가져오는 중 오류가 발생했습니다.');
   }
 }
 
 /**
- * 환경변수 업데이트
+ * 환경변수 업데이트 (데이터베이스 기반)
  */
 async function updateEnvironmentHandler(request: NextRequest) {
   // 관리자 권한 확인
@@ -305,74 +91,91 @@ async function updateEnvironmentHandler(request: NextRequest) {
       throw ApiErrors.BadRequest('variables 배열이 필요합니다.');
     }
 
-    // .env.local 파일 경로
-    const envFilePath = path.join(process.cwd(), '.env.local');
-
-    // 기존 .env.local 파일 읽기
-    let envContent = '';
-    try {
-      envContent = fs.readFileSync(envFilePath, 'utf8');
-    } catch (error) {
-      // 파일이 없으면 새로 생성
-      envContent = '# Environment Variables\n';
-    }
+    const supabase = createAdminClient();
+    const updatedVars: string[] = [];
+    const errors: string[] = [];
 
     // 각 환경변수 업데이트
-    const updatedVars: string[] = [];
-
     for (const variable of variables) {
       const { key, value } = variable;
 
-      // 관리 가능한 환경변수인지 확인
-      if (!MANAGEABLE_ENV_VARS[key]) {
-        throw ApiErrors.BadRequest(`관리할 수 없는 환경변수입니다: ${key}`);
+      if (!key) {
+        errors.push('설정 키가 필요합니다.');
+        continue;
       }
 
-      // 필수 환경변수인데 빈 값인 경우 확인
-      if (MANAGEABLE_ENV_VARS[key].required && !value.trim()) {
-        throw ApiErrors.BadRequest(`필수 환경변수입니다: ${key}`);
-      }
+      try {
+        // 해당 설정이 존재하는지 먼저 확인
+        const { data: existing, error: fetchError } = await supabase
+          .from('store_settings')
+          .select('key, is_required')
+          .eq('key', key)
+          .single();
 
-      updatedVars.push(key);
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
+          console.error(`Error fetching setting ${key}:`, fetchError);
+          errors.push(`설정 조회 오류: ${key}`);
+          continue;
+        }
 
-      // 기존 환경변수 값 대체 또는 추가
-      const envRegex = new RegExp(`^${key}=.*$`, 'm');
-      const newEnvLine = `${key}=${value}`;
+        if (!existing) {
+          errors.push(`존재하지 않는 설정입니다: ${key}`);
+          continue;
+        }
 
-      if (envRegex.test(envContent)) {
-        envContent = envContent.replace(envRegex, newEnvLine);
-      } else {
-        envContent += `\n${newEnvLine}`;
+        // 필수 설정인데 빈 값인 경우 확인
+        if (existing.is_required && !value?.toString().trim()) {
+          errors.push(`필수 설정입니다: ${key}`);
+          continue;
+        }
+
+        // 데이터베이스 업데이트
+        const { error: updateError } = await supabase
+          .from('store_settings')
+          .update({
+            value: value?.toString() || '',
+            updated_at: new Date().toISOString()
+          })
+          .eq('key', key);
+
+        if (updateError) {
+          console.error(`Error updating setting ${key}:`, updateError);
+          errors.push(`설정 업데이트 오류: ${key}`);
+          continue;
+        }
+
+        updatedVars.push(key);
+
+      } catch (error) {
+        console.error(`Unexpected error updating ${key}:`, error);
+        errors.push(`예상치 못한 오류: ${key}`);
       }
     }
 
-    // 파일 저장
-    fs.writeFileSync(envFilePath, envContent, 'utf8');
+    if (errors.length > 0) {
+      throw ApiErrors.BadRequest(`일부 설정 업데이트에 실패했습니다: ${errors.join(', ')}`);
+    }
 
     return createSuccessResponse({
-      message: '환경변수가 성공적으로 업데이트되었습니다.',
+      message: '설정이 성공적으로 업데이트되었습니다.',
       updatedVariables: updatedVars,
-      restartRequired: true,
-      note: '변경사항을 적용하려면 애플리케이션을 재시작해야 합니다.'
+      restartRequired: false,
+      note: '데이터베이스 기반 설정이므로 즉시 적용됩니다.'
     });
 
   } catch (error) {
     console.error('Environment variables update error:', error);
 
-    if (error instanceof Error && error.message.includes('EACCES')) {
-      throw ApiErrors.InternalServerError('파일 접근 권한이 없습니다. 서버 관리자에게 문의하세요.');
+    if (error instanceof Error && error.message.includes('ApiError')) {
+      throw error;
     }
 
-    if (error instanceof Error && error.message.includes('ENOENT')) {
-      throw ApiErrors.InternalServerError('환경변수 파일을 찾을 수 없습니다.');
-    }
-
-    throw error;
+    throw ApiErrors.InternalServerError('설정 업데이트 중 오류가 발생했습니다.');
   }
 }
 
 /**
- * 환경변수 검증
+ * 환경변수 검증 (데이터베이스 기반)
  */
 async function validateEnvironmentHandler(request: NextRequest) {
   // 관리자 권한 확인
@@ -382,43 +185,80 @@ async function validateEnvironmentHandler(request: NextRequest) {
   }
 
   try {
+    const supabase = createAdminClient();
+
+    // 모든 설정을 데이터베이스에서 조회
+    const { data: settings, error } = await supabase
+      .from('store_settings')
+      .select('*')
+      .order('category', { ascending: true })
+      .order('key', { ascending: true });
+
+    if (error) {
+      console.error('Database query error:', error);
+      throw ApiErrors.InternalServerError('설정을 조회하는 중 오류가 발생했습니다.');
+    }
+
     const validationResults: Array<{
       key: string;
       status: 'valid' | 'missing' | 'invalid';
       message: string;
     }> = [];
 
-    // 각 환경변수 검증
-    Object.entries(MANAGEABLE_ENV_VARS).forEach(([key, config]) => {
-      const value = process.env[key];
+    // 각 설정 검증
+    settings?.forEach((setting: StoreSetting) => {
+      const { key, value, is_required, data_type } = setting;
 
-      if (!value) {
+      if (!value || value.trim() === '') {
         validationResults.push({
           key,
-          status: config.required ? 'missing' : 'valid',
-          message: config.required ? '필수 환경변수가 설정되지 않았습니다.' : '선택적 환경변수입니다.'
+          status: is_required ? 'missing' : 'valid',
+          message: is_required ? '필수 설정이 비어있습니다.' : '선택적 설정입니다.'
         });
         return;
       }
 
-      // 특정 환경변수별 검증 로직
+      // 데이터 타입별 검증 로직
       let isValid = true;
       let message = '정상';
 
-      switch (key) {
-        case 'NEXT_PUBLIC_SUPABASE_URL':
-          isValid = value.startsWith('https://') && value.includes('.supabase.co');
-          message = isValid ? '정상' : '올바른 Supabase URL 형식이 아닙니다.';
+      switch (data_type) {
+        case 'number':
+          isValid = !isNaN(Number(value)) && Number(value) >= 0;
+          message = isValid ? '정상' : '올바른 숫자 형식이 아닙니다.';
           break;
 
-        case 'SMTP_PORT':
-          isValid = !isNaN(Number(value)) && Number(value) > 0;
-          message = isValid ? '정상' : '올바른 포트 번호가 아닙니다.';
+        case 'boolean':
+          isValid = ['true', 'false', '1', '0'].includes(value.toLowerCase());
+          message = isValid ? '정상' : '올바른 불린 값이 아닙니다 (true/false).';
           break;
 
-        case 'NODE_ENV':
-          isValid = ['development', 'production', 'test'].includes(value);
-          message = isValid ? '정상' : '올바른 환경값이 아닙니다 (development, production, test 중 하나).';
+        case 'json':
+          try {
+            JSON.parse(value);
+            isValid = true;
+            message = '정상';
+          } catch {
+            isValid = false;
+            message = '올바른 JSON 형식이 아닙니다.';
+          }
+          break;
+
+        case 'string':
+        default:
+          // 특정 키별 추가 검증
+          if (key.includes('URL') && value) {
+            isValid = value.startsWith('http://') || value.startsWith('https://');
+            message = isValid ? '정상' : '올바른 URL 형식이 아닙니다.';
+          } else if (key.includes('EMAIL') && value) {
+            isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+            message = isValid ? '정상' : '올바른 이메일 형식이 아닙니다.';
+          } else if (key.includes('PHONE') && value) {
+            isValid = /^[0-9-+()\s]+$/.test(value);
+            message = isValid ? '정상' : '올바른 전화번호 형식이 아닙니다.';
+          } else {
+            message = '정상';
+          }
           break;
       }
 
@@ -447,7 +287,9 @@ async function validateEnvironmentHandler(request: NextRequest) {
 
   } catch (error) {
     console.error('Environment validation error:', error);
-    throw ApiErrors.InternalServerError('환경변수 검증 중 오류가 발생했습니다.');
+    throw error instanceof Error && error.message.includes('ApiError')
+      ? error
+      : ApiErrors.InternalServerError('환경변수 검증 중 오류가 발생했습니다.');
   }
 }
 

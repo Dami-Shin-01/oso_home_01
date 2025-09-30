@@ -1,0 +1,334 @@
+/**
+ * 데이터베이스 기반 매장 설정 관리 시스템
+ * 환경변수 대신 Supabase 데이터베이스에서 설정을 관리합니다
+ */
+
+import { createClient } from '@/lib/supabase/client';
+import { createAdminClient } from '@/lib/supabase/admin';
+
+// 설정 타입 정의
+export interface StoreSetting {
+  id: string;
+  key: string;
+  value: string;
+  category: 'store' | 'operation' | 'payment' | 'policy' | 'marketing' | 'social';
+  description?: string;
+  data_type: 'string' | 'number' | 'boolean' | 'json';
+  is_required: boolean;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// 설정 카테고리별 타입
+export interface StoreBasicInfo {
+  name: string;
+  phone: string;
+  email: string;
+  noreplyEmail: string;
+  adminEmail: string;
+  address: string;
+  detailedAddress?: string;
+  businessHours: string;
+  closedDay?: string;
+}
+
+export interface TimeSlots {
+  slot1: { time: string; name: string };
+  slot2: { time: string; name: string };
+  slot3: { time: string; name: string };
+  slot4?: { time: string; name: string };
+}
+
+export interface PaymentInfo {
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+}
+
+export interface BusinessPolicies {
+  cancellationPolicy: string;
+  refundPolicy: string;
+  maxAdvanceBookingDays: number;
+  minAdvanceBookingHours: number;
+}
+
+export interface MarketingInfo {
+  siteTitle: string;
+  siteDescription: string;
+  siteKeywords?: string;
+}
+
+export interface SocialMediaInfo {
+  instagramUrl?: string;
+  facebookUrl?: string;
+  blogUrl?: string;
+}
+
+/**
+ * 모든 공개 설정 조회 (클라이언트에서 사용)
+ */
+export async function getPublicSettings(): Promise<Record<string, string>> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('key, value')
+    .eq('is_public', true);
+
+  if (error) {
+    console.error('Failed to fetch public settings:', error);
+    return {};
+  }
+
+  return data.reduce((acc, setting) => {
+    acc[setting.key] = setting.value;
+    return acc;
+  }, {} as Record<string, string>);
+}
+
+/**
+ * 모든 설정 조회 (관리자용)
+ */
+export async function getAllSettings(): Promise<StoreSetting[]> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('*')
+    .order('category', { ascending: true })
+    .order('key', { ascending: true });
+
+  if (error) {
+    console.error('Failed to fetch all settings:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * 카테고리별 설정 조회
+ */
+export async function getSettingsByCategory(category: string): Promise<StoreSetting[]> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('*')
+    .eq('category', category)
+    .order('key', { ascending: true });
+
+  if (error) {
+    console.error(`Failed to fetch ${category} settings:`, error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * 특정 설정값 조회
+ */
+export async function getSetting(key: string): Promise<string | null> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('value')
+    .eq('key', key)
+    .single();
+
+  if (error) {
+    console.error(`Failed to fetch setting ${key}:`, error);
+    return null;
+  }
+
+  return data?.value || null;
+}
+
+/**
+ * 여러 설정값 조회
+ */
+export async function getSettings(keys: string[]): Promise<Record<string, string>> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('key, value')
+    .in('key', keys);
+
+  if (error) {
+    console.error('Failed to fetch settings:', error);
+    return {};
+  }
+
+  return data.reduce((acc, setting) => {
+    acc[setting.key] = setting.value;
+    return acc;
+  }, {} as Record<string, string>);
+}
+
+/**
+ * 설정값 업데이트 (관리자용)
+ */
+export async function updateSetting(key: string, value: string): Promise<boolean> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from('store_settings')
+    .update({ value, updated_at: new Date().toISOString() })
+    .eq('key', key);
+
+  if (error) {
+    console.error(`Failed to update setting ${key}:`, error);
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * 여러 설정값 일괄 업데이트 (관리자용)
+ */
+export async function updateSettings(settings: Array<{ key: string; value: string }>): Promise<boolean> {
+  const supabase = createAdminClient();
+
+  try {
+    // 트랜잭션으로 일괄 업데이트
+    const updates = settings.map(({ key, value }) =>
+      supabase
+        .from('store_settings')
+        .update({ value, updated_at: new Date().toISOString() })
+        .eq('key', key)
+    );
+
+    const results = await Promise.all(updates);
+
+    // 모든 업데이트가 성공했는지 확인
+    const hasError = results.some(result => result.error);
+
+    if (hasError) {
+      console.error('Some settings failed to update');
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Failed to update settings:', error);
+    return false;
+  }
+}
+
+/**
+ * 매장 기본 정보 조회
+ */
+export async function getStoreBasicInfo(): Promise<StoreBasicInfo> {
+  const settings = await getSettings([
+    'STORE_NAME', 'STORE_PHONE', 'STORE_EMAIL', 'STORE_NOREPLY_EMAIL',
+    'STORE_ADMIN_EMAIL', 'STORE_ADDRESS', 'STORE_DETAILED_ADDRESS',
+    'STORE_BUSINESS_HOURS', 'STORE_CLOSED_DAY'
+  ]);
+
+  return {
+    name: settings.STORE_NAME || '매장명',
+    phone: settings.STORE_PHONE || '전화번호',
+    email: settings.STORE_EMAIL || 'info@store.com',
+    noreplyEmail: settings.STORE_NOREPLY_EMAIL || 'noreply@store.com',
+    adminEmail: settings.STORE_ADMIN_EMAIL || 'admin@store.com',
+    address: settings.STORE_ADDRESS || '주소',
+    detailedAddress: settings.STORE_DETAILED_ADDRESS,
+    businessHours: settings.STORE_BUSINESS_HOURS || '영업시간',
+    closedDay: settings.STORE_CLOSED_DAY
+  };
+}
+
+/**
+ * 시간대 정보 조회
+ */
+export async function getTimeSlots(): Promise<TimeSlots> {
+  const settings = await getSettings([
+    'TIME_SLOT_1', 'TIME_SLOT_2', 'TIME_SLOT_3', 'TIME_SLOT_4',
+    'TIME_SLOT_1_NAME', 'TIME_SLOT_2_NAME', 'TIME_SLOT_3_NAME', 'TIME_SLOT_4_NAME'
+  ]);
+
+  const timeSlots: TimeSlots = {
+    slot1: {
+      time: settings.TIME_SLOT_1 || '10:00-14:00',
+      name: settings.TIME_SLOT_1_NAME || '1부'
+    },
+    slot2: {
+      time: settings.TIME_SLOT_2 || '14:00-18:00',
+      name: settings.TIME_SLOT_2_NAME || '2부'
+    },
+    slot3: {
+      time: settings.TIME_SLOT_3 || '18:00-22:00',
+      name: settings.TIME_SLOT_3_NAME || '3부'
+    }
+  };
+
+  if (settings.TIME_SLOT_4 && settings.TIME_SLOT_4_NAME) {
+    timeSlots.slot4 = {
+      time: settings.TIME_SLOT_4,
+      name: settings.TIME_SLOT_4_NAME
+    };
+  }
+
+  return timeSlots;
+}
+
+/**
+ * 결제 정보 조회
+ */
+export async function getPaymentInfo(): Promise<PaymentInfo> {
+  const settings = await getSettings(['BANK_NAME', 'BANK_ACCOUNT_NUMBER', 'BANK_ACCOUNT_HOLDER']);
+
+  return {
+    bankName: settings.BANK_NAME || '은행명',
+    accountNumber: settings.BANK_ACCOUNT_NUMBER || '계좌번호',
+    accountHolder: settings.BANK_ACCOUNT_HOLDER || '예금주'
+  };
+}
+
+/**
+ * 비즈니스 정책 조회
+ */
+export async function getBusinessPolicies(): Promise<BusinessPolicies> {
+  const settings = await getSettings([
+    'CANCELLATION_POLICY', 'REFUND_POLICY',
+    'MAX_ADVANCE_BOOKING_DAYS', 'MIN_ADVANCE_BOOKING_HOURS'
+  ]);
+
+  return {
+    cancellationPolicy: settings.CANCELLATION_POLICY || '취소 정책',
+    refundPolicy: settings.REFUND_POLICY || '환불 정책',
+    maxAdvanceBookingDays: parseInt(settings.MAX_ADVANCE_BOOKING_DAYS) || 30,
+    minAdvanceBookingHours: parseInt(settings.MIN_ADVANCE_BOOKING_HOURS) || 2
+  };
+}
+
+/**
+ * 마케팅 정보 조회
+ */
+export async function getMarketingInfo(): Promise<MarketingInfo> {
+  const settings = await getSettings(['SITE_TITLE', 'SITE_DESCRIPTION', 'SITE_KEYWORDS']);
+
+  return {
+    siteTitle: settings.SITE_TITLE || '사이트 제목',
+    siteDescription: settings.SITE_DESCRIPTION || '사이트 설명',
+    siteKeywords: settings.SITE_KEYWORDS
+  };
+}
+
+/**
+ * 소셜 미디어 정보 조회
+ */
+export async function getSocialMediaInfo(): Promise<SocialMediaInfo> {
+  const settings = await getSettings(['SOCIAL_INSTAGRAM_URL', 'SOCIAL_FACEBOOK_URL', 'SOCIAL_BLOG_URL']);
+
+  return {
+    instagramUrl: settings.SOCIAL_INSTAGRAM_URL,
+    facebookUrl: settings.SOCIAL_FACEBOOK_URL,
+    blogUrl: settings.SOCIAL_BLOG_URL
+  };
+}

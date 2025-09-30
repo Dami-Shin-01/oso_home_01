@@ -1,7 +1,16 @@
 /**
- * 통합 매장 설정 관리 시스템
- * 모든 환경변수를 중앙에서 관리하고 타입 안전성을 보장합니다.
+ * 통합 매장 설정 관리 시스템 (데이터베이스 기반)
+ * 데이터베이스에서 설정을 가져와 타입 안전성을 보장합니다.
  */
+
+import {
+  getStoreBasicInfo as getStoreBasicInfoFromDB,
+  getTimeSlots,
+  getBusinessPolicies,
+  getMarketingInfo,
+  getSocialMediaInfo,
+  getSetting
+} from '@/lib/store-settings';
 
 export interface StoreBasicInfo {
   name: string;
@@ -67,86 +76,158 @@ export interface StoreConfig {
 }
 
 /**
- * 환경변수에서 매장 기본 정보를 가져옵니다
+ * 데이터베이스에서 매장 기본 정보를 가져옵니다
  */
-export function getStoreBasicInfo(): StoreBasicInfo {
-  return {
-    name: process.env.STORE_NAME || '바베큐장',
-    phone: process.env.STORE_PHONE || '02-0000-0000',
-    email: process.env.STORE_EMAIL || 'info@bbq.com',
-    noreplyEmail: process.env.STORE_NOREPLY_EMAIL || 'noreply@bbq.com',
-    adminEmail: process.env.STORE_ADMIN_EMAIL || 'admin@bbq.com'
-  };
+export async function getStoreBasicInfo(): Promise<StoreBasicInfo> {
+  try {
+    const dbInfo = await getStoreBasicInfoFromDB();
+    return {
+      name: dbInfo.name,
+      phone: dbInfo.phone,
+      email: dbInfo.email,
+      noreplyEmail: dbInfo.noreplyEmail,
+      adminEmail: dbInfo.adminEmail
+    };
+  } catch (error) {
+    console.error('Error fetching store basic info:', error);
+    return {
+      name: '바베큐장',
+      phone: '02-0000-0000',
+      email: 'info@bbq.com',
+      noreplyEmail: 'noreply@bbq.com',
+      adminEmail: 'admin@bbq.com'
+    };
+  }
 }
 
 /**
- * 환경변수에서 매장 위치 정보를 가져옵니다
+ * 데이터베이스에서 매장 위치 정보를 가져옵니다
  */
-export function getStoreLocationInfo(): StoreLocationInfo {
-  return {
-    address: process.env.STORE_ADDRESS || '서울특별시 강남구',
-    detailedAddress: process.env.STORE_DETAILED_ADDRESS || '서울특별시 강남구',
-    businessHours: process.env.STORE_BUSINESS_HOURS || '오전 10시 - 오후 10시',
-    closedDay: process.env.STORE_CLOSED_DAY || '매주 월요일'
-  };
+export async function getStoreLocationInfo(): Promise<StoreLocationInfo> {
+  try {
+    const basicInfo = await getStoreBasicInfoFromDB();
+    return {
+      address: basicInfo.address,
+      detailedAddress: basicInfo.detailedAddress || '',
+      businessHours: basicInfo.businessHours,
+      closedDay: basicInfo.closedDay || ''
+    };
+  } catch (error) {
+    console.error('Error fetching store location info:', error);
+    return {
+      address: '서울특별시 강남구',
+      detailedAddress: '',
+      businessHours: '오전 10시 - 오후 10시',
+      closedDay: '매주 월요일'
+    };
+  }
 }
 
 /**
- * 환경변수에서 시간대 설정을 가져옵니다
+ * 데이터베이스에서 시간대 설정을 가져옵니다
  */
-export function getStoreTimeSlots(): StoreTimeSlots {
-  return {
-    slot1: process.env.TIME_SLOT_1 || '10:00-14:00',
-    slot2: process.env.TIME_SLOT_2 || '14:00-18:00',
-    slot3: process.env.TIME_SLOT_3 || '18:00-22:00',
-    slot4: process.env.TIME_SLOT_4 || '22:00-02:00',
-    slot1Name: process.env.TIME_SLOT_1_NAME || '1부',
-    slot2Name: process.env.TIME_SLOT_2_NAME || '2부',
-    slot3Name: process.env.TIME_SLOT_3_NAME || '3부',
-    slot4Name: process.env.TIME_SLOT_4_NAME || '4부'
-  };
+export async function getStoreTimeSlots(): Promise<StoreTimeSlots> {
+  try {
+    const dbTimeSlots = await getTimeSlots();
+    return {
+      slot1: dbTimeSlots.slot1.time,
+      slot2: dbTimeSlots.slot2.time,
+      slot3: dbTimeSlots.slot3.time,
+      slot4: dbTimeSlots.slot4?.time || '22:00-02:00',
+      slot1Name: dbTimeSlots.slot1.name,
+      slot2Name: dbTimeSlots.slot2.name,
+      slot3Name: dbTimeSlots.slot3.name,
+      slot4Name: dbTimeSlots.slot4?.name || '4부'
+    };
+  } catch (error) {
+    console.error('Error fetching store time slots:', error);
+    return {
+      slot1: '10:00-14:00',
+      slot2: '14:00-18:00',
+      slot3: '18:00-22:00',
+      slot4: '22:00-02:00',
+      slot1Name: '1부',
+      slot2Name: '2부',
+      slot3Name: '3부',
+      slot4Name: '4부'
+    };
+  }
 }
 
 /**
- * 환경변수에서 매장 정책을 가져옵니다
+ * 데이터베이스에서 매장 정책을 가져옵니다
  */
-export function getStorePolicies(): StorePolicies {
-  return {
-    cancellationPolicy: process.env.CANCELLATION_POLICY || '예약일 1일 전까지 취소 가능합니다',
-    refundPolicy: process.env.REFUND_POLICY || '취소 정책에 따라 환불됩니다',
-    termsOfServiceUrl: process.env.TERMS_OF_SERVICE_URL || '/terms',
-    privacyPolicyUrl: process.env.PRIVACY_POLICY_URL || '/privacy',
-    maxAdvanceBookingDays: parseInt(process.env.MAX_ADVANCE_BOOKING_DAYS || '30'),
-    minAdvanceBookingHours: parseInt(process.env.MIN_ADVANCE_BOOKING_HOURS || '2')
-  };
+export async function getStorePolicies(): Promise<StorePolicies> {
+  try {
+    const dbPolicies = await getBusinessPolicies();
+    return {
+      cancellationPolicy: dbPolicies.cancellationPolicy,
+      refundPolicy: dbPolicies.refundPolicy,
+      termsOfServiceUrl: process.env.TERMS_OF_SERVICE_URL || '/terms', // API 키는 환경변수 유지
+      privacyPolicyUrl: process.env.PRIVACY_POLICY_URL || '/privacy', // API 키는 환경변수 유지
+      maxAdvanceBookingDays: dbPolicies.maxAdvanceBookingDays,
+      minAdvanceBookingHours: dbPolicies.minAdvanceBookingHours
+    };
+  } catch (error) {
+    console.error('Error fetching store policies:', error);
+    return {
+      cancellationPolicy: '예약일 1일 전까지 취소 가능합니다',
+      refundPolicy: '취소 정책에 따라 환불됩니다',
+      termsOfServiceUrl: '/terms',
+      privacyPolicyUrl: '/privacy',
+      maxAdvanceBookingDays: 30,
+      minAdvanceBookingHours: 2
+    };
+  }
 }
 
 /**
- * 환경변수에서 SEO 정보를 가져옵니다
+ * 데이터베이스에서 SEO 정보를 가져옵니다
  */
-export function getStoreSEOInfo(): StoreSEOInfo {
-  const keywords = process.env.SITE_KEYWORDS || 'babeque,reservation,bbq';
-  return {
-    title: process.env.SITE_TITLE || '바베큐장 예약 시스템',
-    description: process.env.SITE_DESCRIPTION || '바베큐장 시설 예약 시스템',
-    keywords: keywords.split(',').map(k => k.trim()),
-    ogImageUrl: process.env.SITE_OG_IMAGE_URL || '/images/og-image.jpg'
-  };
+export async function getStoreSEOInfo(): Promise<StoreSEOInfo> {
+  try {
+    const dbMarketing = await getMarketingInfo();
+    const keywords = dbMarketing.siteKeywords || 'babeque,reservation,bbq';
+    return {
+      title: dbMarketing.siteTitle,
+      description: dbMarketing.siteDescription,
+      keywords: keywords.split(',').map(k => k.trim()),
+      ogImageUrl: process.env.SITE_OG_IMAGE_URL || '/images/og-image.jpg' // 이미지 URL은 환경변수 유지
+    };
+  } catch (error) {
+    console.error('Error fetching store SEO info:', error);
+    return {
+      title: '바베큐장 예약 시스템',
+      description: '바베큐장 시설 예약 시스템',
+      keywords: ['babeque', 'reservation', 'bbq'],
+      ogImageUrl: '/images/og-image.jpg'
+    };
+  }
 }
 
 /**
- * 환경변수에서 소셜 미디어 정보를 가져옵니다
+ * 데이터베이스에서 소셜 미디어 정보를 가져옵니다
  */
-export function getStoreSocialMedia(): StoreSocialMedia {
-  return {
-    instagramUrl: process.env.SOCIAL_INSTAGRAM_URL || '',
-    facebookUrl: process.env.SOCIAL_FACEBOOK_URL || '',
-    blogUrl: process.env.SOCIAL_BLOG_URL || ''
-  };
+export async function getStoreSocialMedia(): Promise<StoreSocialMedia> {
+  try {
+    const dbSocial = await getSocialMediaInfo();
+    return {
+      instagramUrl: dbSocial.instagramUrl || '',
+      facebookUrl: dbSocial.facebookUrl || '',
+      blogUrl: dbSocial.blogUrl || ''
+    };
+  } catch (error) {
+    console.error('Error fetching store social media info:', error);
+    return {
+      instagramUrl: '',
+      facebookUrl: '',
+      blogUrl: ''
+    };
+  }
 }
 
 /**
- * 환경변수에서 분석 도구 정보를 가져옵니다
+ * 환경변수에서 분석 도구 정보를 가져옵니다 (API 키는 환경변수 유지)
  */
 export function getStoreAnalytics(): StoreAnalytics {
   return {
@@ -156,82 +237,114 @@ export function getStoreAnalytics(): StoreAnalytics {
 }
 
 /**
- * 모든 매장 설정을 통합해서 반환합니다
+ * 모든 매장 설정을 통합해서 반환합니다 (비동기)
  */
-export function getStoreConfig(): StoreConfig {
-  return {
-    basic: getStoreBasicInfo(),
-    location: getStoreLocationInfo(),
-    timeSlots: getStoreTimeSlots(),
-    policies: getStorePolicies(),
-    seo: getStoreSEOInfo(),
-    social: getStoreSocialMedia(),
-    analytics: getStoreAnalytics()
-  };
+export async function getStoreConfig(): Promise<StoreConfig> {
+  try {
+    const [basic, location, timeSlots, policies, seo, social] = await Promise.all([
+      getStoreBasicInfo(),
+      getStoreLocationInfo(),
+      getStoreTimeSlots(),
+      getStorePolicies(),
+      getStoreSEOInfo(),
+      getStoreSocialMedia()
+    ]);
+
+    return {
+      basic,
+      location,
+      timeSlots,
+      policies,
+      seo,
+      social,
+      analytics: getStoreAnalytics() // 동기 함수
+    };
+  } catch (error) {
+    console.error('Error fetching complete store config:', error);
+    throw error;
+  }
 }
 
 /**
- * 환경변수 검증 - 필수 항목이 누락되었는지 확인
+ * 데이터베이스 기반 매장 설정 검증 - 필수 항목이 누락되었는지 확인
  */
-export function validateStoreConfig(): { isValid: boolean; missingVars: string[] } {
-  const requiredVars = [
-    'STORE_NAME',
-    'STORE_PHONE',
-    'STORE_EMAIL',
-    'STORE_ADDRESS',
-    'SITE_TITLE',
-    'SITE_DESCRIPTION'
-  ];
+export async function validateStoreConfig(): Promise<{ isValid: boolean; missingVars: string[] }> {
+  try {
+    const config = await getStoreConfig();
+    const missingVars: string[] = [];
 
-  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+    // 필수 필드 체크
+    if (!config.basic.name) missingVars.push('STORE_NAME');
+    if (!config.basic.phone) missingVars.push('STORE_PHONE');
+    if (!config.basic.email) missingVars.push('STORE_EMAIL');
+    if (!config.location.address) missingVars.push('STORE_ADDRESS');
+    if (!config.seo.title) missingVars.push('SITE_TITLE');
+    if (!config.seo.description) missingVars.push('SITE_DESCRIPTION');
 
-  return {
-    isValid: missingVars.length === 0,
-    missingVars
-  };
+    return {
+      isValid: missingVars.length === 0,
+      missingVars
+    };
+  } catch (error) {
+    console.error('Error validating store config:', error);
+    return {
+      isValid: false,
+      missingVars: ['DATABASE_CONNECTION_ERROR']
+    };
+  }
 }
 
 /**
  * 클라이언트 사이드에서 사용할 수 있는 공개 설정만 반환
  * (민감한 정보는 제외)
  */
-export function getPublicStoreConfig() {
-  const config = getStoreConfig();
+export async function getPublicStoreConfig() {
+  try {
+    const config = await getStoreConfig();
 
-  return {
-    basic: {
-      name: config.basic.name,
-      phone: config.basic.phone,
-      email: config.basic.email
-      // adminEmail, noreplyEmail은 제외
-    },
-    location: config.location,
-    timeSlots: config.timeSlots,
-    policies: {
-      cancellationPolicy: config.policies.cancellationPolicy,
-      refundPolicy: config.policies.refundPolicy,
-      termsOfServiceUrl: config.policies.termsOfServiceUrl,
-      privacyPolicyUrl: config.policies.privacyPolicyUrl
-      // booking 제한 정보는 제외
-    },
-    seo: config.seo,
-    social: config.social
-    // analytics는 제외
-  };
+    return {
+      basic: {
+        name: config.basic.name,
+        phone: config.basic.phone,
+        email: config.basic.email
+        // adminEmail, noreplyEmail은 제외
+      },
+      location: config.location,
+      timeSlots: config.timeSlots,
+      policies: {
+        cancellationPolicy: config.policies.cancellationPolicy,
+        refundPolicy: config.policies.refundPolicy,
+        termsOfServiceUrl: config.policies.termsOfServiceUrl,
+        privacyPolicyUrl: config.policies.privacyPolicyUrl
+        // booking 제한 정보는 제외
+      },
+      seo: config.seo,
+      social: config.social
+      // analytics는 제외
+    };
+  } catch (error) {
+    console.error('Error fetching public store config:', error);
+    throw error;
+  }
 }
 
 /**
  * 개발 모드에서 설정 정보를 콘솔에 출력 (디버깅용)
  */
-export function debugStoreConfig(): void {
+export async function debugStoreConfig(): Promise<void> {
   if (process.env.NODE_ENV === 'development') {
-    const validation = validateStoreConfig();
-    console.log('🏪 Store Config Validation:', validation);
+    try {
+      const validation = await validateStoreConfig();
+      console.log('🏪 Store Config Validation:', validation);
 
-    if (!validation.isValid) {
-      console.warn('⚠️ Missing environment variables:', validation.missingVars);
+      if (!validation.isValid) {
+        console.warn('⚠️ Missing database settings:', validation.missingVars);
+      }
+
+      const config = await getStoreConfig();
+      console.log('🏪 Store Config:', config);
+    } catch (error) {
+      console.error('🏪 Store Config Debug Error:', error);
     }
-
-    console.log('🏪 Store Config:', getStoreConfig());
   }
 }

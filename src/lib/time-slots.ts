@@ -1,6 +1,6 @@
 /**
- * 시간대 관리 유틸리티
- * 환경변수 기반으로 동적 시간대 관리를 지원합니다.
+ * 시간대 관리 유틸리티 (데이터베이스 기반)
+ * 데이터베이스 기반으로 동적 시간대 관리를 지원합니다.
  */
 
 import { getStoreTimeSlots } from './store-config';
@@ -22,10 +22,10 @@ export interface TimeSlotConfig {
 }
 
 /**
- * 환경변수에서 시간대 설정을 가져와서 구조화된 객체로 반환
+ * 데이터베이스에서 시간대 설정을 가져와서 구조화된 객체로 반환
  */
-export function getTimeSlotConfig(): TimeSlotConfig {
-  const slots = getStoreTimeSlots();
+export async function getTimeSlotConfig(): Promise<TimeSlotConfig> {
+  const slots = await getStoreTimeSlots();
 
   return {
     1: { name: slots.slot1Name, time: slots.slot1 },
@@ -38,8 +38,8 @@ export function getTimeSlotConfig(): TimeSlotConfig {
 /**
  * 시간대 ID에 해당하는 라벨을 반환
  */
-export function getTimeSlotLabel(slotId: number): string {
-  const config = getTimeSlotConfig();
+export async function getTimeSlotLabel(slotId: number): Promise<string> {
+  const config = await getTimeSlotConfig();
   const slot = config[slotId];
 
   if (!slot) {
@@ -52,8 +52,8 @@ export function getTimeSlotLabel(slotId: number): string {
 /**
  * 시간대 ID에 해당하는 시간만 반환
  */
-export function getTimeSlotTime(slotId: number): string {
-  const config = getTimeSlotConfig();
+export async function getTimeSlotTime(slotId: number): Promise<string> {
+  const config = await getTimeSlotConfig();
   const slot = config[slotId];
 
   return slot?.time || '시간 미정';
@@ -62,8 +62,8 @@ export function getTimeSlotTime(slotId: number): string {
 /**
  * 시간대 ID에 해당하는 이름만 반환
  */
-export function getTimeSlotName(slotId: number): string {
-  const config = getTimeSlotConfig();
+export async function getTimeSlotName(slotId: number): Promise<string> {
+  const config = await getTimeSlotConfig();
   const slot = config[slotId];
 
   return slot?.name || `${slotId}부`;
@@ -72,8 +72,8 @@ export function getTimeSlotName(slotId: number): string {
 /**
  * 시간대 ID로 전체 시간대 정보 반환
  */
-export function getTimeSlotById(slotId: number): TimeSlot | null {
-  const config = getTimeSlotConfig();
+export async function getTimeSlotById(slotId: number): Promise<TimeSlot | null> {
+  const config = await getTimeSlotConfig();
   const slot = config[slotId];
 
   if (!slot) return null;
@@ -93,8 +93,8 @@ export function getTimeSlotById(slotId: number): TimeSlot | null {
 /**
  * 모든 활성화된 시간대 목록을 반환
  */
-export function getAllTimeSlots(): TimeSlot[] {
-  const config = getTimeSlotConfig();
+export async function getAllTimeSlots(): Promise<TimeSlot[]> {
+  const config = await getTimeSlotConfig();
 
   return Object.entries(config).map(([id, slot]) => {
     const [startTime, endTime] = slot.time.split('-');
@@ -113,8 +113,8 @@ export function getAllTimeSlots(): TimeSlot[] {
 /**
  * 예약 폼에서 사용할 시간대 옵션 반환
  */
-export function getTimeSlotOptions(): Array<{ value: number; label: string }> {
-  const config = getTimeSlotConfig();
+export async function getTimeSlotOptions(): Promise<Array<{ value: number; label: string }>> {
+  const config = await getTimeSlotConfig();
 
   return Object.entries(config).map(([id, slot]) => ({
     value: parseInt(id),
@@ -137,47 +137,58 @@ export function parseTimeSlot(timeString: string): { start: string; end: string 
 /**
  * 시간대가 현재 시간 기준으로 예약 가능한지 확인
  */
-export function isTimeSlotBookable(slotId: number, reservationDate: Date): boolean {
-  const config = getTimeSlotConfig();
-  const slot = config[slotId];
+export async function isTimeSlotBookable(slotId: number, reservationDate: Date): Promise<boolean> {
+  try {
+    const config = await getTimeSlotConfig();
+    const slot = config[slotId];
 
-  if (!slot) return false;
+    if (!slot) return false;
 
-  const timeInfo = parseTimeSlot(slot.time);
-  if (!timeInfo) return false;
+    const timeInfo = parseTimeSlot(slot.time);
+    if (!timeInfo) return false;
 
-  // 현재 시간
-  const now = new Date();
+    // 현재 시간
+    const now = new Date();
 
-  // 예약 날짜와 시간대 시작 시간을 조합
-  const [startHour, startMinute] = timeInfo.start.split(':').map(Number);
-  const slotDateTime = new Date(reservationDate);
-  slotDateTime.setHours(startHour, startMinute, 0, 0);
+    // 예약 날짜와 시간대 시작 시간을 조합
+    const [startHour, startMinute] = timeInfo.start.split(':').map(Number);
+    const slotDateTime = new Date(reservationDate);
+    slotDateTime.setHours(startHour, startMinute, 0, 0);
 
-  // 최소 사전 예약 시간 확인 (환경변수에서 가져옴)
-  const minAdvanceHours = parseInt(process.env.MIN_ADVANCE_BOOKING_HOURS || '2');
-  const minBookingTime = new Date(now.getTime() + (minAdvanceHours * 60 * 60 * 1000));
+    // 최소 사전 예약 시간 확인 (데이터베이스에서 가져옴)
+    const { getBusinessPolicies } = await import('@/lib/store-settings');
+    const policies = await getBusinessPolicies();
+    const minAdvanceHours = policies.minAdvanceBookingHours;
+    const minBookingTime = new Date(now.getTime() + (minAdvanceHours * 60 * 60 * 1000));
 
-  return slotDateTime > minBookingTime;
+    return slotDateTime > minBookingTime;
+  } catch (error) {
+    console.error('Error checking time slot bookable status:', error);
+    return false;
+  }
 }
 
 /**
  * 특정 날짜의 모든 시간대 예약 가능 여부를 확인
  */
-export function getAvailableTimeSlotsForDate(date: Date): TimeSlot[] {
-  const allSlots = getAllTimeSlots();
+export async function getAvailableTimeSlotsForDate(date: Date): Promise<TimeSlot[]> {
+  const allSlots = await getAllTimeSlots();
 
-  return allSlots.map(slot => ({
-    ...slot,
-    available: isTimeSlotBookable(slot.id, date)
-  }));
+  const slotsWithAvailability = await Promise.all(
+    allSlots.map(async (slot) => ({
+      ...slot,
+      available: await isTimeSlotBookable(slot.id, date)
+    }))
+  );
+
+  return slotsWithAvailability;
 }
 
 /**
  * 시간대 설정을 데이터베이스나 API에서 사용할 형태로 변환
  */
-export function getTimeSlotForDatabase(): Record<number, string> {
-  const config = getTimeSlotConfig();
+export async function getTimeSlotForDatabase(): Promise<Record<number, string>> {
+  const config = await getTimeSlotConfig();
   const result: Record<number, string> = {};
 
   Object.entries(config).forEach(([id, slot]) => {
@@ -190,8 +201,8 @@ export function getTimeSlotForDatabase(): Record<number, string> {
 /**
  * 레거시 TIME_SLOT_LABELS 형태로 변환 (기존 코드 호환성)
  */
-export function getLegacyTimeSlotLabels(): Record<number, string> {
-  return getTimeSlotForDatabase();
+export async function getLegacyTimeSlotLabels(): Promise<Record<number, string>> {
+  return await getTimeSlotForDatabase();
 }
 
 /**
@@ -205,40 +216,53 @@ export function validateTimeSlotFormat(timeString: string): boolean {
 /**
  * 모든 시간대 설정이 유효한지 검증
  */
-export function validateAllTimeSlots(): { isValid: boolean; errors: string[] } {
-  const slots = getStoreTimeSlots();
-  const errors: string[] = [];
+export async function validateAllTimeSlots(): Promise<{ isValid: boolean; errors: string[] }> {
+  try {
+    const slots = await getStoreTimeSlots();
+    const errors: string[] = [];
 
-  const timeSlots = [
-    { key: 'slot1', value: slots.slot1 },
-    { key: 'slot2', value: slots.slot2 },
-    { key: 'slot3', value: slots.slot3 },
-    { key: 'slot4', value: slots.slot4 }
-  ];
+    const timeSlots = [
+      { key: 'slot1', value: slots.slot1 },
+      { key: 'slot2', value: slots.slot2 },
+      { key: 'slot3', value: slots.slot3 },
+      { key: 'slot4', value: slots.slot4 }
+    ];
 
-  timeSlots.forEach(({ key, value }) => {
-    if (!validateTimeSlotFormat(value)) {
-      errors.push(`${key}: ${value} - 올바르지 않은 시간 형식입니다. (예: 10:00-14:00)`);
-    }
-  });
+    timeSlots.forEach(({ key, value }) => {
+      if (!validateTimeSlotFormat(value)) {
+        errors.push(`${key}: ${value} - 올바르지 않은 시간 형식입니다. (예: 10:00-14:00)`);
+      }
+    });
 
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  } catch (error) {
+    console.error('Error validating time slots:', error);
+    return {
+      isValid: false,
+      errors: ['Database connection error']
+    };
+  }
 }
 
 /**
  * 개발 모드에서 시간대 설정을 콘솔에 출력 (디버깅용)
  */
-export function debugTimeSlots(): void {
+export async function debugTimeSlots(): Promise<void> {
   if (process.env.NODE_ENV === 'development') {
-    console.log('⏰ Time Slots Configuration:');
-    console.table(getTimeSlotConfig());
+    try {
+      console.log('⏰ Time Slots Configuration:');
+      const config = await getTimeSlotConfig();
+      console.table(config);
 
-    const validation = validateAllTimeSlots();
-    if (!validation.isValid) {
-      console.warn('⚠️ Time Slot Validation Errors:', validation.errors);
+      const validation = await validateAllTimeSlots();
+      if (!validation.isValid) {
+        console.warn('⚠️ Time Slot Validation Errors:', validation.errors);
+      }
+    } catch (error) {
+      console.error('⏰ Time Slots Debug Error:', error);
     }
   }
 }

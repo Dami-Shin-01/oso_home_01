@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabaseAdmin, type Database } from '@/lib/supabase-admin';
+import { createAdminClient, type Database } from '@/lib/supabase/admin';
 import {
   createSuccessResponse,
   ApiErrors,
@@ -16,6 +16,8 @@ async function loginHandler(request: NextRequest) {
   validateEmail(body.email);
 
   const { email, password } = body;
+
+  const supabaseAdmin = createAdminClient();
 
   // 인증 시도
   const { data: authData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
