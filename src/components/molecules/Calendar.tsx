@@ -36,11 +36,6 @@ interface CalendarProps {
   selectedSiteId?: string;
 }
 
-// 환경변수에서 시간대 정보를 가져오는 함수
-const getTimeSlots = (): TimeSlot[] => {
-  return getAllTimeSlots();
-};
-
 export default function Calendar({
   onDateSelect,
   onTimeSlotSelect,
@@ -53,6 +48,12 @@ export default function Calendar({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [availability, setAvailability] = useState<Record<string, FacilityAvailability>>({});
   const [loading, setLoading] = useState(false);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+
+  // 시간대 정보를 비동기로 로드
+  useEffect(() => {
+    getAllTimeSlots().then(setTimeSlots);
+  }, []);
 
   // 달력 날짜 계산
   const year = currentDate.getFullYear();
@@ -215,7 +216,7 @@ export default function Calendar({
                 <div>
                   <h4 className="text-md font-medium text-gray-700 mb-3">이용 시간대</h4>
                   <div className="grid grid-cols-3 gap-3">
-                    {getTimeSlots().map(slot => (
+                    {timeSlots.map(slot => (
                       <button
                         key={slot.id}
                         onClick={() => handleTimeSlotToggle(slot.id)}
@@ -260,7 +261,7 @@ export default function Calendar({
                           </div>
 
                           <div className="flex space-x-1">
-                            {getTimeSlots().map(slot => {
+                            {timeSlots.map(slot => {
                               const available = site.available_time_slots.includes(slot.id);
                               return (
                                 <div
