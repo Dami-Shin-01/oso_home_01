@@ -4,8 +4,8 @@
  */
 
 import { Resend } from 'resend';
-import { getBankAccountForEmail, BankAccountInfo } from '@/lib/bank-account';
-import { getStoreBasicInfo, getStorePolicies } from '@/lib/store-config';
+import { getBankAccountForEmail } from '@/lib/bank-account';
+import { getStoreBasicInfo } from '@/lib/store-config';
 import { getPolicyForEmail } from '@/lib/policies';
 
 // Resend 클라이언트 초기화

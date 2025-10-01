@@ -1,7 +1,7 @@
 import { getPublicStoreConfig } from '@/lib/store-config';
 
-export default function LocationPage() {
-  const storeConfig = getPublicStoreConfig();
+export default async function LocationPage() {
+  const storeConfig = await getPublicStoreConfig();
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">오시는 길</h1>

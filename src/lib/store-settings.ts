@@ -322,3 +322,35 @@ export async function getSocialMediaInfo(): Promise<SocialMediaInfo> {
     blogUrl: settings.SOCIAL_BLOG_URL
   };
 }
+
+/**
+ * 정책 URL 조회 (이용약관, 개인정보처리방침)
+ */
+export async function getPolicyUrls(): Promise<{ termsOfServiceUrl: string; privacyPolicyUrl: string }> {
+  const settings = await getSettings(['TERMS_OF_SERVICE_URL', 'PRIVACY_POLICY_URL']);
+
+  return {
+    termsOfServiceUrl: settings.TERMS_OF_SERVICE_URL || '/terms',
+    privacyPolicyUrl: settings.PRIVACY_POLICY_URL || '/privacy'
+  };
+}
+
+/**
+ * SEO OG 이미지 URL 조회
+ */
+export async function getOgImageUrl(): Promise<string> {
+  const value = await getSetting('SITE_OG_IMAGE_URL');
+  return value || '/images/og-image.jpg';
+}
+
+/**
+ * 분석 도구 ID 조회 (Google Analytics, GTM)
+ */
+export async function getAnalyticsIds(): Promise<{ googleAnalyticsId: string; googleTagManagerId: string }> {
+  const settings = await getSettings(['GOOGLE_ANALYTICS_ID', 'GOOGLE_TAG_MANAGER_ID']);
+
+  return {
+    googleAnalyticsId: settings.GOOGLE_ANALYTICS_ID || '',
+    googleTagManagerId: settings.GOOGLE_TAG_MANAGER_ID || ''
+  };
+}

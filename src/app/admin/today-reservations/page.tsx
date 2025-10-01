@@ -85,6 +85,7 @@ export default function TodayReservationsPage() {
     if (!checkAuth()) return;
 
     fetchTodayReservations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   const fetchTodayReservations = useCallback(async () => {

@@ -1,9 +1,8 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import React, { Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import VideoPlayButton from '@/components/atoms/VideoPlayButton';
-import { getFeaturedImageUrl, getPreloadImageUrls } from '@/lib/image-utils';
+import { getPreloadImageUrls } from '@/lib/image-utils';
 
 // 동적 import로 비디오 컴포넌트를 코드 스플릿
 const LazyFacilitiesSection = React.lazy(() => import('./components/FacilitiesSection'));

@@ -9,7 +9,9 @@ import {
   getBusinessPolicies,
   getMarketingInfo,
   getSocialMediaInfo,
-  getSetting
+  getPolicyUrls,
+  getOgImageUrl,
+  getAnalyticsIds
 } from '@/lib/store-settings';
 
 export interface StoreBasicInfo {
@@ -159,12 +161,16 @@ export async function getStoreTimeSlots(): Promise<StoreTimeSlots> {
  */
 export async function getStorePolicies(): Promise<StorePolicies> {
   try {
-    const dbPolicies = await getBusinessPolicies();
+    const [dbPolicies, policyUrls] = await Promise.all([
+      getBusinessPolicies(),
+      getPolicyUrls()
+    ]);
+
     return {
       cancellationPolicy: dbPolicies.cancellationPolicy,
       refundPolicy: dbPolicies.refundPolicy,
-      termsOfServiceUrl: process.env.TERMS_OF_SERVICE_URL || '/terms', // API 키는 환경변수 유지
-      privacyPolicyUrl: process.env.PRIVACY_POLICY_URL || '/privacy', // API 키는 환경변수 유지
+      termsOfServiceUrl: policyUrls.termsOfServiceUrl,
+      privacyPolicyUrl: policyUrls.privacyPolicyUrl,
       maxAdvanceBookingDays: dbPolicies.maxAdvanceBookingDays,
       minAdvanceBookingHours: dbPolicies.minAdvanceBookingHours
     };
@@ -186,13 +192,17 @@ export async function getStorePolicies(): Promise<StorePolicies> {
  */
 export async function getStoreSEOInfo(): Promise<StoreSEOInfo> {
   try {
-    const dbMarketing = await getMarketingInfo();
+    const [dbMarketing, ogImageUrl] = await Promise.all([
+      getMarketingInfo(),
+      getOgImageUrl()
+    ]);
+
     const keywords = dbMarketing.siteKeywords || 'babeque,reservation,bbq';
     return {
       title: dbMarketing.siteTitle,
       description: dbMarketing.siteDescription,
       keywords: keywords.split(',').map(k => k.trim()),
-      ogImageUrl: process.env.SITE_OG_IMAGE_URL || '/images/og-image.jpg' // 이미지 URL은 환경변수 유지
+      ogImageUrl
     };
   } catch (error) {
     console.error('Error fetching store SEO info:', error);
@@ -227,13 +237,22 @@ export async function getStoreSocialMedia(): Promise<StoreSocialMedia> {
 }
 
 /**
- * 환경변수에서 분석 도구 정보를 가져옵니다 (API 키는 환경변수 유지)
+ * 데이터베이스에서 분석 도구 정보를 가져옵니다
  */
-export function getStoreAnalytics(): StoreAnalytics {
-  return {
-    googleAnalyticsId: process.env.GOOGLE_ANALYTICS_ID || '',
-    googleTagManagerId: process.env.GOOGLE_TAG_MANAGER_ID || ''
-  };
+export async function getStoreAnalytics(): Promise<StoreAnalytics> {
+  try {
+    const analyticsIds = await getAnalyticsIds();
+    return {
+      googleAnalyticsId: analyticsIds.googleAnalyticsId,
+      googleTagManagerId: analyticsIds.googleTagManagerId
+    };
+  } catch (error) {
+    console.error('Error fetching store analytics:', error);
+    return {
+      googleAnalyticsId: '',
+      googleTagManagerId: ''
+    };
+  }
 }
 
 /**
@@ -241,13 +260,14 @@ export function getStoreAnalytics(): StoreAnalytics {
  */
 export async function getStoreConfig(): Promise<StoreConfig> {
   try {
-    const [basic, location, timeSlots, policies, seo, social] = await Promise.all([
+    const [basic, location, timeSlots, policies, seo, social, analytics] = await Promise.all([
       getStoreBasicInfo(),
       getStoreLocationInfo(),
       getStoreTimeSlots(),
       getStorePolicies(),
       getStoreSEOInfo(),
-      getStoreSocialMedia()
+      getStoreSocialMedia(),
+      getStoreAnalytics() // 이제 비동기 함수
     ]);
 
     return {
@@ -257,7 +277,7 @@ export async function getStoreConfig(): Promise<StoreConfig> {
       policies,
       seo,
       social,
-      analytics: getStoreAnalytics() // 동기 함수
+      analytics
     };
   } catch (error) {
     console.error('Error fetching complete store config:', error);

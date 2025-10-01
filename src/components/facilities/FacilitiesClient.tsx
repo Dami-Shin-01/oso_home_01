@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FACILITY_TYPE_LABELS } from '@/constants';
 import { getFeaturedImageUrl, getAllImageUrls } from '@/lib/image-utils';
-import { getAllTimeSlots } from '@/lib/time-slots';
+import { getAllTimeSlots, type TimeSlot } from '@/lib/time-slots';
 
 interface Facility {
   id: string;
@@ -30,6 +30,11 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
   const [filterType, setFilterType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+
+  useEffect(() => {
+    getAllTimeSlots().then(setTimeSlots);
+  }, []);
 
   // 대표 이미지 (첫 번째 이미지) 가져오기
   const getFeaturedImage = (facility: Facility) => {
@@ -417,7 +422,7 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
                     <div>
                       <h4 className="font-bold text-lg mb-2">이용 시간</h4>
                       <div className="space-y-2">
-                        {getAllTimeSlots().map(slot => (
+                        {timeSlots.map(slot => (
                           <div key={slot.id} className="badge badge-outline">
                             {slot.name}: {slot.time}
                           </div>

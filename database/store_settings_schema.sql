@@ -119,7 +119,18 @@ INSERT INTO store_settings (key, value, category, description, data_type, is_req
 -- 소셜 미디어
 ('SOCIAL_INSTAGRAM_URL', 'https://instagram.com/osobbq', 'social', '인스타그램 URL', 'string', false, true),
 ('SOCIAL_FACEBOOK_URL', 'https://facebook.com/osobbq', 'social', '페이스북 URL', 'string', false, true),
-('SOCIAL_BLOG_URL', 'https://blog.naver.com/osobbq', 'social', '블로그 URL', 'string', false, true)
+('SOCIAL_BLOG_URL', 'https://blog.naver.com/osobbq', 'social', '블로그 URL', 'string', false, true),
+
+-- 정책 URL
+('TERMS_OF_SERVICE_URL', '/terms', 'policy', '이용약관 페이지 URL', 'string', true, true),
+('PRIVACY_POLICY_URL', '/privacy', 'policy', '개인정보처리방침 페이지 URL', 'string', true, true),
+
+-- SEO 및 마케팅 (추가)
+('SITE_OG_IMAGE_URL', '/images/og-image.jpg', 'marketing', 'Open Graph 이미지 URL', 'string', false, true),
+
+-- 분석 도구 (민감 정보이므로 is_public = false)
+('GOOGLE_ANALYTICS_ID', '', 'marketing', 'Google Analytics ID', 'string', false, false),
+('GOOGLE_TAG_MANAGER_ID', '', 'marketing', 'Google Tag Manager ID', 'string', false, false)
 
 ON CONFLICT (key) DO UPDATE SET
   value = EXCLUDED.value,

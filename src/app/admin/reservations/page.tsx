@@ -191,7 +191,7 @@ export default function AdminReservationsPage() {
 
 
 
-  const handleExportExcel = () => {
+  const _handleExportExcel = () => {
     alert('Export to Excel not implemented yet.');
   };
 
