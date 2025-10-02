@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Card from '@/components/atoms/Card';
 import { RESERVATION_STATUS, PAYMENT_STATUS } from '@/constants';
-import { getTimeSlotLabel } from '@/lib/time-slots';
+import { getTimeSlotConfig } from '@/lib/time-slots';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -52,6 +52,7 @@ export default function MyPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [reservationsLoading, setReservationsLoading] = useState(true);
+  const [timeSlotTexts, setTimeSlotTexts] = useState<Record<string, string>>({});
   const { user } = useAuth();
 
   // 데이터 로드
@@ -67,7 +68,24 @@ export default function MyPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setReservations(result.data.reservations || []);
+        const reservationData = result.data.reservations || [];
+        setReservations(reservationData);
+
+        // Pre-calculate time slot texts (N+1 prevention)
+        if (reservationData.length > 0) {
+          const config = await getTimeSlotConfig();
+          const texts: Record<string, string> = {};
+
+          reservationData.forEach((reservation: Reservation) => {
+            const labels = reservation.time_slots.map(id => {
+              const slot = config[id];
+              return slot ? `${slot.name} (${slot.time})` : `${id}부`;
+            });
+            texts[reservation.id] = labels.join(', ');
+          });
+
+          setTimeSlotTexts(texts);
+        }
       } else {
         console.error('Reservations fetch failed:', result.error);
       }
@@ -281,7 +299,7 @@ export default function MyPage() {
                       <div>
                         <span className="text-gray-600">시간:</span>
                         <p className="font-medium">
-                          {reservation.time_slots.map(slot => getTimeSlotLabel(slot)).join(', ')}
+                          {timeSlotTexts[reservation.id] || '시간대 로딩 중...'}
                         </p>
                       </div>
                       <div>

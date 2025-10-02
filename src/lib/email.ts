@@ -4,9 +4,14 @@
  */
 
 import { Resend } from 'resend';
-import { getBankAccountForEmail } from '@/lib/bank-account';
-import { getStoreBasicInfo } from '@/lib/store-config';
+import { getBankAccountForEmail, type BankAccountInfo } from '@/lib/bank-account';
+import { getStoreBasicInfo, type StoreBasicInfo } from '@/lib/store-config';
 import { getPolicyForEmail } from '@/lib/policies';
+
+type PolicyInfo = {
+  cancellationNotice: string;
+  importantNotices: string[];
+};
 
 // Resend 클라이언트 초기화
 const resend = process.env.RESEND_API_KEY
@@ -37,12 +42,16 @@ export async function sendReservationConfirmationEmail(
       return { success: false, error: 'Email service not configured' };
     }
 
-    const storeInfo = getStoreBasicInfo();
+    const [storeInfo, accountInfo, policyInfo] = await Promise.all([
+      getStoreBasicInfo(),
+      getBankAccountForEmail(),
+      getPolicyForEmail()
+    ]);
     const { data: result, error } = await resend.emails.send({
       from: `${storeInfo.name} <${storeInfo.noreplyEmail}>`,
       to: [to],
       subject: `[${storeInfo.name}] 예약 확인 - ${data.facilityName}`,
-      html: getReservationConfirmationTemplate(data),
+      html: getReservationConfirmationTemplate(data, storeInfo, accountInfo, policyInfo),
     });
 
     if (error) {
@@ -71,12 +80,12 @@ export async function sendReservationConfirmedEmail(
       return { success: false, error: 'Email service not configured' };
     }
 
-    const storeInfo = getStoreBasicInfo();
+    const storeInfo = await getStoreBasicInfo();
     const { data: result, error } = await resend.emails.send({
       from: `${storeInfo.name} <${storeInfo.noreplyEmail}>`,
       to: [to],
       subject: `[${storeInfo.name}] 예약 확정 안내 - ${data.facilityName}`,
-      html: getReservationConfirmedTemplate(data),
+      html: getReservationConfirmedTemplate(data, storeInfo),
     });
 
     if (error) {
@@ -105,12 +114,12 @@ export async function sendReservationReminderEmail(
       return { success: false, error: 'Email service not configured' };
     }
 
-    const storeInfo = getStoreBasicInfo();
+    const storeInfo = await getStoreBasicInfo();
     const { data: result, error } = await resend.emails.send({
       from: `${storeInfo.name} <${storeInfo.noreplyEmail}>`,
       to: [to],
       subject: `[${storeInfo.name}] 내일 예약 안내 - ${data.facilityName}`,
-      html: getReservationReminderTemplate(data),
+      html: getReservationReminderTemplate(data, storeInfo),
     });
 
     if (error) {
@@ -139,12 +148,12 @@ export async function sendReservationCancelledEmail(
       return { success: false, error: 'Email service not configured' };
     }
 
-    const storeInfo = getStoreBasicInfo();
+    const storeInfo = await getStoreBasicInfo();
     const { data: result, error } = await resend.emails.send({
       from: `${storeInfo.name} <${storeInfo.noreplyEmail}>`,
       to: [to],
       subject: `[${storeInfo.name}] 예약 취소 확인 - ${data.facilityName}`,
-      html: getReservationCancelledTemplate(data),
+      html: getReservationCancelledTemplate(data, storeInfo),
     });
 
     if (error) {
@@ -161,11 +170,13 @@ export async function sendReservationCancelledEmail(
 }
 
 // 이메일 템플릿들
-function getReservationConfirmationTemplate(data: EmailTemplateData): string {
+function getReservationConfirmationTemplate(
+  data: EmailTemplateData,
+  storeInfo: StoreBasicInfo,
+  accountInfo: BankAccountInfo,
+  policyInfo: PolicyInfo
+): string {
   // 환경 변수에서 매장 정보 및 계좌 정보 가져오기
-  const storeInfo = getStoreBasicInfo();
-  const accountInfo = getBankAccountForEmail();
-  const policyInfo = getPolicyForEmail();
 
   return `
     <!DOCTYPE html>
@@ -238,8 +249,7 @@ function getReservationConfirmationTemplate(data: EmailTemplateData): string {
   `;
 }
 
-function getReservationConfirmedTemplate(data: EmailTemplateData): string {
-  const storeInfo = getStoreBasicInfo();
+function getReservationConfirmedTemplate(data: EmailTemplateData, storeInfo: StoreBasicInfo): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -297,8 +307,7 @@ function getReservationConfirmedTemplate(data: EmailTemplateData): string {
   `;
 }
 
-function getReservationReminderTemplate(data: EmailTemplateData): string {
-  const storeInfo = getStoreBasicInfo();
+function getReservationReminderTemplate(data: EmailTemplateData, storeInfo: StoreBasicInfo): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -354,8 +363,7 @@ function getReservationReminderTemplate(data: EmailTemplateData): string {
   `;
 }
 
-function getReservationCancelledTemplate(data: EmailTemplateData): string {
-  const storeInfo = getStoreBasicInfo();
+function getReservationCancelledTemplate(data: EmailTemplateData, storeInfo: StoreBasicInfo): string {
   return `
     <!DOCTYPE html>
     <html>

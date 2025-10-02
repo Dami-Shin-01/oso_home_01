@@ -56,8 +56,28 @@ export default function ReservationForm({ onSubmit }: ReservationFormProps) {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [facilityLoading, setFacilityLoading] = useState(true);
+  const [timeSlotMap, setTimeSlotMap] = useState<Map<number, { name: string; time: string }>>(new Map());
 
   const { user, isAuthenticated } = useAuth();
+
+  // 시간대 설정 로드 (한 번만 fetch)
+  useEffect(() => {
+    const loadTimeSlots = async () => {
+      try {
+        const config = await getTimeSlotConfig();
+        const map = new Map(
+          Object.entries(config).map(([id, slot]) => [
+            parseInt(id),
+            { name: slot.name, time: slot.time }
+          ])
+        );
+        setTimeSlotMap(map);
+      } catch (error) {
+        console.error('Failed to load time slot config:', error);
+      }
+    };
+    loadTimeSlots();
+  }, []);
 
   // 실제 시설 데이터 로드
   useEffect(() => {
@@ -179,9 +199,10 @@ export default function ReservationForm({ onSubmit }: ReservationFormProps) {
   };
 
   const getTimeSlotText = () => {
-    const timeSlotConfig = getTimeSlotConfig();
+    if (timeSlotMap.size === 0) return '시간대 정보를 불러오는 중...';
+
     return selectedTimeSlots.map(id => {
-      const slot = timeSlotConfig[id];
+      const slot = timeSlotMap.get(id);
       return slot ? `${slot.name} (${slot.time})` : `${id}부`;
     }).join(', ');
   };

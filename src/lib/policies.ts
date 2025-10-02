@@ -34,8 +34,8 @@ export interface TermsPolicy {
 /**
  * 취소 정책 정보를 반환합니다
  */
-export function getCancellationPolicy(): CancellationPolicy {
-  const policies = getStorePolicies();
+export async function getCancellationPolicy(): Promise<CancellationPolicy> {
+  const policies = await getStorePolicies();
 
   return {
     description: policies.cancellationPolicy,
@@ -48,8 +48,8 @@ export function getCancellationPolicy(): CancellationPolicy {
 /**
  * 환불 정책 정보를 반환합니다
  */
-export function getRefundPolicy(): RefundPolicy {
-  const policies = getStorePolicies();
+export async function getRefundPolicy(): Promise<RefundPolicy> {
+  const policies = await getStorePolicies();
 
   return {
     description: policies.refundPolicy,
@@ -66,8 +66,8 @@ export function getRefundPolicy(): RefundPolicy {
 /**
  * 예약 정책 정보를 반환합니다
  */
-export function getBookingPolicy(): BookingPolicy {
-  const policies = getStorePolicies();
+export async function getBookingPolicy(): Promise<BookingPolicy> {
+  const policies = await getStorePolicies();
 
   return {
     maxAdvanceDays: policies.maxAdvanceBookingDays,
@@ -79,8 +79,8 @@ export function getBookingPolicy(): BookingPolicy {
 /**
  * 이용약관 및 개인정보 처리방침 정보를 반환합니다
  */
-export function getTermsPolicy(): TermsPolicy {
-  const policies = getStorePolicies();
+export async function getTermsPolicy(): Promise<TermsPolicy> {
+  const policies = await getStorePolicies();
 
   return {
     termsOfServiceUrl: policies.termsOfServiceUrl,
@@ -92,12 +92,12 @@ export function getTermsPolicy(): TermsPolicy {
 /**
  * 특정 날짜/시간에 예약이 가능한지 확인합니다
  */
-export function canMakeReservation(reservationDateTime: Date): {
+export async function canMakeReservation(reservationDateTime: Date): Promise<{
   allowed: boolean;
   reason?: string;
-} {
+}> {
   const now = new Date();
-  const bookingPolicy = getBookingPolicy();
+  const bookingPolicy = await getBookingPolicy();
 
   // 최소 사전 예약 시간 확인
   const minBookingTime = new Date(now.getTime() + (bookingPolicy.minAdvanceHours * 60 * 60 * 1000));
@@ -123,13 +123,13 @@ export function canMakeReservation(reservationDateTime: Date): {
 /**
  * 특정 예약에 대해 취소가 가능한지 확인합니다
  */
-export function canCancelReservation(reservationDateTime: Date): {
+export async function canCancelReservation(reservationDateTime: Date): Promise<{
   allowed: boolean;
   reason?: string;
   penaltyApplied?: boolean;
-} {
+}> {
   const now = new Date();
-  const cancellationPolicy = getCancellationPolicy();
+  const cancellationPolicy = await getCancellationPolicy();
 
   if (!cancellationPolicy.allowCancellation) {
     return {
@@ -201,16 +201,18 @@ export function calculateCancellationFee(
 /**
  * FAQ에서 사용할 정책 정보를 포맷팅해서 반환합니다
  */
-export function getPolicyForFAQ(): {
+export async function getPolicyForFAQ(): Promise<{
   cancellation: string;
   refund: string;
   booking: string;
   terms: string;
-} {
-  const cancellation = getCancellationPolicy();
-  const refund = getRefundPolicy();
-  const booking = getBookingPolicy();
-  const terms = getTermsPolicy();
+}> {
+  const [cancellation, refund, booking, terms] = await Promise.all([
+    getCancellationPolicy(),
+    getRefundPolicy(),
+    getBookingPolicy(),
+    getTermsPolicy()
+  ]);
 
   return {
     cancellation: cancellation.description,
@@ -223,12 +225,12 @@ export function getPolicyForFAQ(): {
 /**
  * 예약 확인 이메일에 포함할 정책 정보를 반환합니다
  */
-export function getPolicyForEmail(): {
+export async function getPolicyForEmail(): Promise<{
   cancellationNotice: string;
   importantNotices: string[];
-} {
-  const cancellation = getCancellationPolicy();
-  const booking = getBookingPolicy();
+}> {
+  const cancellation = await getCancellationPolicy();
+  const booking = await getBookingPolicy();
 
   return {
     cancellationNotice: cancellation.description,
@@ -243,19 +245,25 @@ export function getPolicyForEmail(): {
 /**
  * 관리자 설정 페이지에서 사용할 정책 정보를 반환합니다
  */
-export function getPolicyForAdmin(): {
+export async function getPolicyForAdmin(): Promise<{
   cancellation: CancellationPolicy;
   refund: RefundPolicy;
   booking: BookingPolicy;
   terms: TermsPolicy;
   editable: string[];
   environmentBased: string[];
-} {
+}> {
+  const [cancellation, refund, booking, terms] = await Promise.all([
+    getCancellationPolicy(),
+    getRefundPolicy(),
+    getBookingPolicy(),
+    getTermsPolicy()
+  ]);
   return {
-    cancellation: getCancellationPolicy(),
-    refund: getRefundPolicy(),
-    booking: getBookingPolicy(),
-    terms: getTermsPolicy(),
+    cancellation,
+    refund,
+    booking,
+    terms,
     editable: [
       'allowCancellation',
       'deadlineHours',
@@ -273,9 +281,9 @@ export function getPolicyForAdmin(): {
 /**
  * 정책 설정 유효성을 검증합니다
  */
-export function validatePolicies(): { isValid: boolean; errors: string[] } {
+export async function validatePolicies(): Promise<{ isValid: boolean; errors: string[] }> {
   const errors: string[] = [];
-  const policies = getStorePolicies();
+  const policies = await getStorePolicies();
 
   // 예약 정책 검증
   if (policies.maxAdvanceBookingDays < 1) {

@@ -5,8 +5,9 @@ import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
 import Card from '@/components/atoms/Card';
-import { RESERVATION_STATUS, PAYMENT_STATUS, getTimeSlotLabel } from '@/constants';
+import { RESERVATION_STATUS, PAYMENT_STATUS } from '@/constants';
 import { fetchWithAdminAuth } from '@/lib/admin-fetch';
+import { getTimeSlotConfig } from '@/lib/time-slots';
 
 interface ReservationItem {
   id: string;
@@ -126,6 +127,7 @@ export default function AdminReservationsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState('');
+  const [timeSlotTexts, setTimeSlotTexts] = useState<Record<string, string>>({});
 
   const fetchReservations = async () => {
     try {
@@ -151,6 +153,23 @@ export default function AdminReservationsPage() {
       }));
 
       setReservations(mapped);
+
+      // Pre-calculate time slot texts (N+1 prevention)
+      if (mapped.length > 0) {
+        const config = await getTimeSlotConfig();
+        const texts: Record<string, string> = {};
+
+        mapped.forEach((reservation) => {
+          const labels = reservation.time_slots.map(id => {
+            const slot = config[id];
+            return slot ? `${slot.name} (${slot.time})` : `${id}부`;
+          });
+          texts[reservation.id] = labels.join(', ');
+        });
+
+        setTimeSlotTexts(texts);
+      }
+
       setError(null);
     } catch (err) {
       console.error('Reservations fetch error:', err);
@@ -322,7 +341,7 @@ export default function AdminReservationsPage() {
               <div>
                 <span className="text-gray-600">이용 시간</span>
                 <p className="font-medium">
-                  {reservation.time_slots.map((slot) => getTimeSlotLabel(slot)).join(', ')}
+                  {timeSlotTexts[reservation.id] || '시간대 로딩 중...'}
                 </p>
               </div>
               <div>
