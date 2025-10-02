@@ -100,7 +100,9 @@ export async function getAllSettings(): Promise<StoreSetting[]> {
 /**
  * 카테고리별 설정 조회
  */
-export async function getSettingsByCategory(category: string): Promise<StoreSetting[]> {
+export async function getSettingsByCategory(
+  category: 'store' | 'operation' | 'payment' | 'policy' | 'marketing' | 'social'
+): Promise<StoreSetting[]> {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase

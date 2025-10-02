@@ -317,15 +317,15 @@ export async function validatePolicies(): Promise<{ isValid: boolean; errors: st
 /**
  * 개발 모드에서 정책 설정을 콘솔에 출력 (디버깅용)
  */
-export function debugPolicies(): void {
+export async function debugPolicies(): Promise<void> {
   if (process.env.NODE_ENV === 'development') {
     console.log('📋 Policies Configuration:');
-    console.log('Cancellation:', getCancellationPolicy());
-    console.log('Refund:', getRefundPolicy());
-    console.log('Booking:', getBookingPolicy());
-    console.log('Terms:', getTermsPolicy());
+    console.log('Cancellation:', await getCancellationPolicy());
+    console.log('Refund:', await getRefundPolicy());
+    console.log('Booking:', await getBookingPolicy());
+    console.log('Terms:', await getTermsPolicy());
 
-    const validation = validatePolicies();
+    const validation = await validatePolicies();
     if (!validation.isValid) {
       console.warn('⚠️ Policy Validation Errors:', validation.errors);
     }
