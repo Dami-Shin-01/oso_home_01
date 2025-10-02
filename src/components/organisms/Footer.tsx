@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { ROUTES } from '@/constants';
-import { getPublicStoreConfig } from '@/lib/store-config';
+import { getPublicStoreConfig, type PublicStoreConfig } from '@/lib/store-config';
 import { getBankAccountForEmail } from '@/lib/bank-account';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
-  const [storeConfig, setStoreConfig] = useState({
+  const [storeConfig, setStoreConfig] = useState<PublicStoreConfig>({
     basic: { name: '바베큐장', phone: '02-0000-0000', email: 'info@bbq.com' },
     location: { address: '서울특별시', detailedAddress: '', businessHours: '10:00-22:00', closedDay: '매주 월요일' },
     timeSlots: { slot1: '10:00-14:00', slot2: '14:00-18:00', slot3: '18:00-22:00', slot4: '', slot1Name: '1부', slot2Name: '2부', slot3Name: '3부', slot4Name: '' },

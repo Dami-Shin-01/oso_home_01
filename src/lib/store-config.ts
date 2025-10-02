@@ -315,10 +315,31 @@ export async function validateStoreConfig(): Promise<{ isValid: boolean; missing
 }
 
 /**
+ * 클라이언트 공개 설정 타입 정의
+ */
+export interface PublicStoreConfig {
+  basic: {
+    name: string;
+    phone: string;
+    email: string;
+  };
+  location: StoreLocationInfo;
+  timeSlots: StoreTimeSlots;
+  policies: {
+    cancellationPolicy: string;
+    refundPolicy: string;
+    termsOfServiceUrl: string;
+    privacyPolicyUrl: string;
+  };
+  seo: StoreSEOInfo;
+  social: StoreSocialMedia;
+}
+
+/**
  * 클라이언트 사이드에서 사용할 수 있는 공개 설정만 반환
  * (민감한 정보는 제외)
  */
-export async function getPublicStoreConfig() {
+export async function getPublicStoreConfig(): Promise<PublicStoreConfig> {
   try {
     const config = await getStoreConfig();
 
