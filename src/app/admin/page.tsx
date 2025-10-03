@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Button from '@/components/atoms/Button';
 import Card from '@/components/atoms/Card';
 import { getTimeSlotConfig } from '@/lib/time-slots';
+import VideoUploadSection from '@/components/admin/VideoUploadSection';
 
 interface DashboardStats {
   monthlyRevenue: number;
@@ -44,6 +45,7 @@ export default function AdminDashboard() {
   const [recentReservations, setRecentReservations] = useState<RecentReservation[]>([]);
   const [tasks, setTasks] = useState<DashboardTask[]>([]);
   const [showDbTest, setShowDbTest] = useState(false);
+  const [showVideoUpload, setShowVideoUpload] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
@@ -420,6 +422,14 @@ export default function AdminDashboard() {
               </div>
             </Link>
 
+            <button
+              onClick={() => setShowVideoUpload(!showVideoUpload)}
+              className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <span className="text-2xl mb-2 block">🎬</span>
+              <p className="text-sm font-medium">영상 관리</p>
+            </button>
+
             <Link href="/admin/environment">
               <div className="p-4 text-center border rounded-lg hover:bg-gray-50 transition-colors">
                 <span className="text-2xl mb-2 block">⚙️</span>
@@ -438,21 +448,41 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
+      {/* 영상 관리 섹션 */}
+      {showVideoUpload && (
+        <div className="mt-8">
+          <Card>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold">히어로 영상 관리</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowVideoUpload(false)}
+              >
+                닫기
+              </Button>
+            </div>
+
+            <VideoUploadSection />
+          </Card>
+        </div>
+      )}
+
       {/* DB 테스트 섹션 */}
       {showDbTest && (
         <div className="mt-8">
           <Card>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold">데이터베이스 연결 테스트</h3>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => setShowDbTest(false)}
               >
                 닫기
               </Button>
             </div>
-            
+
             <div className="mb-4">
               <Link href="/test-db">
                 <Button className="mr-4">
