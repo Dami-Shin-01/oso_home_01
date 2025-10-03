@@ -1,59 +1,30 @@
 /**
- * 데이터베이스 기반 매장 설정 관리 시스템
- * 환경변수 대신 Supabase 데이터베이스에서 설정을 관리합니다
+ * 클라이언트 안전 매장 설정 함수들
+ * 이 파일의 모든 함수는 브라우저(클라이언트)에서 안전하게 실행 가능합니다.
+ * createClient()만 사용하며 createAdminClient()는 사용하지 않습니다.
  */
 
 import { createClient } from '@/lib/supabase/client';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { StoreSettingRow } from '@/types/database';
+import type {
+  StoreSetting,
+  StoreBasicInfo,
+  TimeSlots,
+  PaymentInfo,
+  BusinessPolicies,
+  MarketingInfo,
+  SocialMediaInfo
+} from './types';
 
-// 설정 타입 정의 (데이터베이스 타입과 일치하도록 import)
-export type StoreSetting = StoreSettingRow;
-
-// 설정 카테고리별 타입
-export interface StoreBasicInfo {
-  name: string;
-  phone: string;
-  email: string;
-  noreplyEmail: string;
-  adminEmail: string;
-  address: string;
-  detailedAddress?: string;
-  businessHours: string;
-  closedDay?: string;
-}
-
-export interface TimeSlots {
-  slot1: { time: string; name: string };
-  slot2: { time: string; name: string };
-  slot3: { time: string; name: string };
-  slot4?: { time: string; name: string };
-}
-
-export interface PaymentInfo {
-  bankName: string;
-  accountNumber: string;
-  accountHolder: string;
-}
-
-export interface BusinessPolicies {
-  cancellationPolicy: string;
-  refundPolicy: string;
-  maxAdvanceBookingDays: number;
-  minAdvanceBookingHours: number;
-}
-
-export interface MarketingInfo {
-  siteTitle: string;
-  siteDescription: string;
-  siteKeywords?: string;
-}
-
-export interface SocialMediaInfo {
-  instagramUrl?: string;
-  facebookUrl?: string;
-  blogUrl?: string;
-}
+// Re-export types for convenience
+export type {
+  StoreSetting,
+  StoreBasicInfo,
+  TimeSlots,
+  PaymentInfo,
+  BusinessPolicies,
+  MarketingInfo,
+  SocialMediaInfo
+} from './types';
 
 /**
  * 모든 공개 설정 조회 (클라이언트에서 사용)
@@ -75,48 +46,6 @@ export async function getPublicSettings(): Promise<Record<string, string>> {
     acc[setting.key] = setting.value;
     return acc;
   }, {} as Record<string, string>);
-}
-
-/**
- * 모든 설정 조회 (관리자용)
- */
-export async function getAllSettings(): Promise<StoreSetting[]> {
-  const supabase = createAdminClient();
-
-  const { data, error } = await supabase
-    .from('store_settings')
-    .select('*')
-    .order('category', { ascending: true })
-    .order('key', { ascending: true });
-
-  if (error) {
-    console.error('Failed to fetch all settings:', error);
-    return [];
-  }
-
-  return data || [];
-}
-
-/**
- * 카테고리별 설정 조회
- */
-export async function getSettingsByCategory(
-  category: 'store' | 'operation' | 'payment' | 'policy' | 'marketing' | 'social'
-): Promise<StoreSetting[]> {
-  const supabase = createAdminClient();
-
-  const { data, error } = await supabase
-    .from('store_settings')
-    .select('*')
-    .eq('category', category)
-    .order('key', { ascending: true });
-
-  if (error) {
-    console.error(`Failed to fetch ${category} settings:`, error);
-    return [];
-  }
-
-  return data || [];
 }
 
 /**
@@ -159,57 +88,6 @@ export async function getSettings(keys: string[]): Promise<Record<string, string
     acc[setting.key] = setting.value;
     return acc;
   }, {} as Record<string, string>);
-}
-
-/**
- * 설정값 업데이트 (관리자용)
- */
-export async function updateSetting(key: string, value: string): Promise<boolean> {
-  const supabase = createAdminClient();
-
-  const { error } = await supabase
-    .from('store_settings')
-    .update({ value, updated_at: new Date().toISOString() })
-    .eq('key', key);
-
-  if (error) {
-    console.error(`Failed to update setting ${key}:`, error);
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * 여러 설정값 일괄 업데이트 (관리자용)
- */
-export async function updateSettings(settings: Array<{ key: string; value: string }>): Promise<boolean> {
-  const supabase = createAdminClient();
-
-  try {
-    // 트랜잭션으로 일괄 업데이트
-    const updates = settings.map(({ key, value }) =>
-      supabase
-        .from('store_settings')
-        .update({ value, updated_at: new Date().toISOString() })
-        .eq('key', key)
-    );
-
-    const results = await Promise.all(updates);
-
-    // 모든 업데이트가 성공했는지 확인
-    const hasError = results.some(result => result.error);
-
-    if (hasError) {
-      console.error('Some settings failed to update');
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Failed to update settings:', error);
-    return false;
-  }
 }
 
 /**
