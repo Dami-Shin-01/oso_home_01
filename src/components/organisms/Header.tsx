@@ -52,7 +52,7 @@ export default function Header() {
   };
 
   return (
-    <div className="navbar bg-base-100 shadow-lg sticky top-0 z-50">
+    <div className="navbar bg-base-100/80 backdrop-blur-md shadow-lg sticky top-0 z-50">
       <div className="navbar-start">
         {/* 모바일 메뉴 */}
         <div className="dropdown">
@@ -81,7 +81,7 @@ export default function Header() {
           {isMenuOpen && (
             <ul
               tabIndex={0}
-              className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+              className="menu menu-sm dropdown-content bg-base-100/95 backdrop-blur-md rounded-box z-[1] mt-3 w-52 p-2 shadow"
             >
               {navigationItems.map((item) => (
                 <li key={item.name}>
@@ -173,7 +173,7 @@ export default function Header() {
                   </span>
                 </div>
               </div>
-              <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow border">
+              <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100/95 backdrop-blur-md rounded-box z-[1] mt-3 w-52 p-2 shadow border">
                 <li className="menu-title">
                   <span>{user?.name || '사용자'}</span>
                 </li>
