@@ -3,6 +3,7 @@ import React, { Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import VideoPlayButton from '@/components/atoms/VideoPlayButton';
 import { getPreloadImageUrls } from '@/lib/image-utils';
+import HeroVideo from '@/components/HeroVideo';
 
 // 동적 import로 비디오 컴포넌트를 코드 스플릿
 const LazyFacilitiesSection = React.lazy(() => import('./components/FacilitiesSection'));
@@ -32,19 +33,8 @@ export default async function Home() {
       
       {/* 히어로 섹션 */}
       <div className="hero min-h-screen relative overflow-hidden">
-        {/* 배경 영상 - 성능 최적화 */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto" // auto로 변경하여 즉시 로딩
-          className="absolute inset-0 w-full h-full object-cover z-0 hidden md:block"
-          poster="/images/hero-poster.jpg"
-        >
-          <source src="/videos/hero-video.mp4" type="video/mp4" />
-          <source src="/videos/hero-video.webm" type="video/webm" />
-        </video>
+        {/* 배경 영상 - Supabase Storage (데스크탑만) */}
+        <HeroVideo className="hidden md:block" />
 
         {/* 모바일용 정적 배경 이미지 */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary-focus md:hidden z-0"></div>

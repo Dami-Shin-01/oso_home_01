@@ -8,7 +8,7 @@
 -- 버킷명: facility-images
 -- Public: true (고객이 이미지 조회 가능)
 -- File Size Limit: 5MB
--- Allowed MIME Types: image/jpeg, image/png, image/webp
+-- Allowed MIME Types: image/jpeg, image/png, image/webp, image/svg+xml
 
 -- 2. Storage RLS 정책 설정 (수정된 버전)
 -- storage.objects 테이블에 대한 정책 생성

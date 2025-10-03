@@ -70,7 +70,7 @@ export function getResponsiveImageUrl(imagePath: string, size: 'thumb' | 'small'
   });
 
   try {
-    return `${supabaseUrl}/storage/v1/object/sign/${bucket}/${imagePath}?${params.toString()}`;
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${imagePath}?${params.toString()}`;
   } catch (error) {
     console.error('Error generating responsive image URL:', error);
     return getSupabaseImageUrl(imagePath);
