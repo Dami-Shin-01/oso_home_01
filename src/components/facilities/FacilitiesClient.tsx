@@ -282,7 +282,7 @@ export default function FacilitiesClient({ facilities }: FacilitiesClientProps) 
 
       {/* 시설 상세 모달 */}
       <dialog id="facility_detail_modal" className="modal">
-        <div className="modal-box max-w-4xl">
+        <div className="modal-box max-w-4xl" style={{ backgroundColor: '#ffffff' }}>
           {selectedFacility && (
             <>
               <form method="dialog">

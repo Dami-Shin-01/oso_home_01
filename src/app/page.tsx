@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import React, { Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import VideoPlayButton from '@/components/atoms/VideoPlayButton';
@@ -104,41 +105,53 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="card bg-base-100 shadow-xl">
+            <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 group">
               <div className="card-body items-center text-center">
-                <div className="avatar">
-                  <div className="w-16 rounded-full bg-primary text-primary-content flex items-center justify-center">
-                    <span className="text-2xl">📅</span>
-                  </div>
+                <div className="relative w-20 h-20 md:w-24 md:h-24 mb-4 overflow-hidden rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <Image
+                    src="https://nrblnfmknolgsqpcqite.supabase.co/storage/v1/object/public/feature-icons/reservation-icon.jpg"
+                    alt="간편한 예약"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    sizes="(max-width: 768px) 80px, 96px"
+                  />
                 </div>
                 <h3 className="card-title">간편한 예약</h3>
                 <p>1,2,3부 시간대를 한눈에 확인하고 원하는 시간에 바로 예약</p>
               </div>
             </div>
 
-            <div className="card bg-base-100 shadow-xl">
+            <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 group">
               <div className="card-body items-center text-center">
-                <div className="avatar">
-                  <div className="w-16 rounded-full bg-secondary text-secondary-content flex items-center justify-center">
-                    <span className="text-2xl">🏞️</span>
+                <div className="relative w-20 h-20 md:w-24 md:h-24 mb-4 overflow-hidden rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <Image
+                    src="https://nrblnfmknolgsqpcqite.supabase.co/storage/v1/object/public/feature-icons/nature-icon.jpg"
+                    alt="최고의 자연환경"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    sizes="(max-width: 768px) 80px, 96px"
+                  />
+                </div>
+                <h3 className="card-title">최고의 자연환경</h3>
+                <p>깨끗하고 쾌적한 자연 속에서 즐기는 프리미엄 바베큐 공간</p>
               </div>
             </div>
-            <h3 className="card-title">최고의 자연환경</h3>
-            <p>깨끗하고 쾌적한 자연 속에서 즐기는 프리미엄 바베큐 공간</p>
-          </div>
-        </div>
 
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body items-center text-center">
-            <div className="avatar">
-              <div className="w-16 rounded-full bg-accent text-accent-content flex items-center justify-center">
-                <span className="text-2xl">⚡</span>
+            <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 group">
+              <div className="card-body items-center text-center">
+                <div className="relative w-20 h-20 md:w-24 md:h-24 mb-4 overflow-hidden rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <Image
+                    src="https://nrblnfmknolgsqpcqite.supabase.co/storage/v1/object/public/feature-icons/facility-icon.jpg"
+                    alt="완벽한 시설"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    sizes="(max-width: 768px) 80px, 96px"
+                  />
+                </div>
+                <h3 className="card-title">완벽한 시설</h3>
+                <p>모든 필수 시설과 장비가 구비되어 편리하게 이용 가능</p>
               </div>
             </div>
-            <h3 className="card-title">완벽한 시설</h3>
-            <p>모든 필수 시설과 장비가 구비되어 편리하게 이용 가능</p>
-          </div>
-        </div>
         </div>
       </div>
     </section>

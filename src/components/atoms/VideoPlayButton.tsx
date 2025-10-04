@@ -1,15 +1,19 @@
 'use client'
 
+import { useState } from 'react';
+
 export default function VideoPlayButton() {
+  const [isPlaying, setIsPlaying] = useState(true);
+
   const handleVideoToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
     const video = e.currentTarget.parentElement?.querySelector('video');
     if (video) {
       if (video.paused) {
         video.play();
-        e.currentTarget.innerHTML = '⏸️';
+        setIsPlaying(true);
       } else {
         video.pause();
-        e.currentTarget.innerHTML = '▶️';
+        setIsPlaying(false);
       }
     }
   };
@@ -20,7 +24,7 @@ export default function VideoPlayButton() {
       onClick={handleVideoToggle}
       aria-label="영상 재생/일시정지"
     >
-      ⏸️
+      {isPlaying ? '⏸️' : '▶️'}
     </button>
   );
 }

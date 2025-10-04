@@ -55,7 +55,7 @@ export default function HeroVideo({
   // 로딩 중이거나 영상이 없으면 포스터 이미지 표시
   if (isLoading || !hasVideo) {
     return (
-      <div className={`absolute inset-0 w-full h-full ${className}`}>
+      <div className={`absolute inset-0 w-full h-full ${className}`} suppressHydrationWarning>
         <Image
           src={poster}
           alt="BBQ 히어로 이미지"

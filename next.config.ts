@@ -38,6 +38,7 @@ const nextConfig: NextConfig = {
     ],
     // 이미지 최적화 품질 및 형식
     formats: ['image/webp', 'image/avif'],
+    qualities: [75, 85, 90, 100], // Next.js 16 대비 품질 설정
     minimumCacheTTL: 31536000, // 1년 캐시
     // 반응형 이미지 크기 정의
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
